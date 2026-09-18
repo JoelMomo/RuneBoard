@@ -2,14 +2,13 @@ package io.github.joelmomo.runeboard;
 
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
-import android.view.View;
 
 public final class RuneBoardImeService extends InputMethodService
         implements RuneKeyboardView.Listener {
@@ -37,6 +36,10 @@ public final class RuneBoardImeService extends InputMethodService
 
     public boolean isControllerCaptureAvailable() {
         return keyboardView != null && isInputViewShown();
+    }
+
+    public boolean shouldCaptureControllerKey(int keyCode) {
+        return keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode);
     }
 
     public boolean handleControllerKey(int keyCode) {
@@ -119,27 +122,33 @@ public final class RuneBoardImeService extends InputMethodService
             return;
         }
 
-        ExtractedText extracted = connection.getExtractedText(new ExtractedTextRequest(), 0);
-        if (extracted != null && extracted.text != null && extracted.selectionStart >= 0) {
-            int next = Math.max(0, Math.min(
-                    extracted.text.length(),
-                    extracted.selectionStart + (direction < 0 ? -1 : 1)));
-            boolean moved = connection.setSelection(next, next);
-            Log.d("RuneBoard", "cursor direction=" + direction
-                    + " from=" + extracted.selectionStart + " to=" + next
-                    + " result=" + moved);
+        ExtractedText extracted =
+                connection.getExtractedText(new ExtractedTextRequest(), 0);
+        if (extracted != null
+                && extracted.text != null
+                && extracted.selectionStart >= 0) {
+            int next = Math.max(
+                    0,
+                    Math.min(
+                            extracted.text.length(),
+                            extracted.selectionStart
+                                    + (direction < 0 ? -1 : 1)));
+            connection.setSelection(next, next);
             return;
         }
 
-        int keyCode = direction < 0 ? KeyEvent.KEYCODE_DPAD_LEFT : KeyEvent.KEYCODE_DPAD_RIGHT;
+        int keyCode = direction < 0
+                ? KeyEvent.KEYCODE_DPAD_LEFT
+                : KeyEvent.KEYCODE_DPAD_RIGHT;
         long now = SystemClock.uptimeMillis();
-        connection.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0));
-        connection.sendKeyEvent(new KeyEvent(now, now, KeyEvent.ACTION_UP, keyCode, 0));
+        connection.sendKeyEvent(new KeyEvent(
+                now, now, KeyEvent.ACTION_DOWN, keyCode, 0));
+        connection.sendKeyEvent(new KeyEvent(
+                now, now, KeyEvent.ACTION_UP, keyCode, 0));
     }
 
     @Override
     public void onMinimizedChanged(boolean minimized) {
-        // The custom view requests a new measured height. Hardware testing on the Thor
-        // will tell us whether AYN's pinned-IME window honors that resize directly.
+        // AYN Thor firmware .377 honors the requested input-view resize.
     }
 }
