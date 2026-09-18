@@ -22,22 +22,53 @@ The first prototype must prove four things on real hardware:
 - Y: shift
 - L1 / R1: move text cursor left / right
 - Start: enter
+- Select: minimize
 - Touch: direct key input
 
 Controller mappings are intentionally provisional until tested on AYN Thor hardware.
 
+## Current implementation
+
+Prototype 0 already contains:
+
+- a real Android `InputMethodService`;
+- a touch QWERTY keyboard with an always-visible number row;
+- gamepad/D-pad navigation and provisional Thor button mappings;
+- four keyboard opacity levels;
+- compact/minimized mode;
+- a setup/test activity;
+- a Thor hardware test plan;
+- GitHub Actions CI that assembles a debug APK successfully.
+
+The Android project has no third-party runtime dependencies at this stage.
+
 ## Scope
 
-This prototype intentionally does **not** include swipe typing, advanced prediction, cloud services, telemetry, or the final theme/customization system.
+This prototype intentionally does **not** include swipe typing, advanced prediction, cloud services, telemetry, persistent customization, or the final visual design.
 
 RuneBoard is being designed Thor-first. General Android compatibility can be evaluated later.
 
 ## Build
 
-The repository contains a minimal Android project using Java and the platform APIs only. GitHub Actions builds a debug APK on each push.
+GitHub Actions builds a debug APK on each push and pull request.
 
-Current prototype target: Android 13+.
+Current prototype target: **Android 13+**.
+
+The latest successful workflow exposes the APK as the `RuneBoard-prototype-debug` artifact.
+
+## Hardware validation
+
+The cloud build validates the Android project, but the Thor-specific behavior must be tested on real hardware.
+
+See:
+
+- `docs/PROTOTYPE_0_TEST_PLAN.md`
+- GitHub issue **#1 — Prototype 0: validate Thor hardware gates**
 
 ## Status
 
-**Experimental — not ready for daily use.**
+**Build: passing.**
+
+**Thor hardware gates: pending.**
+
+Experimental — not ready for daily use.
