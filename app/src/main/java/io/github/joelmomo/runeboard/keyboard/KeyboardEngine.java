@@ -59,7 +59,6 @@ public final class KeyboardEngine {
             return true;
         }
         return action == ControllerAction.PRESS_SELECTED
-                || action == ControllerAction.ENTER
                 || action == ControllerAction.TOGGLE_MINIMIZE;
     }
 
@@ -91,7 +90,7 @@ public final class KeyboardEngine {
                 output.onSpace();
                 return Update.NONE;
             case SHIFT:
-                state.toggleShift();
+                state.advanceShiftMode();
                 return Update.VISUAL;
             case CURSOR_LEFT:
                 output.onMoveCursor(-1);
@@ -129,13 +128,12 @@ public final class KeyboardEngine {
                     text = text.toUpperCase(Locale.ROOT);
                 }
                 output.onText(text);
-                if (state.isShifted()) {
-                    state.clearShift();
+                if (state.consumeOneShotShift()) {
                     return Update.VISUAL;
                 }
                 return Update.NONE;
             case SHIFT:
-                state.toggleShift();
+                state.advanceShiftMode();
                 return Update.VISUAL;
             case SPACE:
                 output.onSpace();

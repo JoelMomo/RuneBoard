@@ -4,10 +4,16 @@ import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
 
 public final class KeyboardState {
 
+    public enum ShiftMode {
+        OFF,
+        ONCE,
+        CAPS_LOCK
+    }
+
     private final KeyboardLayout layout;
     private int selectedRow = 1;
     private int selectedCol = 0;
-    private boolean shifted;
+    private ShiftMode shiftMode = ShiftMode.OFF;
     private boolean minimized;
     private int opacity;
 
@@ -99,16 +105,39 @@ public final class KeyboardState {
         return best;
     }
 
+    public ShiftMode getShiftMode() {
+        return shiftMode;
+    }
+
     public boolean isShifted() {
-        return shifted;
+        return shiftMode != ShiftMode.OFF;
     }
 
-    public void toggleShift() {
-        shifted = !shifted;
+    public boolean isCapsLocked() {
+        return shiftMode == ShiftMode.CAPS_LOCK;
     }
 
-    public void clearShift() {
-        shifted = false;
+    public void advanceShiftMode() {
+        switch (shiftMode) {
+            case OFF:
+                shiftMode = ShiftMode.ONCE;
+                break;
+            case ONCE:
+                shiftMode = ShiftMode.CAPS_LOCK;
+                break;
+            case CAPS_LOCK:
+            default:
+                shiftMode = ShiftMode.OFF;
+                break;
+        }
+    }
+
+    public boolean consumeOneShotShift() {
+        if (shiftMode != ShiftMode.ONCE) {
+            return false;
+        }
+        shiftMode = ShiftMode.OFF;
+        return true;
     }
 
     public boolean isMinimized() {

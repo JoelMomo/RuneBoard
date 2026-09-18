@@ -12,7 +12,7 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - A: press selected key
 - B: backspace
 - X: space
-- Y: shift
+- Y: Shift -> Caps Lock -> off
 - L1 / R1: move text cursor left / right
 - L2 / R2: previous / next word
 - Start: enter
@@ -32,6 +32,8 @@ Prototype 0 contains:
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
 - persistent physical-button remapping with automatic conflict swapping;
+- one-shot Shift plus persistent Caps Lock;
+- action keys show the currently mapped physical button;
 - four keyboard opacity levels;
 - persistent background opacity across IME recreation;
 - built-in theme profiles: Default, OLED Black and Transparent;
@@ -60,7 +62,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.7-prototype**
+Current development version: **0.0.8-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -83,7 +85,8 @@ Validated on the physical device:
 - D-pad and A/B/X/Y controller typing;
 - L1/R1 text-cursor movement and L2/R2 word navigation;
 - live physical-button remapping, including conflict swapping and reset;
-- minimize/restore;
+- Shift/Caps state cycling and compact-mode Start pass-through;
+- compact minimize/restore with controller pass-through;
 - opacity-state switching.
 
 Measured lower-display keyboard sizes during the prototype:
@@ -122,7 +125,7 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 
 **RuneBoard Default visual system: implemented in emulator.**
 
-**Physical controller remapping: validated on the real Thor.**
+**Physical controller remapping, Shift/Caps and compact capture policy: validated on the real Thor.**
 
 **Final visual tuning on the physical Thor panel: pending.**
 

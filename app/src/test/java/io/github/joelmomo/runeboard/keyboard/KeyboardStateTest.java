@@ -76,6 +76,54 @@ public final class KeyboardStateTest {
     }
 
     @Test
+    public void shiftCyclesOffOnceCapsAndBackOff() {
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
+
+        assertEquals(
+                KeyboardState.ShiftMode.OFF,
+                state.getShiftMode());
+
+        state.advanceShiftMode();
+        assertEquals(
+                KeyboardState.ShiftMode.ONCE,
+                state.getShiftMode());
+        assertTrue(state.isShifted());
+        assertFalse(state.isCapsLocked());
+
+        state.advanceShiftMode();
+        assertEquals(
+                KeyboardState.ShiftMode.CAPS_LOCK,
+                state.getShiftMode());
+        assertTrue(state.isCapsLocked());
+        assertFalse(state.consumeOneShotShift());
+
+        state.advanceShiftMode();
+        assertEquals(
+                KeyboardState.ShiftMode.OFF,
+                state.getShiftMode());
+    }
+
+    @Test
+    public void oneShotShiftIsConsumedButCapsIsNot() {
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
+
+        state.advanceShiftMode();
+        assertTrue(state.consumeOneShotShift());
+        assertEquals(
+                KeyboardState.ShiftMode.OFF,
+                state.getShiftMode());
+
+        state.advanceShiftMode();
+        state.advanceShiftMode();
+        assertFalse(state.consumeOneShotShift());
+        assertEquals(
+                KeyboardState.ShiftMode.CAPS_LOCK,
+                state.getShiftMode());
+    }
+
+    @Test
     public void movementStopsWhileMinimized() {
         KeyboardState state =
                 new KeyboardState(KeyboardLayouts.qwerty());

@@ -10,7 +10,7 @@ RuneBoard treats the AYN Thor controller as a first-class keyboard input method.
 | A | Confirm / press selected key |
 | B | Backspace |
 | X | Space |
-| Y | Shift |
+| Y | Shift / Caps Lock |
 | L1 / R1 | Cursor left / right |
 | L2 / R2 | Previous / next word |
 | Start | Enter |
@@ -90,3 +90,12 @@ A live remap was then tested on the physical device:
 - the active lower-display IME resolved X as Confirm and A as Space
 
 After validation, RESET CONTROLS restored the defaults and the Thor system setting ime_fixed was returned to its original value (0).
+
+
+## Shift and Caps Lock
+
+Shift uses a deterministic three-state cycle: Off -> one-shot Shift -> Caps Lock -> Off.
+
+One-shot Shift is consumed after the next text key. Caps Lock remains active until Shift is pressed again. The on-screen Shift key changes to CAPS while locked.
+
+Action keys also render the currently mapped physical-button label, and the minimized bar shows the actual Confirm and Minimize buttons used to restore RuneBoard.

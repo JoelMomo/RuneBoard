@@ -33,6 +33,7 @@
     <string name="more_apps_support">More apps &amp; support</string>
 
     <string name="key_shift">SHIFT</string>
+    <string name="key_caps">CAPS</string>
     <string name="key_space">SPACE</string>
     <string name="key_backspace">BACK</string>
     <string name="key_enter">ENTER</string>
@@ -42,7 +43,7 @@
     <string name="header_layout">QWERTY</string>
     <string name="header_controller">D-PAD</string>
     <string name="header_background">BG %1$d%%</string>
-    <string name="minimized_restore">A  RESTORE</string>
+    <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
 
     <string name="section_controls">PHYSICAL MAPPING</string>
     <string name="section_controls_subtitle">Tap an action, then press the controller button to assign</string>

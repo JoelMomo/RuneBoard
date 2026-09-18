@@ -80,3 +80,10 @@ Built-in theme profiles currently defined in code:
 - Transparent.
 
 A visual theme picker will sit on top of this model rather than adding theme logic to the renderer.
+
+
+### Physical-control hints
+
+Utility keys display the physical button currently mapped to their action. These hints are generated from ControllerBindings, so remapping is reflected directly on the keyboard.
+
+The minimized bar also resolves the active Confirm and Minimize buttons dynamically instead of assuming A / Select.

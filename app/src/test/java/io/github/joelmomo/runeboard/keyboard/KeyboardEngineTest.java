@@ -28,6 +28,27 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void capsLockPersistsUntilShiftCyclesOff() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        engine.handle(ControllerAction.SHIFT);
+        engine.handle(ControllerAction.SHIFT);
+        engine.handle(ControllerAction.PRESS_SELECTED);
+        engine.handle(ControllerAction.PRESS_SELECTED);
+
+        assertEquals(List.of("Q", "Q"), output.text);
+        assertTrue(engine.getState().isCapsLocked());
+
+        engine.handle(ControllerAction.SHIFT);
+        engine.handle(ControllerAction.PRESS_SELECTED);
+
+        assertEquals(List.of("Q", "Q", "q"), output.text);
+        assertFalse(engine.getState().isShifted());
+    }
+
+    @Test
     public void directEditingActionsReachOutput() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =
@@ -69,7 +90,7 @@ public final class KeyboardEngineTest {
 
         assertTrue(engine.shouldCapture(ControllerAction.PRESS_SELECTED));
         assertFalse(engine.shouldCapture(ControllerAction.PRESS_CENTER));
-        assertTrue(engine.shouldCapture(ControllerAction.ENTER));
+        assertFalse(engine.shouldCapture(ControllerAction.ENTER));
         assertTrue(engine.shouldCapture(ControllerAction.TOGGLE_MINIMIZE));
     }
 

@@ -16,8 +16,10 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 
+import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
+import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
@@ -375,13 +377,15 @@ public final class RuneKeyboardView extends View {
         boolean utility = key.getType() != KeyboardKey.Type.TEXT;
         boolean activeShift =
                 key.getType() == KeyboardKey.Type.SHIFT && state.isShifted();
+        boolean activeCaps =
+                key.getType() == KeyboardKey.Type.SHIFT && state.isCapsLocked();
 
         int fill = utility ? theme.utilityKeyFill : theme.keyFill;
         int alpha = utility ? theme.utilityKeyAlpha : theme.keyAlpha;
 
         if (activeShift && !selected) {
             fill = theme.selectedFill;
-            alpha = 170;
+            alpha = activeCaps ? 220 : 170;
         }
 
         if (selected) {
@@ -446,6 +450,52 @@ public final class RuneKeyboardView extends View {
                 rect.centerX(),
                 baseline,
                 paint);
+
+        drawControllerHint(canvas, rect, key, selected);
+    }
+
+    private void drawControllerHint(
+            Canvas canvas,
+            RectF rect,
+            KeyboardKey key,
+            boolean selected) {
+        BindableAction action = bindableActionFor(key);
+        if (action == null) {
+            return;
+        }
+
+        String hint = ControllerKeyNames.nameFor(
+                controllerMapper.getBindings().getKeyCode(action));
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.RIGHT);
+        paint.setTextSize(dp(7));
+        paint.setColor(selected ? theme.selectedStroke : theme.accent);
+        paint.setAlpha(220);
+        canvas.drawText(
+                hint,
+                rect.right - dp(7),
+                rect.top + dp(11),
+                paint);
+        paint.setAlpha(255);
+    }
+
+    private BindableAction bindableActionFor(KeyboardKey key) {
+        switch (key.getType()) {
+            case SHIFT:
+                return BindableAction.SHIFT;
+            case SPACE:
+                return BindableAction.SPACE;
+            case BACKSPACE:
+                return BindableAction.BACKSPACE;
+            case ENTER:
+                return BindableAction.ENTER;
+            case MINIMIZE:
+                return BindableAction.MINIMIZE;
+            default:
+                return null;
+        }
     }
 
     private String displayLabel(KeyboardKey key) {
@@ -461,7 +511,10 @@ public final class RuneKeyboardView extends View {
 
         switch (key.getType()) {
             case SHIFT:
-                return getContext().getString(R.string.key_shift);
+                return getContext().getString(
+                        state.isCapsLocked()
+                                ? R.string.key_caps
+                                : R.string.key_shift);
             case SPACE:
                 return getContext().getString(R.string.key_space);
             case BACKSPACE:
@@ -527,8 +580,17 @@ public final class RuneKeyboardView extends View {
         paint.setTextAlign(Paint.Align.RIGHT);
         paint.setTextSize(dp(10));
         paint.setColor(theme.accent);
+        String restoreButton = ControllerKeyNames.nameFor(
+                controllerMapper.getBindings().getKeyCode(
+                        BindableAction.CONFIRM));
+        String minimizeButton = ControllerKeyNames.nameFor(
+                controllerMapper.getBindings().getKeyCode(
+                        BindableAction.MINIMIZE));
         canvas.drawText(
-                getContext().getString(R.string.minimized_restore),
+                getContext().getString(
+                        R.string.minimized_restore,
+                        restoreButton,
+                        minimizeButton),
                 getWidth() - outer,
                 badgeBaseline,
                 paint);
@@ -599,6 +661,10 @@ public final class RuneKeyboardView extends View {
 
         if (debugLogging) {
             KeyboardState state = engine.getState();
+
+            if (action == ControllerAction.SHIFT) {
+                Log.d(TAG, "shiftMode=" + state.getShiftMode());
+            }
 
             if (action == ControllerAction.MOVE_LEFT
                     || action == ControllerAction.MOVE_RIGHT

@@ -1,4 +1,4 @@
-# RuneBoard architecture - Prototype 0.0.7
+# RuneBoard architecture - Prototype 0.0.8
 
 ## Principle
 
@@ -33,7 +33,7 @@ Prototype 0 currently exposes QWERTY with an always-visible number row.
 Owns mutable keyboard state:
 
 - selected row/column;
-- shift;
+- shift mode (off / one-shot / Caps Lock);
 - opacity;
 - minimized state.
 
