@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a reproducible RuneBoard problem.
+title: "[Bug] "
+body:
+  - type: input
+    id: build
+    attributes:
+      label: Build or commit
+      placeholder: Artifact name, release, or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device, Android and firmware
+      placeholder: e.g. AYN Thor · Android 13 · firmware .377
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Keyboard state
+      options:
+        - Full keyboard
+        - Compact / minimized
+        - Both
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: input
+    attributes:
+      label: Input method
+      options:
+        - Touch
+        - D-pad / face buttons
+        - Shoulder buttons
+        - Analog stick
+        - Mixed
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
