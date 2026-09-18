@@ -62,3 +62,20 @@ RuneBoard does not back up app data through Android cloud backup or device trans
 This avoids moving keyboard configuration or future learned typing data implicitly between devices.
 
 Explicit export/import can be added later for user-controlled backups.
+
+## Settings UI
+
+MainActivity now provides a custom RuneBoard settings surface instead of stock-looking setup buttons.
+
+Current controls:
+
+- Android keyboard enable shortcut;
+- active IME picker;
+- Physical Controls accessibility shortcut;
+- visual theme cards for Default, OLED Black and Transparent;
+- background opacity chips for 100%, 71%, 35% and 0%;
+- built-in test text field.
+
+Theme and opacity changes persist immediately. If the RuneBoard IME service is alive, the activity also requests an input-view appearance refresh so the next visible keyboard uses the new profile without restarting the app.
+
+The settings UI was validated on the dedicated 1240x1080 emulator.

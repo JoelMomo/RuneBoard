@@ -33,6 +33,7 @@ Prototype 0 contains:
 - four keyboard opacity levels;
 - persistent background opacity across IME recreation;
 - built-in theme profiles: Default, OLED Black and Transparent;
+- custom settings UI with live theme and background controls;
 - compact/minimized mode;
 - a setup/test activity;
 - unit tests for state, controller mappings and minimized capture policy;
@@ -57,7 +58,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.5-prototype**
+Current development version: **0.0.6-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
