@@ -18,28 +18,32 @@ public final class KeyboardProfiles {
                     "English",
                     "QWERTY",
                     "EN",
-                    KeyboardLayouts.englishQwerty()),
+                    KeyboardLayouts.englishQwerty(),
+                    KeyboardLayouts.englishSymbols()),
             new KeyboardProfile(
                     ID_ES_ES,
                     "es-ES",
-                    "EspaÃ±ol",
+                    "Espa\u00f1ol",
                     "QWERTY",
                     "ES",
-                    KeyboardLayouts.spanishQwerty()),
+                    KeyboardLayouts.spanishQwerty(),
+                    KeyboardLayouts.spanishSymbols()),
             new KeyboardProfile(
                     ID_FR_FR,
                     "fr-FR",
-                    "FranÃ§ais",
+                    "Fran\u00e7ais",
                     "AZERTY",
                     "FR",
-                    KeyboardLayouts.frenchAzerty()),
+                    KeyboardLayouts.frenchAzerty(),
+                    KeyboardLayouts.frenchSymbols()),
             new KeyboardProfile(
                     ID_RU_RU,
                     "ru-RU",
-                    "Ð ÑƒÑÑÐºÐ¸Ð¹",
-                    "Ð™Ð¦Ð£ÐšÐ•Ð",
+                    "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
+                    "\u0419\u0426\u0423\u041a\u0415\u041d",
                     "RU",
-                    KeyboardLayouts.russianJcuken()));
+                    KeyboardLayouts.russianJcuken(),
+                    KeyboardLayouts.russianSymbols()));
 
     private KeyboardProfiles() {
     }

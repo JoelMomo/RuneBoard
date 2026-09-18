@@ -1,4 +1,4 @@
-# RuneBoard architecture - Prototype 0.0.10
+# RuneBoard architecture - Prototype 0.0.11
 
 ## Principle
 
@@ -26,7 +26,7 @@ The view does not own the layout definition.
 
 Factory for built-in layouts.
 
-Prototype 0 currently exposes QWERTY with an always-visible number row.
+Prototype 0 exposes language-specific alphabet layouts plus a secondary symbol layout, both with an always-visible number row.
 
 ### keyboard/KeyboardState
 
@@ -129,6 +129,10 @@ Setup and local test screen:
 Key rectangles are calculated when the View size/layout changes and cached for drawing and touch hit testing.
 
 Normal redraws for selection, shift or opacity do not allocate new key geometry.
+
+ABC/SYM switching uses `KeyboardEngine.Update.GEOMETRY`: RuneKeyboardView rebuilds hit targets and redraws without requesting a new IME window layout. `Update.LAYOUT` remains reserved for real size changes such as minimize/restore.
+
+The view also subtracts the bottom navigation-bar inset before distributing row height so the utility row remains above Android system navigation.
 
 ## Validation
 

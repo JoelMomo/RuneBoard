@@ -15,6 +15,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowInsets;
 
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerAction;
@@ -131,6 +132,7 @@ public final class RuneKeyboardView extends View {
 
         engine = new KeyboardEngine(
                 profile.layout,
+                profile.symbolLayout,
                 new KeyboardEngine.Output() {
                     @Override
                     public void onText(String text) {
@@ -298,9 +300,10 @@ public final class RuneKeyboardView extends View {
                 outer + headerHeight);
         float contentTop = outer + headerHeight + gap;
         float rowGaps = gap * (layout.getRowCount() - 1);
+        float bottomInset = navigationBarBottomInset();
         float availableHeight = Math.max(
                 1f,
-                height - contentTop - outer - rowGaps);
+                height - contentTop - outer - bottomInset - rowGaps);
         float heightUnit =
                 availableHeight / layout.getTotalHeightWeight();
 
@@ -328,6 +331,24 @@ public final class RuneKeyboardView extends View {
 
             top += rowHeight + gap;
         }
+    }
+
+    @Override
+    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        WindowInsets applied = super.onApplyWindowInsets(insets);
+        if (getWidth() > 0 && getHeight() > 0) {
+            rebuildGeometry(getWidth(), getHeight());
+            invalidate();
+        }
+        return applied;
+    }
+
+    private int navigationBarBottomInset() {
+        WindowInsets insets = getRootWindowInsets();
+        if (insets == null) {
+            return 0;
+        }
+        return insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
     }
 
     @Override
@@ -411,7 +432,9 @@ public final class RuneKeyboardView extends View {
         canvas.drawText(
                 profile.shortLabel
                         + " / "
-                        + profile.layoutName
+                        + (state.isSymbols()
+                                ? "SYM"
+                                : profile.layoutName)
                         + "  "
                         + ControllerKeyNames.nameFor(
                                 controllerMapper.getBindings().getKeyCode(
@@ -662,6 +685,11 @@ public final class RuneKeyboardView extends View {
                         state.isCapsLocked()
                                 ? R.string.key_caps
                                 : R.string.key_shift);
+            case MODE:
+                return getContext().getString(
+                        state.isSymbols()
+                                ? R.string.key_letters
+                                : R.string.key_symbols);
             case SPACE:
                 return getContext().getString(R.string.key_space);
             case BACKSPACE:
@@ -907,6 +935,10 @@ public final class RuneKeyboardView extends View {
                 || second == KeyboardEngine.Update.LAYOUT) {
             return KeyboardEngine.Update.LAYOUT;
         }
+        if (first == KeyboardEngine.Update.GEOMETRY
+                || second == KeyboardEngine.Update.GEOMETRY) {
+            return KeyboardEngine.Update.GEOMETRY;
+        }
         if (first == KeyboardEngine.Update.VISUAL
                 || second == KeyboardEngine.Update.VISUAL) {
             return KeyboardEngine.Update.VISUAL;
@@ -917,6 +949,11 @@ public final class RuneKeyboardView extends View {
     private void applyUpdate(KeyboardEngine.Update update) {
         if (update == KeyboardEngine.Update.LAYOUT) {
             requestLayout();
+            invalidate();
+        } else if (update == KeyboardEngine.Update.GEOMETRY) {
+            if (getWidth() > 0 && getHeight() > 0) {
+                rebuildGeometry(getWidth(), getHeight());
+            }
             invalidate();
         } else if (update == KeyboardEngine.Update.VISUAL) {
             invalidate();
