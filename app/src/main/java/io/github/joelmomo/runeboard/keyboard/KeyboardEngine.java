@@ -13,6 +13,7 @@ public final class KeyboardEngine {
         void onSpace();
         void onEnter();
         void onMoveCursor(int direction);
+        void onMoveWord(int direction);
         void onMinimizedChanged(boolean minimized);
         void onBackgroundOpacityChanged(int opacity);
     }
@@ -97,6 +98,12 @@ public final class KeyboardEngine {
                 return Update.NONE;
             case CURSOR_RIGHT:
                 output.onMoveCursor(1);
+                return Update.NONE;
+            case WORD_LEFT:
+                output.onMoveWord(-1);
+                return Update.NONE;
+            case WORD_RIGHT:
+                output.onMoveWord(1);
                 return Update.NONE;
             case ENTER:
                 output.onEnter();

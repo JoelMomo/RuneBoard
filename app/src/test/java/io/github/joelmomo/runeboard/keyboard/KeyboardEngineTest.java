@@ -38,11 +38,14 @@ public final class KeyboardEngineTest {
         engine.handle(ControllerAction.ENTER);
         engine.handle(ControllerAction.CURSOR_LEFT);
         engine.handle(ControllerAction.CURSOR_RIGHT);
+        engine.handle(ControllerAction.WORD_LEFT);
+        engine.handle(ControllerAction.WORD_RIGHT);
 
         assertEquals(1, output.spaces);
         assertEquals(1, output.backspaces);
         assertEquals(1, output.enters);
         assertEquals(List.of(-1, 1), output.cursorMoves);
+        assertEquals(List.of(-1, 1), output.wordMoves);
     }
 
     @Test
@@ -110,6 +113,7 @@ public final class KeyboardEngineTest {
 
         final List<String> text = new ArrayList<>();
         final List<Integer> cursorMoves = new ArrayList<>();
+        final List<Integer> wordMoves = new ArrayList<>();
         final List<Boolean> minimizedStates = new ArrayList<>();
         final List<Integer> backgroundOpacities = new ArrayList<>();
 
@@ -140,6 +144,11 @@ public final class KeyboardEngineTest {
         @Override
         public void onMoveCursor(int direction) {
             cursorMoves.add(direction);
+        }
+
+        @Override
+        public void onMoveWord(int direction) {
+            wordMoves.add(direction);
         }
 
         @Override

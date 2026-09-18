@@ -33,7 +33,7 @@ public final class RuneBoardControlService extends AccessibilityService {
         }
 
         if (event.getRepeatCount() > 0
-                && !isRepeatableKey(event.getKeyCode())) {
+                && !ime.isRepeatableControllerKey(event.getKeyCode())) {
             return true;
         }
 
@@ -41,11 +41,5 @@ public final class RuneBoardControlService extends AccessibilityService {
         return true;
     }
 
-    private boolean isRepeatableKey(int keyCode) {
-        return keyCode == KeyEvent.KEYCODE_DPAD_LEFT
-                || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
-                || keyCode == KeyEvent.KEYCODE_DPAD_UP
-                || keyCode == KeyEvent.KEYCODE_DPAD_DOWN
-                || keyCode == KeyEvent.KEYCODE_BUTTON_B;
-    }
+
 }

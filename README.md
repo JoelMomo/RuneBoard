@@ -14,11 +14,12 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - X: space
 - Y: shift
 - L1 / R1: move text cursor left / right
+- L2 / R2: previous / next word
 - Start: enter
 - Select: minimize
 - Touch: direct key input
 
-The DS-style D-pad/button mappings are validated on AYN Thor hardware. Analog-stick navigation remains experimental.
+The DS-style controls are validated on AYN Thor hardware. Ten editing actions can be remapped; D-pad navigation remains fixed. Analog-stick navigation remains experimental.
 
 ## Current implementation
 
@@ -29,7 +30,8 @@ Prototype 0 contains:
 - a narrowly scoped accessibility service for physical controller buttons;
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
-- L1/R1 cursor movement through the active `InputConnection`;
+- L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
+- persistent physical-button remapping with automatic conflict swapping;
 - four keyboard opacity levels;
 - persistent background opacity across IME recreation;
 - built-in theme profiles: Default, OLED Black and Transparent;
@@ -58,7 +60,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.6-prototype**
+Current development version: **0.0.7-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -79,7 +81,8 @@ Validated on the physical device:
 - AYN pins RuneBoard to the lower display while the editor remains on the upper display;
 - touch input on the lower display writes into the upper-display editor;
 - D-pad and A/B/X/Y controller typing;
-- L1/R1 text-cursor movement;
+- L1/R1 text-cursor movement and L2/R2 word navigation;
+- live physical-button remapping, including conflict swapping and reset;
 - minimize/restore;
 - opacity-state switching.
 
@@ -95,6 +98,7 @@ See:
 - `docs/PROTOTYPE_0_TEST_PLAN.md`
 - `docs/PROTOTYPE_0_RESULTS.md`
 - `docs/EMULATOR_TESTING.md`
+- `docs/CONTROLLER_MAPPING.md`
 
 ## Emulator limitation
 
@@ -106,7 +110,7 @@ Thor-specific display placement remains a real-hardware test.
 
 ## Scope
 
-Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts, telemetry or the final visual/theme system.
+Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts or telemetry. Dictionary-backed suggestions and autocorrection belong to the next product phase.
 
 RuneBoard is Thor-first. General Android support can be evaluated later.
 
@@ -117,6 +121,8 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 **Core Thor architecture: validated.**
 
 **RuneBoard Default visual system: implemented in emulator.**
+
+**Physical controller remapping: validated on the real Thor.**
 
 **Final visual tuning on the physical Thor panel: pending.**
 

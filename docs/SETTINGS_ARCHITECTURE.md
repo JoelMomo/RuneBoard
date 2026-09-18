@@ -10,6 +10,7 @@ Current persisted values:
 
 - `theme_id`
 - `background_opacity`
+- `binding_*` controller assignments
 
 The keyboard engine does not read Android preferences directly.
 
@@ -79,3 +80,14 @@ Current controls:
 Theme and opacity changes persist immediately. If the RuneBoard IME service is alive, the activity also requests an input-view appearance refresh so the next visible keyboard uses the new profile without restarting the app.
 
 The settings UI was validated on the dedicated 1240x1080 emulator.
+
+
+## Physical controller mappings
+
+RunePreferences persists the ten remappable editing actions as `binding_*` integer key codes.
+
+Changing a mapping loads the current ControllerBindings, swaps conflicts if necessary, persists the complete unique mapping, and refreshes the active IME view.
+
+The settings UI captures the next supported physical button after the user taps an action. D-pad navigation is deliberately fixed. RESET CONTROLS removes all binding overrides and restores the Thor defaults.
+
+The mapping flow, L2/R2 word navigation, minimized pass-through and a live A/X swap were validated on the physical AYN Thor with RuneBoard running on display 4.

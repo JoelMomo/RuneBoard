@@ -4,10 +4,13 @@ import android.view.KeyEvent;
 
 public final class ControllerMapper {
 
-    private ControllerMapper() {
+    private final ControllerBindings bindings;
+
+    public ControllerMapper(ControllerBindings bindings) {
+        this.bindings = bindings;
     }
 
-    public static ControllerAction fromKeyCode(int keyCode) {
+    public ControllerAction fromKeyCode(int keyCode) {
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 return ControllerAction.MOVE_LEFT;
@@ -17,27 +20,25 @@ public final class ControllerMapper {
                 return ControllerAction.MOVE_UP;
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 return ControllerAction.MOVE_DOWN;
-            case KeyEvent.KEYCODE_BUTTON_A:
-                return ControllerAction.PRESS_SELECTED;
             case KeyEvent.KEYCODE_DPAD_CENTER:
                 return ControllerAction.PRESS_CENTER;
-            case KeyEvent.KEYCODE_BUTTON_B:
-                return ControllerAction.BACKSPACE;
-            case KeyEvent.KEYCODE_BUTTON_X:
-                return ControllerAction.SPACE;
-            case KeyEvent.KEYCODE_BUTTON_Y:
-                return ControllerAction.SHIFT;
-            case KeyEvent.KEYCODE_BUTTON_L1:
-                return ControllerAction.CURSOR_LEFT;
-            case KeyEvent.KEYCODE_BUTTON_R1:
-                return ControllerAction.CURSOR_RIGHT;
-            case KeyEvent.KEYCODE_BUTTON_START:
             case KeyEvent.KEYCODE_ENTER:
                 return ControllerAction.ENTER;
-            case KeyEvent.KEYCODE_BUTTON_SELECT:
-                return ControllerAction.TOGGLE_MINIMIZE;
             default:
-                return ControllerAction.NONE;
+                return bindings.getControllerAction(keyCode);
         }
+    }
+
+    public boolean isRepeatable(int keyCode) {
+        ControllerAction action = fromKeyCode(keyCode);
+        return action == ControllerAction.MOVE_LEFT
+                || action == ControllerAction.MOVE_RIGHT
+                || action == ControllerAction.MOVE_UP
+                || action == ControllerAction.MOVE_DOWN
+                || action == ControllerAction.BACKSPACE;
+    }
+
+    public ControllerBindings getBindings() {
+        return bindings;
     }
 }

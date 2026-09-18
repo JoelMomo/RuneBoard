@@ -10,6 +10,8 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
+import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.keyboard.WordNavigator;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 
@@ -61,6 +63,11 @@ public final class RuneBoardImeService extends InputMethodService
                 && keyboardView.handleKeyCode(keyCode);
     }
 
+    public boolean isRepeatableControllerKey(int keyCode) {
+        return keyboardView != null
+                && keyboardView.isRepeatableKeyCode(keyCode);
+    }
+
     @Override
     public View onCreateInputView() {
         keyboardView = createKeyboardView();
@@ -74,7 +81,8 @@ public final class RuneBoardImeService extends InputMethodService
         RuneKeyboardView view = new RuneKeyboardView(
                 this,
                 theme,
-                initialOpacity);
+                initialOpacity,
+                new ControllerMapper(preferences.getControllerBindings()));
         view.setListener(this);
         view.setFocusable(true);
         view.setFocusableInTouchMode(true);
@@ -190,6 +198,35 @@ public final class RuneBoardImeService extends InputMethodService
                 KeyEvent.ACTION_UP,
                 keyCode,
                 0));
+    }
+
+    @Override
+    public void onMoveWord(int direction) {
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null) {
+            return;
+        }
+
+        ExtractedText extracted =
+                connection.getExtractedText(new ExtractedTextRequest(), 0);
+        if (extracted == null
+                || extracted.text == null
+                || extracted.selectionStart < 0) {
+            return;
+        }
+
+        String text = extracted.text.toString();
+        int localSelection = extracted.selectionStart - extracted.startOffset;
+        if (localSelection < 0 || localSelection > text.length()) {
+            return;
+        }
+
+        int localNext = WordNavigator.move(
+                text,
+                localSelection,
+                direction);
+        int next = extracted.startOffset + localNext;
+        connection.setSelection(next, next);
     }
 
     @Override

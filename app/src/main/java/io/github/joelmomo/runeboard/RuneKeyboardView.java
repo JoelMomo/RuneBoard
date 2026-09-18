@@ -17,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import io.github.joelmomo.runeboard.controller.ControllerAction;
+import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
@@ -57,6 +58,7 @@ public final class RuneKeyboardView extends View {
     private final boolean debugLogging;
     private final KeyboardEngine engine;
     private final KeyboardTheme theme;
+    private final ControllerMapper controllerMapper;
 
     private Listener listener;
     private LinearGradient backgroundGradient;
@@ -66,17 +68,31 @@ public final class RuneKeyboardView extends View {
         this(
                 context,
                 RuneThemes.defaultTheme(),
-                BackgroundOpacity.defaultValue());
+                BackgroundOpacity.defaultValue(),
+                new ControllerMapper(new ControllerBindings()));
     }
 
     public RuneKeyboardView(
             Context context,
             KeyboardTheme theme,
             int initialOpacity) {
+        this(
+                context,
+                theme,
+                initialOpacity,
+                new ControllerMapper(new ControllerBindings()));
+    }
+
+    public RuneKeyboardView(
+            Context context,
+            KeyboardTheme theme,
+            int initialOpacity,
+            ControllerMapper controllerMapper) {
         super(context);
         debugLogging = (context.getApplicationInfo().flags
                 & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         this.theme = theme;
+        this.controllerMapper = controllerMapper;
 
         engine = new KeyboardEngine(
                 KeyboardLayouts.qwerty(),
@@ -117,6 +133,13 @@ public final class RuneKeyboardView extends View {
                     }
 
                     @Override
+                    public void onMoveWord(int direction) {
+                        if (listener != null) {
+                            listener.onMoveWord(direction);
+                        }
+                    }
+
+                    @Override
                     public void onMinimizedChanged(boolean minimized) {
                         if (listener != null) {
                             listener.onMinimizedChanged(minimized);
@@ -141,7 +164,11 @@ public final class RuneKeyboardView extends View {
     }
 
     public boolean shouldCaptureKeyCode(int keyCode) {
-        return engine.shouldCapture(ControllerMapper.fromKeyCode(keyCode));
+        return engine.shouldCapture(controllerMapper.fromKeyCode(keyCode));
+    }
+
+    public boolean isRepeatableKeyCode(int keyCode) {
+        return controllerMapper.isRepeatable(keyCode);
     }
 
     @Override
@@ -557,7 +584,10 @@ public final class RuneKeyboardView extends View {
     }
 
     public boolean handleKeyCode(int keyCode) {
-        ControllerAction action = ControllerMapper.fromKeyCode(keyCode);
+        ControllerAction action = controllerMapper.fromKeyCode(keyCode);
+        if (debugLogging) {
+            Log.d(TAG, "keyCode=" + keyCode + " action=" + action);
+        }
         if (!engine.shouldCapture(action)) {
             return false;
         }

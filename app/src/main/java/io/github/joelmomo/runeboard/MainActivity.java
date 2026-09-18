@@ -9,13 +9,19 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import io.github.joelmomo.runeboard.controller.BindableAction;
+import io.github.joelmomo.runeboard.controller.ControllerBindings;
+import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
@@ -37,8 +43,13 @@ public final class MainActivity extends Activity {
             new LinkedHashMap<>();
     private final Map<Integer, TextView> opacityChips =
             new LinkedHashMap<>();
+    private final Map<BindableAction, TextView> bindingChips =
+            new LinkedHashMap<>();
 
     private RunePreferences preferences;
+    private BindableAction pendingBinding;
+    private TextView bindingStatus;
+    private OnBackInvokedCallback backCallback;
 
     @Override
     @SuppressWarnings("deprecation")
@@ -46,6 +57,17 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         preferences = new RunePreferences(this);
+        backCallback = () -> {
+            if (pendingBinding != null) {
+                pendingBinding = null;
+                refreshBindingControls();
+            } else {
+                finish();
+            }
+        };
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                backCallback);
 
         getWindow().setStatusBarColor(COLOR_WINDOW);
         getWindow().setNavigationBarColor(COLOR_WINDOW);
@@ -75,6 +97,12 @@ public final class MainActivity extends Activity {
 
         addSectionHeader(
                 root,
+                R.string.section_controls,
+                R.string.section_controls_subtitle);
+        addControllerBindings(root);
+
+        addSectionHeader(
+                root,
                 R.string.section_test,
                 R.string.section_test_subtitle);
         addTestField(root);
@@ -88,6 +116,7 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         refreshAppearanceControls();
+        refreshBindingControls();
     }
 
     @Override
@@ -95,7 +124,44 @@ public final class MainActivity extends Activity {
         super.onResume();
         if (preferences != null) {
             refreshAppearanceControls();
+            refreshBindingControls();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (backCallback != null) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                    backCallback);
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (pendingBinding != null) {
+            int keyCode = event.getKeyCode();
+
+            if (event.getAction() == KeyEvent.ACTION_DOWN
+                    && event.getRepeatCount() == 0) {
+                if (ControllerBindings.isBindableKeyCode(keyCode)) {
+                    preferences.setControllerBinding(
+                            pendingBinding,
+                            keyCode);
+                    pendingBinding = null;
+                    refreshBindingControls();
+                    RuneBoardImeService.requestAppearanceRefresh();
+                    return true;
+                }
+            }
+
+            if (event.getAction() == KeyEvent.ACTION_UP
+                    && ControllerBindings.isBindableKeyCode(keyCode)) {
+                return true;
+            }
+        }
+
+        return super.dispatchKeyEvent(event);
     }
 
     private void addHeader(LinearLayout root) {
@@ -386,6 +452,171 @@ public final class MainActivity extends Activity {
 
         opacityChips.put(opacity, chip);
         addWeighted(row, chip, first);
+    }
+
+    private void addControllerBindings(LinearLayout root) {
+        addBindingPair(root, BindableAction.CONFIRM, BindableAction.BACKSPACE);
+        addBindingPair(root, BindableAction.SPACE, BindableAction.SHIFT);
+        addBindingPair(root, BindableAction.CURSOR_LEFT, BindableAction.CURSOR_RIGHT);
+        addBindingPair(root, BindableAction.WORD_LEFT, BindableAction.WORD_RIGHT);
+        addBindingPair(root, BindableAction.ENTER, BindableAction.MINIMIZE);
+
+        bindingStatus = text(
+                getString(R.string.bindings_ready),
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams statusParams = matchWidth();
+        statusParams.topMargin = dp(10);
+        root.addView(bindingStatus, statusParams);
+
+        TextView reset = text(
+                getString(R.string.bindings_reset),
+                12f,
+                COLOR_ACCENT,
+                true);
+        reset.setGravity(Gravity.CENTER);
+        reset.setPadding(dp(12), dp(10), dp(12), dp(10));
+        reset.setClickable(true);
+        reset.setFocusable(true);
+        reset.setBackground(
+                rounded(COLOR_SURFACE, 0xFF49386A, 1, 10f));
+        reset.setOnClickListener(v -> {
+            preferences.resetControllerBindings();
+            pendingBinding = null;
+            refreshBindingControls();
+            RuneBoardImeService.requestAppearanceRefresh();
+        });
+
+        LinearLayout.LayoutParams resetParams = matchWidth();
+        resetParams.topMargin = dp(10);
+        root.addView(reset, resetParams);
+
+        TextView fixed = text(
+                getString(R.string.bindings_dpad_fixed),
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams fixedParams = matchWidth();
+        fixedParams.topMargin = dp(8);
+        root.addView(fixed, fixedParams);
+    }
+
+    private void addBindingPair(
+            LinearLayout root,
+            BindableAction first,
+            BindableAction second) {
+        LinearLayout row = horizontalRow();
+        addWeighted(row, bindingCard(first), true);
+        addWeighted(row, bindingCard(second), false);
+
+        LinearLayout.LayoutParams rowParams = matchWidth();
+        rowParams.bottomMargin = dp(8);
+        root.addView(row, rowParams);
+    }
+
+    private LinearLayout bindingCard(BindableAction action) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(13), dp(11), dp(11), dp(11));
+        card.setBackground(
+                rounded(COLOR_SURFACE, COLOR_BORDER, 1, 10f));
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setOnClickListener(v -> {
+            pendingBinding = action;
+            refreshBindingControls();
+        });
+
+        TextView label = text(
+                getString(bindingTitle(action)),
+                13f,
+                COLOR_TEXT,
+                true);
+        card.addView(
+                label,
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f));
+
+        TextView chip = text("", 11f, COLOR_ACCENT, true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setMinWidth(dp(68));
+        chip.setPadding(dp(9), dp(7), dp(9), dp(7));
+        card.addView(chip);
+        bindingChips.put(action, chip);
+
+        return card;
+    }
+
+    private int bindingTitle(BindableAction action) {
+        switch (action) {
+            case CONFIRM:
+                return R.string.binding_confirm;
+            case BACKSPACE:
+                return R.string.binding_backspace;
+            case SPACE:
+                return R.string.binding_space;
+            case SHIFT:
+                return R.string.binding_shift;
+            case CURSOR_LEFT:
+                return R.string.binding_cursor_left;
+            case CURSOR_RIGHT:
+                return R.string.binding_cursor_right;
+            case WORD_LEFT:
+                return R.string.binding_word_left;
+            case WORD_RIGHT:
+                return R.string.binding_word_right;
+            case ENTER:
+                return R.string.binding_enter;
+            case MINIMIZE:
+                return R.string.binding_minimize;
+            default:
+                throw new IllegalArgumentException(
+                        "Unknown binding action: " + action);
+        }
+    }
+
+    private void refreshBindingControls() {
+        if (preferences == null) {
+            return;
+        }
+
+        ControllerBindings bindings = preferences.getControllerBindings();
+        for (Map.Entry<BindableAction, TextView> entry
+                : bindingChips.entrySet()) {
+            BindableAction action = entry.getKey();
+            TextView chip = entry.getValue();
+            boolean waiting = action == pendingBinding;
+
+            chip.setText(
+                    waiting
+                            ? getString(R.string.binding_press)
+                            : ControllerKeyNames.nameFor(
+                                    bindings.getKeyCode(action)));
+            chip.setTextColor(waiting ? COLOR_WINDOW : COLOR_ACCENT);
+            chip.setBackground(
+                    rounded(
+                            waiting ? COLOR_ACCENT : COLOR_SURFACE_ALT,
+                            waiting ? COLOR_ACCENT : COLOR_BORDER,
+                            1,
+                            8f));
+        }
+
+        if (bindingStatus != null) {
+            if (pendingBinding == null) {
+                bindingStatus.setText(R.string.bindings_ready);
+                bindingStatus.setTextColor(COLOR_MUTED);
+            } else {
+                bindingStatus.setText(
+                        getString(
+                                R.string.bindings_waiting,
+                                getString(bindingTitle(pendingBinding))));
+                bindingStatus.setTextColor(COLOR_ACCENT);
+            }
+        }
     }
 
     private void addTestField(LinearLayout root) {

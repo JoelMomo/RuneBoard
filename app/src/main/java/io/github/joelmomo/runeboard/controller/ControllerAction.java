@@ -13,6 +13,8 @@ public enum ControllerAction {
     SHIFT,
     CURSOR_LEFT,
     CURSOR_RIGHT,
+    WORD_LEFT,
+    WORD_RIGHT,
     ENTER,
     TOGGLE_MINIMIZE
 }

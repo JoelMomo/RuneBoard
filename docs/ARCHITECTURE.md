@@ -1,4 +1,4 @@
-# RuneBoard architecture - Prototype 0.0.3
+# RuneBoard architecture - Prototype 0.0.7
 
 ## Principle
 
@@ -50,6 +50,7 @@ It receives abstract `ControllerAction` values or touch selection changes and pr
 - space;
 - enter;
 - cursor movement;
+- word movement;
 - minimize/restore.
 
 This layer has no Android View dependency and is unit tested.
@@ -62,13 +63,20 @@ Platform-independent actions such as:
 - PRESS_SELECTED;
 - BACKSPACE;
 - CURSOR_RIGHT;
+- WORD_LEFT / WORD_RIGHT;
 - TOGGLE_MINIMIZE.
 
 ### controller/ControllerMapper
 
-Maps Android `KeyEvent` codes to `ControllerAction`.
+Maps Android `KeyEvent` codes to `ControllerAction`. D-pad navigation remains fixed; editing actions resolve through persisted `ControllerBindings`.
 
 `BUTTON_A` and `DPAD_CENTER` intentionally map to different actions. Some Android devices synthesize DPAD_CENTER after other gamepad buttons; keeping them separate prevents accidental restore while RuneBoard is minimized.
+
+### controller/ControllerBindings
+
+Owns the remappable A/B/X/Y, L1/R1, L2/R2, Start/Select and L3/R3 assignments.
+
+Assigning an occupied button swaps the two actions, guaranteeing unique and reachable bindings. Repeatability follows the resolved action, so a remapped Backspace button still repeats.
 
 ### RuneKeyboardView
 
@@ -91,7 +99,8 @@ It owns the active `InputConnection` and converts engine output into:
 - text commits;
 - deletion;
 - editor actions;
-- cursor selection changes.
+- cursor selection changes;
+- previous/next word selection through `WordNavigator`.
 
 ### RuneBoardControlService
 
@@ -110,6 +119,9 @@ Setup and local test screen:
 - enable RuneBoard;
 - select the active IME;
 - open Physical Controls accessibility settings;
+- select visual themes and background opacity;
+- remap physical controller actions;
+- reset mappings to the Thor defaults;
 - test text field.
 
 ## Rendering
@@ -132,7 +144,9 @@ Current JVM tests cover:
 - one-shot shift;
 - text/editing output callbacks;
 - minimize/restore capture policy;
-- controller mapping;
+- controller mapping and occupied-button swapping;
+- repeatability after remapping;
+- word-boundary navigation;
 - BUTTON_A vs DPAD_CENTER behavior.
 
 ### Emulator
