@@ -29,6 +29,8 @@ Prototype 0 contains:
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement through the active `InputConnection`;
 - four keyboard opacity levels;
+- persistent background opacity across IME recreation;
+- built-in theme profiles: Default, OLED Black and Transparent;
 - compact/minimized mode;
 - a setup/test activity;
 - unit tests for state, controller mappings and minimized capture policy;
@@ -43,6 +45,8 @@ The product code is split into independent layers:
 
 - `keyboard/`: layout, key model, state and keyboard engine;
 - `controller/`: controller actions and Android key-code mapping;
+- `theme/`: visual profiles and supported background-opacity levels;
+- `settings/`: persistent user preferences;
 - `RuneKeyboardView`: rendering, touch hit testing and motion-event adapter;
 - `RuneBoardImeService`: Android IME and `InputConnection` adapter;
 - `RuneBoardControlService`: physical-button filtering while RuneBoard is active.
@@ -51,7 +55,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.4-prototype**
+Current development version: **0.0.5-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 

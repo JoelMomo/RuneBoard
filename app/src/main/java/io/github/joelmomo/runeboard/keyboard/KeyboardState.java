@@ -1,18 +1,23 @@
 package io.github.joelmomo.runeboard.keyboard;
 
-public final class KeyboardState {
+import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
 
-    private static final int[] OPACITY_LEVELS = {255, 180, 90, 0};
+public final class KeyboardState {
 
     private final KeyboardLayout layout;
     private int selectedRow = 1;
     private int selectedCol = 0;
     private boolean shifted;
     private boolean minimized;
-    private int opacityIndex;
+    private int opacity;
 
     public KeyboardState(KeyboardLayout layout) {
+        this(layout, BackgroundOpacity.defaultValue());
+    }
+
+    public KeyboardState(KeyboardLayout layout, int initialOpacity) {
         this.layout = layout;
+        opacity = BackgroundOpacity.normalize(initialOpacity);
     }
 
     public KeyboardLayout getLayout() {
@@ -119,14 +124,14 @@ public final class KeyboardState {
     }
 
     public int getOpacity() {
-        return OPACITY_LEVELS[opacityIndex];
+        return opacity;
     }
 
     public int getOpacityPercent() {
-        return Math.round(getOpacity() * 100f / 255f);
+        return BackgroundOpacity.percent(opacity);
     }
 
     public void cycleOpacity() {
-        opacityIndex = (opacityIndex + 1) % OPACITY_LEVELS.length;
+        opacity = BackgroundOpacity.next(opacity);
     }
 }
