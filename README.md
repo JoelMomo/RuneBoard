@@ -17,9 +17,11 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - L2 / R2: previous / next word
 - Start: enter
 - Select: minimize
+- L3: next language
+- R3: accept primary suggestion
 - Touch: direct key input
 
-The DS-style controls are validated on AYN Thor hardware. Ten editing actions can be remapped; D-pad navigation remains fixed. Analog-stick navigation remains experimental.
+The DS-style controls are validated on AYN Thor hardware. Twelve editing actions can be remapped; D-pad navigation remains fixed. Analog-stick navigation remains experimental.
 
 ## Current implementation
 
@@ -33,6 +35,9 @@ Prototype 0 contains:
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
 - quick language cycling from L3 or the keyboard header;
+- ABC/SYM mode switching without closing the IME;
+- direct comma/period keys plus language-specific accent and punctuation pages;
+- navigation-bar inset handling so the utility row stays tappable;
 - system spell-check suggestions with up to three header candidates;
 - touch or remappable R3 acceptance of the primary suggestion;
 - conservative autocorrect on Space for strong typo recommendations;
@@ -70,7 +75,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.10-prototype**
+Current development version: **0.0.11-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -116,6 +121,7 @@ See:
 - `docs/CONTROLLER_MAPPING.md`
 - `docs/LANGUAGES.md`
 - `docs/SUGGESTIONS.md`
+- `docs/SYMBOLS.md`
 
 ## Emulator limitation
 
@@ -143,7 +149,7 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 
 **Final visual tuning on the physical Thor panel: pending.**
 
-Experimental ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â not ready for daily use.
+Experimental - not ready for daily use.
 
 ## Contributing
 

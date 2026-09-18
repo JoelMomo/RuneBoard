@@ -124,6 +124,33 @@ public final class KeyboardStateTest {
     }
 
     @Test
+    public void symbolModeSwitchesLayoutsAndClearsShift() {
+        KeyboardState state = new KeyboardState(
+                KeyboardLayouts.englishQwerty(),
+                KeyboardLayouts.englishSymbols(),
+                255);
+
+        state.advanceShiftMode();
+        state.select(4, 8);
+        assertTrue(state.toggleSymbols());
+
+        assertTrue(state.isSymbols());
+        assertFalse(state.isShifted());
+        assertEquals("!", state.getLayout().getKey(1, 0).getText());
+        assertEquals(4, state.getSelectedRow());
+        assertEquals(0, state.getSelectedCol());
+        assertEquals(KeyboardKey.Type.MODE,
+                state.getSelectedKey().getType());
+
+        assertTrue(state.toggleSymbols());
+        assertFalse(state.isSymbols());
+        assertEquals(1, state.getSelectedCol());
+        assertEquals(KeyboardKey.Type.MODE,
+                state.getSelectedKey().getType());
+        assertEquals("q", state.getLayout().getKey(1, 0).getText());
+    }
+
+    @Test
     public void movementStopsWhileMinimized() {
         KeyboardState state =
                 new KeyboardState(KeyboardLayouts.qwerty());

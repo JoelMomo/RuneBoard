@@ -41,6 +41,41 @@ public final class LanguageLayoutTest {
     }
 
     @Test
+    public void alphabetLayoutsExposeCommaAndPeriod() {
+        KeyboardLayout layout = KeyboardLayouts.englishQwerty();
+
+        assertEquals(",", layout.getKey(4, 2).getText());
+        assertEquals(".", layout.getKey(4, 4).getText());
+    }
+
+    @Test
+    public void spanishSymbolsContainAccentsAndInvertedPunctuation() {
+        KeyboardLayout layout = KeyboardLayouts.spanishSymbols();
+
+        assertEquals("\u00e1", layout.getKey(2, 0).getText());
+        assertEquals("\u00f1", layout.getKey(2, 6).getText());
+        assertEquals("\u00bf", layout.getKey(2, 7).getText());
+        assertEquals("\u00a1", layout.getKey(2, 8).getText());
+    }
+
+    @Test
+    public void frenchSymbolsContainCommonDiacritics() {
+        KeyboardLayout layout = KeyboardLayouts.frenchSymbols();
+
+        assertEquals("\u00e9", layout.getKey(2, 0).getText());
+        assertEquals("\u00e7", layout.getKey(2, 3).getText());
+        assertEquals("\u00fb", layout.getKey(2, 9).getText());
+    }
+
+    @Test
+    public void russianSymbolsExposeYoVariants() {
+        KeyboardLayout layout = KeyboardLayouts.russianSymbols();
+
+        assertEquals("\u0451", layout.getKey(2, 0).getText());
+        assertEquals("\u0401", layout.getKey(2, 1).getText());
+    }
+
+    @Test
     public void localeAwareShiftUppercasesSpanishAndRussian() {
         assertEquals("\u00d1", shiftedText(
                 KeyboardProfiles.byId(KeyboardProfiles.ID_ES_ES),

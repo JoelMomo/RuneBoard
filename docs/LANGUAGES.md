@@ -71,3 +71,15 @@ On the dedicated Android emulator:
 - each change persists immediately;
 - tapping the header also cycles the active profile;
 - the IME stays visible while the profile view is recreated.
+
+
+## Symbols and accents
+
+Each typing profile now owns both an alphabet layout and a language-specific symbol layout.
+
+- English: common symbols plus pound/euro.
+- Spanish: accented vowels, diaeresis, enye, inverted question/exclamation marks and euro.
+- French: common accented vowels and cedilla.
+- Russian: yo variants plus common Russian-oriented punctuation/currency symbols.
+
+The utility-row SYM key switches to the symbol page and becomes ABC there. Controller focus stays on MODE across the transition so A can toggle back immediately.

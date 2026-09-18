@@ -5,6 +5,7 @@ public final class KeyboardKey {
     public enum Type {
         TEXT,
         SHIFT,
+        MODE,
         SPACE,
         BACKSPACE,
         ENTER,
@@ -23,12 +24,25 @@ public final class KeyboardKey {
     }
 
     public static KeyboardKey text(String text) {
-        return new KeyboardKey(Type.TEXT, text, 1f);
+        return text(text, 1f);
+    }
+
+    public static KeyboardKey text(String text, float weight) {
+        if (text == null || text.isEmpty()) {
+            throw new IllegalArgumentException("Text key cannot be empty");
+        }
+        if (weight <= 0f) {
+            throw new IllegalArgumentException("Key weight must be positive");
+        }
+        return new KeyboardKey(Type.TEXT, text, weight);
     }
 
     public static KeyboardKey action(Type type, float weight) {
         if (type == Type.TEXT) {
             throw new IllegalArgumentException("Use text() for text keys");
+        }
+        if (weight <= 0f) {
+            throw new IllegalArgumentException("Key weight must be positive");
         }
         return new KeyboardKey(type, null, weight);
     }

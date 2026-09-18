@@ -23,6 +23,7 @@ public final class KeyboardEngine {
     public enum Update {
         NONE,
         VISUAL,
+        GEOMETRY,
         LAYOUT
     }
 
@@ -33,6 +34,7 @@ public final class KeyboardEngine {
     public KeyboardEngine(KeyboardLayout layout, Output output) {
         this(
                 layout,
+                layout,
                 output,
                 BackgroundOpacity.defaultValue(),
                 Locale.ROOT);
@@ -42,7 +44,12 @@ public final class KeyboardEngine {
             KeyboardLayout layout,
             Output output,
             int initialOpacity) {
-        this(layout, output, initialOpacity, Locale.ROOT);
+        this(
+                layout,
+                layout,
+                output,
+                initialOpacity,
+                Locale.ROOT);
     }
 
     public KeyboardEngine(
@@ -50,7 +57,24 @@ public final class KeyboardEngine {
             Output output,
             int initialOpacity,
             Locale locale) {
-        this.state = new KeyboardState(layout, initialOpacity);
+        this(
+                layout,
+                layout,
+                output,
+                initialOpacity,
+                locale);
+    }
+
+    public KeyboardEngine(
+            KeyboardLayout alphabetLayout,
+            KeyboardLayout symbolLayout,
+            Output output,
+            int initialOpacity,
+            Locale locale) {
+        this.state = new KeyboardState(
+                alphabetLayout,
+                symbolLayout,
+                initialOpacity);
         this.output = output;
         this.locale = locale == null ? Locale.ROOT : locale;
     }
@@ -146,7 +170,9 @@ public final class KeyboardEngine {
         switch (key.getType()) {
             case TEXT:
                 String text = key.getText();
-                if (state.isShifted() && Character.isLetter(text.charAt(0))) {
+                if (state.isShifted()
+                        && !state.isSymbols()
+                        && Character.isLetter(text.charAt(0))) {
                     text = text.toUpperCase(locale);
                 }
                 output.onText(text);
@@ -157,6 +183,9 @@ public final class KeyboardEngine {
             case SHIFT:
                 state.advanceShiftMode();
                 return Update.VISUAL;
+            case MODE:
+                state.toggleSymbols();
+                return Update.GEOMETRY;
             case SPACE:
                 output.onSpace();
                 return Update.NONE;

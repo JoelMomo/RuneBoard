@@ -43,6 +43,8 @@
     <string name="more_apps_support">More apps &amp; support</string>
 
     <string name="key_shift">SHIFT</string>
+    <string name="key_symbols">SYM</string>
+    <string name="key_letters">ABC</string>
     <string name="key_caps">CAPS</string>
     <string name="key_space">SPACE</string>
     <string name="key_backspace">BACK</string>

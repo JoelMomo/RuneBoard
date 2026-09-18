@@ -12,6 +12,7 @@ public final class KeyboardProfile {
     public final String layoutName;
     public final String shortLabel;
     public final KeyboardLayout layout;
+    public final KeyboardLayout symbolLayout;
     public final Locale locale;
 
     public KeyboardProfile(
@@ -20,13 +21,15 @@ public final class KeyboardProfile {
             String displayName,
             String layoutName,
             String shortLabel,
-            KeyboardLayout layout) {
+            KeyboardLayout layout,
+            KeyboardLayout symbolLayout) {
         this.id = id;
         this.localeTag = localeTag;
         this.displayName = displayName;
         this.layoutName = layoutName;
         this.shortLabel = shortLabel;
         this.layout = layout;
+        this.symbolLayout = symbolLayout;
         this.locale = Locale.forLanguageTag(localeTag);
     }
 }

@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class KeyboardEngineTest {
 
@@ -46,6 +47,37 @@ public final class KeyboardEngineTest {
 
         assertEquals(List.of("Q", "Q", "q"), output.text);
         assertFalse(engine.getState().isShifted());
+    }
+
+    @Test
+    public void modeKeySwitchesLayoutsAndTypesSymbols() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine = new KeyboardEngine(
+                KeyboardLayouts.englishQwerty(),
+                KeyboardLayouts.englishSymbols(),
+                output,
+                255,
+                Locale.US);
+
+        engine.getState().select(4, 1);
+        assertEquals(KeyboardEngine.Update.GEOMETRY, engine.pressSelected());
+        assertTrue(engine.getState().isSymbols());
+        assertEquals(KeyboardKey.Type.MODE,
+                engine.getState().getSelectedKey().getType());
+
+        engine.handle(ControllerAction.MOVE_UP);
+        engine.handle(ControllerAction.MOVE_UP);
+        engine.handle(ControllerAction.MOVE_UP);
+        engine.pressSelected();
+        assertEquals(List.of("!"), output.text);
+
+        engine.handle(ControllerAction.MOVE_DOWN);
+        engine.handle(ControllerAction.MOVE_DOWN);
+        engine.handle(ControllerAction.MOVE_DOWN);
+        assertEquals(KeyboardKey.Type.MODE,
+                engine.getState().getSelectedKey().getType());
+        assertEquals(KeyboardEngine.Update.GEOMETRY, engine.pressSelected());
+        assertFalse(engine.getState().isSymbols());
     }
 
     @Test
@@ -141,7 +173,7 @@ public final class KeyboardEngineTest {
                         output,
                         90);
 
-        engine.getState().select(4, 4);
+        engine.getState().select(4, 7);
         assertEquals(90, engine.getState().getOpacity());
 
         assertEquals(
