@@ -2,16 +2,46 @@ package io.github.joelmomo.runeboard;
 
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.ExtractedText;
+import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.View;
 
 public final class RuneBoardImeService extends InputMethodService
         implements RuneKeyboardView.Listener {
 
+    private static volatile RuneBoardImeService activeInstance;
     private RuneKeyboardView keyboardView;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        activeInstance = this;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+        super.onDestroy();
+    }
+
+    public static RuneBoardImeService getActiveInstance() {
+        return activeInstance;
+    }
+
+    public boolean isControllerCaptureAvailable() {
+        return keyboardView != null && isInputViewShown();
+    }
+
+    public boolean handleControllerKey(int keyCode) {
+        return keyboardView != null && keyboardView.handleKeyCode(keyCode);
+    }
 
     @Override
     public View onCreateInputView() {
@@ -86,6 +116,18 @@ public final class RuneBoardImeService extends InputMethodService
     public void onMoveCursor(int direction) {
         InputConnection connection = getCurrentInputConnection();
         if (connection == null) {
+            return;
+        }
+
+        ExtractedText extracted = connection.getExtractedText(new ExtractedTextRequest(), 0);
+        if (extracted != null && extracted.text != null && extracted.selectionStart >= 0) {
+            int next = Math.max(0, Math.min(
+                    extracted.text.length(),
+                    extracted.selectionStart + (direction < 0 ? -1 : 1)));
+            boolean moved = connection.setSelection(next, next);
+            Log.d("RuneBoard", "cursor direction=" + direction
+                    + " from=" + extracted.selectionStart + " to=" + next
+                    + " result=" + moved);
             return;
         }
 

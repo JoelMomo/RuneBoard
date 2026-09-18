@@ -2,7 +2,7 @@
 
 RuneBoard is an experimental dual-screen Android keyboard designed primarily for the **AYN Thor**.
 
-The project is currently in **Prototype 0 / feasibility testing**. The goal is to prove the Thor-specific interaction model before investing in the final visual design.
+The project is currently in **Prototype 0**. The core Thor-specific architecture has been validated on physical hardware; visual/product development comes next.
 
 ## Prototype goals
 
@@ -15,7 +15,7 @@ The first prototype must prove four things on real hardware:
 
 ## Prototype controls
 
-- D-pad / left stick: move keyboard selection
+- D-pad: move keyboard selection
 - A: press selected key
 - B: backspace
 - X: space
@@ -25,7 +25,7 @@ The first prototype must prove four things on real hardware:
 - Select: minimize
 - Touch: direct key input
 
-Controller mappings are intentionally provisional until tested on AYN Thor hardware.
+The DS-style D-pad/button mappings are validated on AYN Thor hardware. Analog-stick navigation remains experimental.
 
 ## Current implementation
 
@@ -33,10 +33,11 @@ Prototype 0 already contains:
 
 - a real Android `InputMethodService`;
 - a touch QWERTY keyboard with an always-visible number row;
-- gamepad/D-pad navigation and provisional Thor button mappings;
+- validated D-pad/button navigation through a narrowly scoped accessibility service;
+- L1/R1 text-cursor movement through the active `InputConnection`;
 - four keyboard opacity levels;
-- compact/minimized mode;
-- a setup/test activity;
+- compact/minimized mode that the Thor firmware resizes correctly;
+- a setup/test activity with shortcuts for IME and Physical Controls settings;
 - a Thor hardware test plan;
 - GitHub Actions CI that assembles a debug APK successfully.
 
@@ -58,17 +59,31 @@ The latest successful workflow exposes the APK as the `RuneBoard-prototype-debug
 
 ## Hardware validation
 
-The cloud build validates the Android project, but the Thor-specific behavior must be tested on real hardware.
+Prototype 0 has been tested on an AYN Thor running Android 13 / firmware `.377`.
+
+Validated on the physical device:
+
+- IME pinned by AYN to the lower display while typing into the upper display;
+- direct touch input on the lower display;
+- D-pad plus A/B/X/Y controller typing;
+- L1/R1 text-cursor movement;
+- minimize/restore: approximately `1240×595` px full and `1240×134` px compact;
+- opacity-state switching while the IME remains active.
+
+The lower panel is `1080×1240` native and `1240×1080` in landscape.
 
 See:
 
 - `docs/PROTOTYPE_0_TEST_PLAN.md`
+- `docs/PROTOTYPE_0_RESULTS.md`
 - GitHub issue **#1 — Prototype 0: validate Thor hardware gates**
 
 ## Status
 
-**Build: passing.**
+**Build and lint: passing.**
 
-**Thor hardware gates: pending.**
+**Core Thor architecture: validated.**
+
+Transparency is functional but still needs final visual tuning on-panel. Analog-stick navigation is not yet validated.
 
 Experimental — not ready for daily use.

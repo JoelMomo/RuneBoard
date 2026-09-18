@@ -27,26 +27,26 @@ public final class MainActivity extends Activity {
         root.setBackgroundColor(Color.rgb(16, 16, 20));
 
         TextView title = new TextView(this);
-        title.setText("RuneBoard");
+        title.setText(R.string.app_name);
         title.setTextColor(Color.WHITE);
         title.setTextSize(28f);
         root.addView(title);
 
         TextView status = new TextView(this);
-        status.setText("Prototype 0\n\nEnable RuneBoard, select it as the active keyboard, then use the field below to test touch and physical controls.");
+        status.setText(R.string.setup_description);
         status.setTextColor(Color.rgb(190, 190, 200));
         status.setTextSize(16f);
         status.setPadding(0, dp(12), 0, dp(20));
         root.addView(status);
 
         Button enable = new Button(this);
-        enable.setText("1. Enable RuneBoard");
+        enable.setText(R.string.enable_keyboard);
         enable.setOnClickListener(v ->
                 startActivity(new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)));
         root.addView(enable, matchWidth());
 
         Button choose = new Button(this);
-        choose.setText("2. Choose active keyboard");
+        choose.setText(R.string.choose_keyboard);
         choose.setOnClickListener(v -> {
             InputMethodManager imm = getSystemService(InputMethodManager.class);
             if (imm != null) {
@@ -55,8 +55,21 @@ public final class MainActivity extends Activity {
         });
         root.addView(choose, matchWidth());
 
+        Button controls = new Button(this);
+        controls.setText(R.string.enable_physical_controls);
+        controls.setOnClickListener(v ->
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+        root.addView(controls, matchWidth());
+
+        TextView controlsNote = new TextView(this);
+        controlsNote.setText(R.string.physical_controls_note);
+        controlsNote.setTextColor(Color.rgb(160, 160, 170));
+        controlsNote.setTextSize(13f);
+        controlsNote.setPadding(0, dp(8), 0, 0);
+        root.addView(controlsNote);
+
         EditText testField = new EditText(this);
-        testField.setHint("Tap here and type with RuneBoard");
+        testField.setHint(R.string.test_hint);
         testField.setTextColor(Color.WHITE);
         testField.setHintTextColor(Color.GRAY);
         testField.setSingleLine(false);

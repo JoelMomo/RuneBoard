@@ -1,10 +1,13 @@
 package io.github.joelmomo.runeboard;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -15,6 +18,8 @@ import java.util.List;
 import java.util.Locale;
 
 public final class RuneKeyboardView extends View {
+
+    private static final String TAG = "RuneBoard";
 
     public interface Listener {
         void onText(String text);
@@ -58,6 +63,7 @@ public final class RuneKeyboardView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<List<Key>> rows = new ArrayList<>();
     private final List<HitTarget> hitTargets = new ArrayList<>();
+    private final boolean debugLogging;
 
     private Listener listener;
     private int selectedRow = 1;
@@ -71,6 +77,7 @@ public final class RuneKeyboardView extends View {
 
     public RuneKeyboardView(Context context) {
         super(context);
+        debugLogging = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         setFocusable(true);
         setFocusableInTouchMode(true);
         buildRows();
@@ -126,6 +133,8 @@ public final class RuneKeyboardView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         if (minimized) {
             drawMinimized(canvas);
@@ -203,7 +212,7 @@ public final class RuneKeyboardView extends View {
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(dp(15));
         float baseline = getHeight() / 2f - (paint.ascent() + paint.descent()) / 2f;
-        canvas.drawText("RuneBoard  ·  minimized  ·  tap or A to restore",
+        canvas.drawText("RuneBoard  Â·  minimized  Â·  tap or A to restore",
                 getWidth() / 2f, baseline, paint);
     }
 
@@ -216,6 +225,7 @@ public final class RuneKeyboardView extends View {
         requestFocus();
 
         if (minimized) {
+            performClick();
             setMinimized(false);
             return true;
         }
@@ -224,12 +234,19 @@ public final class RuneKeyboardView extends View {
             if (target.bounds.contains(event.getX(), event.getY())) {
                 selectedRow = target.row;
                 selectedCol = target.col;
+                performClick();
                 pressSelected();
                 invalidate();
                 return true;
             }
         }
 
+        return true;
+    }
+
+    @Override
+    public boolean performClick() {
+        super.performClick();
         return true;
     }
 
@@ -362,6 +379,11 @@ public final class RuneKeyboardView extends View {
             selectedCol = (selectedCol + dx + size) % size;
         }
 
+        if (debugLogging) {
+            Key selected = rows.get(selectedRow).get(selectedCol);
+            Log.d(TAG, "selection row=" + selectedRow + " col=" + selectedCol
+                    + " label=" + selected.label);
+        }
         invalidate();
     }
 
@@ -372,6 +394,9 @@ public final class RuneKeyboardView extends View {
         }
 
         Key key = rows.get(selectedRow).get(selectedCol);
+        if (debugLogging) {
+            Log.d(TAG, "press kind=" + key.kind + " label=" + key.label);
+        }
         switch (key.kind) {
             case TEXT:
                 if (listener != null) {
@@ -400,6 +425,9 @@ public final class RuneKeyboardView extends View {
                 break;
             case OPACITY:
                 opacityIndex = (opacityIndex + 1) % opacityLevels.length;
+                if (debugLogging) {
+                    Log.d(TAG, "opacity=" + opacityLevels[opacityIndex]);
+                }
                 invalidate();
                 break;
             case MINIMIZE:
@@ -418,6 +446,9 @@ public final class RuneKeyboardView extends View {
             return;
         }
         minimized = value;
+        if (debugLogging) {
+            Log.d(TAG, "minimized=" + minimized + " measured=" + getWidth() + "x" + getHeight());
+        }
         requestLayout();
         invalidate();
         if (listener != null) {
