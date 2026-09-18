@@ -40,6 +40,13 @@ public final class RuneBoardImeService extends InputMethodService
         return activeInstance;
     }
 
+    public static void requestAppearanceRefresh() {
+        RuneBoardImeService instance = activeInstance;
+        if (instance != null) {
+            instance.getMainExecutor().execute(instance::refreshAppearance);
+        }
+    }
+
     public boolean isControllerCaptureAvailable() {
         return keyboardView != null && isInputViewShown();
     }
@@ -56,18 +63,32 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public View onCreateInputView() {
+        keyboardView = createKeyboardView();
+        return keyboardView;
+    }
+
+    private RuneKeyboardView createKeyboardView() {
         KeyboardTheme theme = preferences.getTheme();
         int initialOpacity = preferences.getBackgroundOpacity(theme);
 
-        keyboardView = new RuneKeyboardView(
+        RuneKeyboardView view = new RuneKeyboardView(
                 this,
                 theme,
                 initialOpacity);
-        keyboardView.setListener(this);
-        keyboardView.setFocusable(true);
-        keyboardView.setFocusableInTouchMode(true);
-        keyboardView.requestFocus();
-        return keyboardView;
+        view.setListener(this);
+        view.setFocusable(true);
+        view.setFocusableInTouchMode(true);
+        view.requestFocus();
+        return view;
+    }
+
+    private void refreshAppearance() {
+        RuneKeyboardView refreshed = createKeyboardView();
+        keyboardView = refreshed;
+        setInputView(refreshed);
+        if (isInputViewShown()) {
+            refreshed.requestFocus();
+        }
     }
 
     @Override
