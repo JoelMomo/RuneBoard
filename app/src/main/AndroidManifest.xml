@@ -4,7 +4,9 @@
         android:required="false" />
 
     <application
-        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@drawable/ic_runeboard"
+        android:roundIcon="@drawable/ic_runeboard"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.RuneBoard">

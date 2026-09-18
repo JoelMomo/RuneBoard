@@ -9,4 +9,11 @@
     <string name="enable_physical_controls">3. Enable Physical Controls</string>
     <string name="physical_controls_note">RuneBoard only filters controller buttons while its keyboard is visible. It does not read screen content.</string>
     <string name="test_hint">Tap here and type with RuneBoard</string>
+    <string name="key_shift">Shift</string>
+    <string name="key_space">Space</string>
+    <string name="key_backspace">Back</string>
+    <string name="key_enter">Enter</string>
+    <string name="key_opacity">Alpha %1$d%%</string>
+    <string name="key_minimize">Min</string>
+    <string name="minimized_label">RuneBoard · minimized · tap or A to restore</string>
 </resources>
