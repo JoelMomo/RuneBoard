@@ -87,3 +87,9 @@ See:
 Transparency is functional but still needs final visual tuning on-panel. Analog-stick navigation is not yet validated.
 
 Experimental — not ready for daily use.
+
+## Support development
+
+These projects are free to use and developed in my spare time. If they've been useful to you, you can support future development through [GitHub Sponsors](https://github.com/sponsors/JoelMomo) or leave a [one-time tip on Ko-fi](https://ko-fi.com/joelmomodev).
+
+All projects remain free regardless of support.
