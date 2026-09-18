@@ -4,9 +4,12 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.RectF;
+import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -19,7 +22,10 @@ import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
+import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.keyboard.KeyboardState;
+import io.github.joelmomo.runeboard.theme.KeyboardTheme;
+import io.github.joelmomo.runeboard.theme.RuneThemes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,17 +51,21 @@ public final class RuneKeyboardView extends View {
     }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<HitTarget> hitTargets = new ArrayList<>();
     private final boolean debugLogging;
     private final KeyboardEngine engine;
+    private final KeyboardTheme theme;
 
     private Listener listener;
+    private LinearGradient backgroundGradient;
     private long lastAxisMoveAt;
 
     public RuneKeyboardView(Context context) {
         super(context);
         debugLogging = (context.getApplicationInfo().flags
                 & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        theme = RuneThemes.defaultTheme();
 
         engine = new KeyboardEngine(
                 KeyboardLayouts.qwerty(),
@@ -134,8 +144,20 @@ public final class RuneKeyboardView extends View {
     }
 
     @Override
-    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+    protected void onSizeChanged(
+            int width,
+            int height,
+            int oldWidth,
+            int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
+        backgroundGradient = new LinearGradient(
+                0f,
+                0f,
+                0f,
+                Math.max(1, height),
+                theme.backgroundTop,
+                theme.backgroundBottom,
+                Shader.TileMode.CLAMP);
         rebuildGeometry(width, height);
     }
 
@@ -148,26 +170,30 @@ public final class RuneKeyboardView extends View {
         }
 
         KeyboardLayout layout = state.getLayout();
-        float outer = dp(8);
-        float gap = dp(5);
-        float rowHeight = (height - outer * 2
-                - gap * (layout.getRowCount() - 1))
-                / layout.getRowCount();
+        float outer = dp(theme.outerMarginDp);
+        float gap = dp(theme.keyGapDp);
+        float headerHeight = dp(theme.headerHeightDp);
+        float contentTop = outer + headerHeight + gap;
+        float rowGaps = gap * (layout.getRowCount() - 1);
+        float availableHeight = Math.max(
+                1f,
+                height - contentTop - outer - rowGaps);
+        float heightUnit =
+                availableHeight / layout.getTotalHeightWeight();
 
+        float top = contentTop;
         for (int rowIndex = 0; rowIndex < layout.getRowCount(); rowIndex++) {
-            List<KeyboardKey> row = layout.getRow(rowIndex);
-            float totalWeight = 0f;
-            for (KeyboardKey key : row) {
-                totalWeight += key.getWeight();
-            }
-
-            float usableWidth = width - outer * 2 - gap * (row.size() - 1);
-            float x = outer;
-            float top = outer + rowIndex * (rowHeight + gap);
+            KeyboardRow row = layout.getRow(rowIndex);
+            float rowHeight = heightUnit * row.getHeightWeight();
+            float widthWithoutGaps =
+                    width - outer * 2 - gap * (row.size() - 1);
+            float widthUnit =
+                    widthWithoutGaps / row.getTotalWidthWeight();
+            float x = outer + row.getLeftInsetWeight() * widthUnit;
 
             for (int col = 0; col < row.size(); col++) {
-                KeyboardKey key = row.get(col);
-                float keyWidth = usableWidth * key.getWeight() / totalWeight;
+                KeyboardKey key = row.getKey(col);
+                float keyWidth = widthUnit * key.getWeight();
                 RectF rect = new RectF(
                         x,
                         top,
@@ -176,6 +202,8 @@ public final class RuneKeyboardView extends View {
                 hitTargets.add(new HitTarget(rect, rowIndex, col));
                 x += keyWidth + gap;
             }
+
+            top += rowHeight + gap;
         }
     }
 
@@ -185,12 +213,14 @@ public final class RuneKeyboardView extends View {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         KeyboardState state = engine.getState();
+        drawBackground(canvas, state.getOpacity());
+
         if (state.isMinimized()) {
             drawMinimized(canvas);
             return;
         }
 
-        canvas.drawColor(Color.argb(state.getOpacity(), 17, 17, 23));
+        drawHeader(canvas);
 
         for (HitTarget target : hitTargets) {
             KeyboardKey key = state.getLayout().getKey(target.row, target.col);
@@ -198,37 +228,171 @@ public final class RuneKeyboardView extends View {
                     canvas,
                     target.bounds,
                     key,
+                    target.row,
                     target.row == state.getSelectedRow()
                             && target.col == state.getSelectedCol());
         }
+    }
+
+    private void drawBackground(Canvas canvas, int alpha) {
+        backgroundPaint.setShader(backgroundGradient);
+        backgroundPaint.setAlpha(alpha);
+        canvas.drawRect(0f, 0f, getWidth(), getHeight(), backgroundPaint);
+        backgroundPaint.setShader(null);
+        backgroundPaint.setAlpha(255);
+    }
+
+    private void drawHeader(Canvas canvas) {
+        KeyboardState state = engine.getState();
+        float outer = dp(theme.outerMarginDp);
+        float headerHeight = dp(theme.headerHeightDp);
+        float badge = dp(23);
+        float badgeTop = outer + (headerHeight - badge) / 2f;
+        float badgeRadius = dp(7);
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(theme.accent);
+        paint.setAlpha(255);
+        canvas.drawRoundRect(
+                outer,
+                badgeTop,
+                outer + badge,
+                badgeTop + badge,
+                badgeRadius,
+                badgeRadius,
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(dp(13));
+        paint.setColor(theme.backgroundTop);
+        float badgeBaseline =
+                badgeTop + badge / 2f - (paint.ascent() + paint.descent()) / 2f;
+        canvas.drawText("R", outer + badge / 2f, badgeBaseline, paint);
+
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setColor(theme.textPrimary);
+        paint.setTextSize(dp(13));
+        float titleX = outer + badge + dp(9);
+        float titleBaseline = outer + dp(15);
+        canvas.drawText(
+                getContext().getString(R.string.header_title),
+                titleX,
+                titleBaseline,
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT);
+        paint.setColor(theme.textSecondary);
+        paint.setTextSize(dp(9));
+        canvas.drawText(
+                getContext().getString(R.string.header_layout),
+                titleX,
+                outer + dp(30),
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.RIGHT);
+        paint.setColor(theme.accent);
+        paint.setTextSize(dp(10));
+        canvas.drawText(
+                getContext().getString(R.string.header_controller),
+                getWidth() - outer,
+                outer + dp(14),
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT);
+        paint.setColor(theme.textSecondary);
+        paint.setTextSize(dp(9));
+        canvas.drawText(
+                getContext().getString(
+                        R.string.header_background,
+                        state.getOpacityPercent()),
+                getWidth() - outer,
+                outer + dp(30),
+                paint);
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(theme.accent);
+        paint.setAlpha(70);
+        float lineY = outer + headerHeight + dp(2);
+        canvas.drawRect(outer, lineY, getWidth() - outer, lineY + dp(1), paint);
+        paint.setAlpha(255);
     }
 
     private void drawKey(
             Canvas canvas,
             RectF rect,
             KeyboardKey key,
+            int row,
             boolean selected) {
         KeyboardState state = engine.getState();
-        int baseAlpha = Math.max(120, state.getOpacity());
+        boolean utility = key.getType() != KeyboardKey.Type.TEXT;
+        boolean activeShift =
+                key.getType() == KeyboardKey.Type.SHIFT && state.isShifted();
 
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(selected
-                ? Color.argb(baseAlpha, 139, 92, 246)
-                : Color.argb(baseAlpha, 48, 48, 61));
-        canvas.drawRoundRect(rect, dp(9), dp(9), paint);
+        int fill = utility ? theme.utilityKeyFill : theme.keyFill;
+        int alpha = utility ? theme.utilityKeyAlpha : theme.keyAlpha;
+
+        if (activeShift && !selected) {
+            fill = theme.selectedFill;
+            alpha = 170;
+        }
 
         if (selected) {
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(theme.selectedFill);
+            paint.setAlpha(245);
+            canvas.drawRoundRect(
+                    rect,
+                    dp(theme.keyRadiusDp),
+                    dp(theme.keyRadiusDp),
+                    paint);
+
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(dp(2));
-            paint.setColor(Color.WHITE);
-            canvas.drawRoundRect(rect, dp(9), dp(9), paint);
+            paint.setColor(theme.selectedStroke);
+            paint.setAlpha(240);
+            canvas.drawRoundRect(
+                    rect.left - dp(1),
+                    rect.top - dp(1),
+                    rect.right + dp(1),
+                    rect.bottom + dp(1),
+                    dp(theme.keyRadiusDp + 1f),
+                    dp(theme.keyRadiusDp + 1f),
+                    paint);
+        } else {
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(fill);
+            paint.setAlpha(alpha);
+            canvas.drawRoundRect(
+                    rect,
+                    dp(theme.keyRadiusDp),
+                    dp(theme.keyRadiusDp),
+                    paint);
         }
 
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.WHITE);
+        paint.setAlpha(255);
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(
-                key.getType() == KeyboardKey.Type.TEXT ? dp(20) : dp(13));
+        paint.setTypeface(
+                key.getType() == KeyboardKey.Type.TEXT
+                        ? Typeface.DEFAULT_BOLD
+                        : Typeface.DEFAULT);
+        paint.setColor(
+                activeShift && !selected
+                        ? theme.textPrimary
+                        : theme.textPrimary);
+
+        float textSize;
+        if (key.getType() != KeyboardKey.Type.TEXT) {
+            textSize = dp(11);
+        } else if (row == 0) {
+            textSize = dp(15);
+        } else {
+            textSize = dp(19);
+        }
+        paint.setTextSize(textSize);
+
         float baseline =
                 rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
         canvas.drawText(
@@ -270,17 +434,57 @@ public final class RuneKeyboardView extends View {
     }
 
     private void drawMinimized(Canvas canvas) {
-        canvas.drawColor(Color.argb(205, 17, 17, 23));
-        paint.setColor(Color.WHITE);
+        float outer = dp(theme.outerMarginDp);
+        float centerY = getHeight() / 2f;
+        float badge = dp(24);
+        float badgeTop = centerY - badge / 2f;
+
         paint.setStyle(Paint.Style.FILL);
+        paint.setColor(theme.accent);
+        paint.setAlpha(255);
+        canvas.drawRoundRect(
+                outer,
+                badgeTop,
+                outer + badge,
+                badgeTop + badge,
+                dp(7),
+                dp(7),
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(dp(15));
-        float baseline =
-                getHeight() / 2f - (paint.ascent() + paint.descent()) / 2f;
+        paint.setTextSize(dp(13));
+        paint.setColor(theme.backgroundTop);
+        float badgeBaseline =
+                centerY - (paint.ascent() + paint.descent()) / 2f;
+        canvas.drawText("R", outer + badge / 2f, badgeBaseline, paint);
+
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setColor(theme.textPrimary);
+        paint.setTextSize(dp(13));
         canvas.drawText(
-                getContext().getString(R.string.minimized_label),
-                getWidth() / 2f,
-                baseline,
+                getContext().getString(R.string.header_title),
+                outer + badge + dp(9),
+                centerY - dp(1),
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT);
+        paint.setColor(theme.textSecondary);
+        paint.setTextSize(dp(9));
+        canvas.drawText(
+                getContext().getString(R.string.header_layout),
+                outer + badge + dp(9),
+                centerY + dp(13),
+                paint);
+
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.RIGHT);
+        paint.setTextSize(dp(10));
+        paint.setColor(theme.accent);
+        canvas.drawText(
+                getContext().getString(R.string.minimized_restore),
+                getWidth() - outer,
+                badgeBaseline,
                 paint);
     }
 
@@ -436,7 +640,6 @@ public final class RuneKeyboardView extends View {
 
     private void applyUpdate(KeyboardEngine.Update update) {
         if (update == KeyboardEngine.Update.LAYOUT) {
-            rebuildGeometry(getWidth(), getHeight());
             requestLayout();
             invalidate();
         } else if (update == KeyboardEngine.Update.VISUAL) {
@@ -444,7 +647,7 @@ public final class RuneKeyboardView extends View {
         }
     }
 
-    private int dp(int value) {
+    private int dp(float value) {
         return Math.round(
                 value * getResources().getDisplayMetrics().density);
     }
