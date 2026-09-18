@@ -10,7 +10,10 @@ Current persisted values:
 
 - `theme_id`
 - `background_opacity`
+- `profile_id` typing language/layout
 - `binding_*` controller assignments
+- `suggestions_enabled`
+- `autocorrect_enabled`
 
 The keyboard engine does not read Android preferences directly.
 
@@ -91,3 +94,21 @@ Changing a mapping loads the current ControllerBindings, swaps conflicts if nece
 The settings UI captures the next supported physical button after the user taps an action. D-pad navigation is deliberately fixed. RESET CONTROLS removes all binding overrides and restores the Thor defaults.
 
 The mapping flow, L2/R2 word navigation, minimized pass-through and a live A/X swap were validated on the physical AYN Thor with RuneBoard running on display 4.
+
+
+## Typing language profiles
+
+RunePreferences stores the active typing profile as `profile_id`.
+
+The IME resolves that profile before constructing RuneKeyboardView, so language/layout selection survives process recreation.
+
+Profiles can be selected from the settings activity, cycled controller-first through the remappable Next language action (L3 by default), or cycled by tapping the language/layout area in the keyboard header.
+
+
+## Typing assistance
+
+Suggestions and Autocorrect are enabled by default.
+
+Disabling Suggestions also disables Autocorrect. Enabling Autocorrect automatically enables Suggestions.
+
+Changing either setting refreshes the active IME. When Suggestions is disabled RuneBoard closes its Android spell-check session.

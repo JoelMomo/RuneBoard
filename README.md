@@ -31,6 +31,12 @@ Prototype 0 contains:
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
+- persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
+- quick language cycling from L3 or the keyboard header;
+- system spell-check suggestions with up to three header candidates;
+- touch or remappable R3 acceptance of the primary suggestion;
+- conservative autocorrect on Space for strong typo recommendations;
+- Suggestions and Autocorrect toggles, both enabled by default;
 - persistent physical-button remapping with automatic conflict swapping;
 - one-shot Shift plus persistent Caps Lock;
 - action keys show the currently mapped physical button;
@@ -53,6 +59,8 @@ The product code is split into independent layers:
 - `keyboard/`: layout, key model, state and keyboard engine;
 - `controller/`: controller actions and Android key-code mapping;
 - `theme/`: visual profiles and supported background-opacity levels;
+- `language/`: typing-language profiles and layout metadata;
+- `suggestion/`: word extraction, Android spell-check adapter and correction policy;
 - `settings/`: persistent user preferences;
 - `RuneKeyboardView`: rendering, touch hit testing and motion-event adapter;
 - `RuneBoardImeService`: Android IME and `InputConnection` adapter;
@@ -62,7 +70,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.8-prototype**
+Current development version: **0.0.10-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -84,6 +92,10 @@ Validated on the physical device:
 - touch input on the lower display writes into the upper-display editor;
 - D-pad and A/B/X/Y controller typing;
 - L1/R1 text-cursor movement and L2/R2 word navigation;
+- EN/ES/FR/RU layout switching, persisted across IME recreation;
+- L3 quick-cycle language switching;
+- R3 primary-suggestion acceptance and touch-selectable candidate chips;
+- conservative Space autocorrection for recommended typos;
 - live physical-button remapping, including conflict swapping and reset;
 - Shift/Caps state cycling and compact-mode Start pass-through;
 - compact minimize/restore with controller pass-through;
@@ -102,6 +114,8 @@ See:
 - `docs/PROTOTYPE_0_RESULTS.md`
 - `docs/EMULATOR_TESTING.md`
 - `docs/CONTROLLER_MAPPING.md`
+- `docs/LANGUAGES.md`
+- `docs/SUGGESTIONS.md`
 
 ## Emulator limitation
 
@@ -113,7 +127,7 @@ Thor-specific display placement remains a real-hardware test.
 
 ## Scope
 
-Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts or telemetry. Dictionary-backed suggestions and autocorrection belong to the next product phase.
+Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts or telemetry. RuneBoard now integrates Android system spelling for suggestions and conservative autocorrection. Japanese is intentionally deferred until RuneBoard has a real kana/kanji composition layer.
 
 RuneBoard is Thor-first. General Android support can be evaluated later.
 
@@ -129,7 +143,7 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 
 **Final visual tuning on the physical Thor panel: pending.**
 
-Experimental â€” not ready for daily use.
+Experimental ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â not ready for daily use.
 
 ## Contributing
 

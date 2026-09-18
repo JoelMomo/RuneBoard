@@ -1,4 +1,4 @@
-# RuneBoard architecture - Prototype 0.0.8
+# RuneBoard architecture - Prototype 0.0.10
 
 ## Principle
 
@@ -171,3 +171,13 @@ Real-hardware validation remains authoritative for:
 - final minimize/restore behavior.
 
 The Thor must only be used after explicit user permission.
+
+
+### suggestion/
+
+Contains the text-service integration without coupling it to rendering or controller input:
+
+- WordContext extracts the word before the cursor;
+- AndroidSpellSuggestionSource wraps Android SpellCheckerSession;
+- SuggestionResult is the provider-independent result model;
+- SuggestionText owns autocorrect eligibility and case adaptation.

@@ -22,6 +22,8 @@ import android.widget.TextView;
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
+import io.github.joelmomo.runeboard.language.KeyboardProfile;
+import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
@@ -43,12 +45,16 @@ public final class MainActivity extends Activity {
             new LinkedHashMap<>();
     private final Map<Integer, TextView> opacityChips =
             new LinkedHashMap<>();
+    private final Map<String, LinearLayout> profileCards =
+            new LinkedHashMap<>();
     private final Map<BindableAction, TextView> bindingChips =
             new LinkedHashMap<>();
 
     private RunePreferences preferences;
     private BindableAction pendingBinding;
     private TextView bindingStatus;
+    private TextView suggestionsChip;
+    private TextView autocorrectChip;
     private OnBackInvokedCallback backCallback;
 
     @Override
@@ -90,6 +96,18 @@ public final class MainActivity extends Activity {
 
         addSectionHeader(
                 root,
+                R.string.section_language,
+                R.string.section_language_subtitle);
+        addLanguageCards(root);
+
+        addSectionHeader(
+                root,
+                R.string.section_typing_assistance,
+                R.string.section_typing_assistance_subtitle);
+        addTypingAssistance(root);
+
+        addSectionHeader(
+                root,
                 R.string.section_appearance,
                 R.string.section_appearance_subtitle);
         addThemeCards(root);
@@ -115,6 +133,7 @@ public final class MainActivity extends Activity {
                         ScrollView.LayoutParams.WRAP_CONTENT));
         setContentView(scroll);
 
+        refreshLanguageControls();
         refreshAppearanceControls();
         refreshBindingControls();
     }
@@ -123,6 +142,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (preferences != null) {
+            refreshLanguageControls();
             refreshAppearanceControls();
             refreshBindingControls();
         }
@@ -332,6 +352,190 @@ public final class MainActivity extends Activity {
         return card;
     }
 
+    private void addLanguageCards(LinearLayout root) {
+        java.util.List<KeyboardProfile> profiles =
+                KeyboardProfiles.builtIns();
+
+        for (int index = 0; index < profiles.size(); index += 2) {
+            LinearLayout row = horizontalRow();
+            addWeighted(
+                    row,
+                    languageCard(profiles.get(index)),
+                    true);
+
+            if (index + 1 < profiles.size()) {
+                addWeighted(
+                        row,
+                        languageCard(profiles.get(index + 1)),
+                        false);
+            }
+
+            LinearLayout.LayoutParams rowParams = matchWidth();
+            rowParams.bottomMargin = dp(9);
+            root.addView(row, rowParams);
+        }
+    }
+
+    private LinearLayout languageCard(KeyboardProfile profile) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setContentDescription(
+                profile.displayName + ". " + profile.layoutName);
+        card.setOnClickListener(v -> {
+            preferences.setKeyboardProfileId(profile.id);
+            refreshLanguageControls();
+            RuneBoardImeService.requestAppearanceRefresh();
+        });
+
+        TextView title = text(
+                profile.displayName,
+                14f,
+                COLOR_TEXT,
+                true);
+        card.addView(title);
+
+        TextView subtitle = text(
+                profile.shortLabel + " / " + profile.layoutName,
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams subtitleParams = wrap();
+        subtitleParams.topMargin = dp(4);
+        card.addView(subtitle, subtitleParams);
+
+        profileCards.put(profile.id, card);
+        return card;
+    }
+
+    private void refreshLanguageControls() {
+        if (preferences == null) {
+            return;
+        }
+
+        String activeId = preferences.getKeyboardProfileId();
+        for (Map.Entry<String, LinearLayout> entry
+                : profileCards.entrySet()) {
+            boolean selected = entry.getKey().equals(activeId);
+            entry.getValue().setBackground(
+                    rounded(
+                            selected ? 0xFF201A2D : COLOR_SURFACE,
+                            selected ? COLOR_ACCENT : COLOR_BORDER,
+                            selected ? 2 : 1,
+                            12f));
+        }
+    }
+
+    private void addTypingAssistance(LinearLayout root) {
+        LinearLayout row = horizontalRow();
+        addWeighted(
+                row,
+                typingAssistanceCard(true),
+                true);
+        addWeighted(
+                row,
+                typingAssistanceCard(false),
+                false);
+        root.addView(row, matchWidth());
+    }
+
+    private LinearLayout typingAssistanceCard(boolean suggestions) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(14), dp(12), dp(12), dp(12));
+        card.setBackground(
+                rounded(COLOR_SURFACE, COLOR_BORDER, 1, 12f));
+        card.setClickable(true);
+        card.setFocusable(true);
+
+        LinearLayout words = new LinearLayout(this);
+        words.setOrientation(LinearLayout.VERTICAL);
+        TextView title = text(
+                getString(suggestions
+                        ? R.string.suggestions_title
+                        : R.string.autocorrect_title),
+                14f,
+                COLOR_TEXT,
+                true);
+        words.addView(title);
+        TextView subtitle = text(
+                getString(suggestions
+                        ? R.string.suggestions_subtitle
+                        : R.string.autocorrect_subtitle),
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams subtitleParams = wrap();
+        subtitleParams.topMargin = dp(4);
+        words.addView(subtitle, subtitleParams);
+        card.addView(
+                words,
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f));
+
+        TextView chip = text("", 11f, COLOR_ACCENT, true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setMinWidth(dp(52));
+        chip.setPadding(dp(8), dp(7), dp(8), dp(7));
+        card.addView(chip);
+        if (suggestions) {
+            suggestionsChip = chip;
+            card.setOnClickListener(v -> {
+                boolean enabled = !preferences.areSuggestionsEnabled();
+                preferences.setSuggestionsEnabled(enabled);
+                if (!enabled) {
+                    preferences.setAutocorrectEnabled(false);
+                }
+                refreshTypingAssistance();
+                RuneBoardImeService.requestAppearanceRefresh();
+            });
+        } else {
+            autocorrectChip = chip;
+            card.setOnClickListener(v -> {
+                boolean enabled = !preferences.isAutocorrectEnabled();
+                preferences.setAutocorrectEnabled(enabled);
+                if (enabled) {
+                    preferences.setSuggestionsEnabled(true);
+                }
+                refreshTypingAssistance();
+                RuneBoardImeService.requestAppearanceRefresh();
+            });
+        }
+        card.setMinimumHeight(dp(86));
+        return card;
+    }
+
+    private void refreshTypingAssistance() {
+        if (preferences == null) {
+            return;
+        }
+        styleToggleChip(
+                suggestionsChip,
+                preferences.areSuggestionsEnabled());
+        styleToggleChip(
+                autocorrectChip,
+                preferences.isAutocorrectEnabled());
+    }
+
+    private void styleToggleChip(TextView chip, boolean enabled) {
+        if (chip == null) {
+            return;
+        }
+        chip.setText(enabled ? R.string.toggle_on : R.string.toggle_off);
+        chip.setTextColor(enabled ? COLOR_WINDOW : COLOR_MUTED);
+        chip.setBackground(
+                rounded(
+                        enabled ? COLOR_ACCENT : COLOR_SURFACE_ALT,
+                        enabled ? COLOR_ACCENT : COLOR_BORDER,
+                        1,
+                        9f));
+    }
+
     private void addThemeCards(LinearLayout root) {
         LinearLayout row = horizontalRow();
 
@@ -460,6 +664,7 @@ public final class MainActivity extends Activity {
         addBindingPair(root, BindableAction.CURSOR_LEFT, BindableAction.CURSOR_RIGHT);
         addBindingPair(root, BindableAction.WORD_LEFT, BindableAction.WORD_RIGHT);
         addBindingPair(root, BindableAction.ENTER, BindableAction.MINIMIZE);
+        addBindingPair(root, BindableAction.LANGUAGE_NEXT, BindableAction.ACCEPT_SUGGESTION);
 
         bindingStatus = text(
                 getString(R.string.bindings_ready),
@@ -513,6 +718,15 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams rowParams = matchWidth();
         rowParams.bottomMargin = dp(8);
         root.addView(row, rowParams);
+    }
+
+    private void addBindingSingle(
+            LinearLayout root,
+            BindableAction action) {
+        LinearLayout card = bindingCard(action);
+        LinearLayout.LayoutParams params = matchWidth();
+        params.bottomMargin = dp(8);
+        root.addView(card, params);
     }
 
     private LinearLayout bindingCard(BindableAction action) {
@@ -571,6 +785,10 @@ public final class MainActivity extends Activity {
                 return R.string.binding_word_right;
             case ENTER:
                 return R.string.binding_enter;
+            case LANGUAGE_NEXT:
+                return R.string.binding_language_next;
+            case ACCEPT_SUGGESTION:
+                return R.string.binding_accept_suggestion;
             case MINIMIZE:
                 return R.string.binding_minimize;
             default:

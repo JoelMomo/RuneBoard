@@ -14,6 +14,8 @@ public final class KeyboardEngine {
         void onEnter();
         void onMoveCursor(int direction);
         void onMoveWord(int direction);
+        void onNextLanguage();
+        void onAcceptSuggestion();
         void onMinimizedChanged(boolean minimized);
         void onBackgroundOpacityChanged(int opacity);
     }
@@ -26,17 +28,31 @@ public final class KeyboardEngine {
 
     private final KeyboardState state;
     private final Output output;
+    private final Locale locale;
 
     public KeyboardEngine(KeyboardLayout layout, Output output) {
-        this(layout, output, BackgroundOpacity.defaultValue());
+        this(
+                layout,
+                output,
+                BackgroundOpacity.defaultValue(),
+                Locale.ROOT);
     }
 
     public KeyboardEngine(
             KeyboardLayout layout,
             Output output,
             int initialOpacity) {
+        this(layout, output, initialOpacity, Locale.ROOT);
+    }
+
+    public KeyboardEngine(
+            KeyboardLayout layout,
+            Output output,
+            int initialOpacity,
+            Locale locale) {
         this.state = new KeyboardState(layout, initialOpacity);
         this.output = output;
+        this.locale = locale == null ? Locale.ROOT : locale;
     }
 
     public KeyboardState getState() {
@@ -107,6 +123,12 @@ public final class KeyboardEngine {
             case ENTER:
                 output.onEnter();
                 return Update.NONE;
+            case LANGUAGE_NEXT:
+                output.onNextLanguage();
+                return Update.NONE;
+            case ACCEPT_SUGGESTION:
+                output.onAcceptSuggestion();
+                return Update.NONE;
             case TOGGLE_MINIMIZE:
                 return setMinimized(true);
             case NONE:
@@ -125,7 +147,7 @@ public final class KeyboardEngine {
             case TEXT:
                 String text = key.getText();
                 if (state.isShifted() && Character.isLetter(text.charAt(0))) {
-                    text = text.toUpperCase(Locale.ROOT);
+                    text = text.toUpperCase(locale);
                 }
                 output.onText(text);
                 if (state.consumeOneShotShift()) {

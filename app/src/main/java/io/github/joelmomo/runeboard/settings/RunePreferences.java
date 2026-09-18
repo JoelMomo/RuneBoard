@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
+import io.github.joelmomo.runeboard.language.KeyboardProfile;
+import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
@@ -15,13 +17,42 @@ public final class RunePreferences {
 
     private static final String PREFS_NAME = "runeboard_preferences";
     private static final String KEY_THEME_ID = "theme_id";
+    private static final String KEY_PROFILE_ID = "profile_id";
     private static final String KEY_BACKGROUND_OPACITY = "background_opacity";
+    private static final String KEY_SUGGESTIONS_ENABLED = "suggestions_enabled";
+    private static final String KEY_AUTOCORRECT_ENABLED = "autocorrect_enabled";
     private static final String KEY_BINDING_PREFIX = "binding_";
 
     private final SharedPreferences preferences;
 
     public RunePreferences(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    }
+
+    public KeyboardProfile getKeyboardProfile() {
+        return KeyboardProfiles.byId(
+                preferences.getString(
+                        KEY_PROFILE_ID,
+                        KeyboardProfiles.defaultProfile().id));
+    }
+
+    public String getKeyboardProfileId() {
+        return getKeyboardProfile().id;
+    }
+
+    public void setKeyboardProfileId(String id) {
+        preferences.edit()
+                .putString(
+                        KEY_PROFILE_ID,
+                        KeyboardProfiles.byId(id).id)
+                .apply();
+    }
+
+    public KeyboardProfile cycleKeyboardProfile() {
+        KeyboardProfile next = KeyboardProfiles.next(
+                getKeyboardProfileId());
+        setKeyboardProfileId(next.id);
+        return next;
     }
 
     public KeyboardTheme getTheme() {
@@ -59,6 +90,22 @@ public final class RunePreferences {
 
     public void resetBackgroundOpacity() {
         preferences.edit().remove(KEY_BACKGROUND_OPACITY).apply();
+    }
+
+    public boolean areSuggestionsEnabled() {
+        return preferences.getBoolean(KEY_SUGGESTIONS_ENABLED, true);
+    }
+
+    public void setSuggestionsEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_SUGGESTIONS_ENABLED, enabled).apply();
+    }
+
+    public boolean isAutocorrectEnabled() {
+        return preferences.getBoolean(KEY_AUTOCORRECT_ENABLED, true);
+    }
+
+    public void setAutocorrectEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_AUTOCORRECT_ENABLED, enabled).apply();
     }
 
     public ControllerBindings getControllerBindings() {
