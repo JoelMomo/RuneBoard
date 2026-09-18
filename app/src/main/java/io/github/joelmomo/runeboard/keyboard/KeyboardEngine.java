@@ -1,6 +1,7 @@
 package io.github.joelmomo.runeboard.keyboard;
 
 import io.github.joelmomo.runeboard.controller.ControllerAction;
+import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
 
 import java.util.Locale;
 
@@ -13,6 +14,7 @@ public final class KeyboardEngine {
         void onEnter();
         void onMoveCursor(int direction);
         void onMinimizedChanged(boolean minimized);
+        void onBackgroundOpacityChanged(int opacity);
     }
 
     public enum Update {
@@ -25,7 +27,14 @@ public final class KeyboardEngine {
     private final Output output;
 
     public KeyboardEngine(KeyboardLayout layout, Output output) {
-        this.state = new KeyboardState(layout);
+        this(layout, output, BackgroundOpacity.defaultValue());
+    }
+
+    public KeyboardEngine(
+            KeyboardLayout layout,
+            Output output,
+            int initialOpacity) {
+        this.state = new KeyboardState(layout, initialOpacity);
         this.output = output;
     }
 
@@ -132,6 +141,7 @@ public final class KeyboardEngine {
                 return Update.NONE;
             case OPACITY:
                 state.cycleOpacity();
+                output.onBackgroundOpacityChanged(state.getOpacity());
                 return Update.VISUAL;
             case MINIMIZE:
                 return setMinimized(true);

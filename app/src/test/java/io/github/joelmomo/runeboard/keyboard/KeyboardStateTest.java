@@ -10,7 +10,8 @@ public final class KeyboardStateTest {
 
     @Test
     public void startsOnQ() {
-        KeyboardState state = new KeyboardState(KeyboardLayouts.qwerty());
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
 
         assertEquals(1, state.getSelectedRow());
         assertEquals(0, state.getSelectedCol());
@@ -19,7 +20,8 @@ public final class KeyboardStateTest {
 
     @Test
     public void horizontalMovementWrapsWithinRow() {
-        KeyboardState state = new KeyboardState(KeyboardLayouts.qwerty());
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
 
         assertTrue(state.move(-1, 0));
         assertEquals(9, state.getSelectedCol());
@@ -32,7 +34,8 @@ public final class KeyboardStateTest {
 
     @Test
     public void verticalMovementTracksPhysicalKeyCenter() {
-        KeyboardState state = new KeyboardState(KeyboardLayouts.qwerty());
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
         state.select(1, 9);
 
         assertTrue(state.move(0, 1));
@@ -48,7 +51,8 @@ public final class KeyboardStateTest {
 
     @Test
     public void opacityCyclesAndReturnsToOpaque() {
-        KeyboardState state = new KeyboardState(KeyboardLayouts.qwerty());
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
 
         assertEquals(255, state.getOpacity());
         state.cycleOpacity();
@@ -62,8 +66,19 @@ public final class KeyboardStateTest {
     }
 
     @Test
+    public void initialOpacitySnapsToNearestSupportedLevel() {
+        KeyboardState state =
+                new KeyboardState(
+                        KeyboardLayouts.qwerty(),
+                        170);
+
+        assertEquals(180, state.getOpacity());
+    }
+
+    @Test
     public void movementStopsWhileMinimized() {
-        KeyboardState state = new KeyboardState(KeyboardLayouts.qwerty());
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
         state.setMinimized(true);
 
         assertFalse(state.move(1, 0));

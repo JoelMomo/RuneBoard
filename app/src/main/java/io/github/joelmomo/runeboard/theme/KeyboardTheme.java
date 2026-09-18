@@ -2,6 +2,8 @@ package io.github.joelmomo.runeboard.theme;
 
 public final class KeyboardTheme {
 
+    public final String id;
+    public final int defaultBackgroundOpacity;
     public final int backgroundTop;
     public final int backgroundBottom;
     public final int keyFill;
@@ -19,6 +21,8 @@ public final class KeyboardTheme {
     public final float headerHeightDp;
 
     public KeyboardTheme(
+            String id,
+            int defaultBackgroundOpacity,
             int backgroundTop,
             int backgroundBottom,
             int keyFill,
@@ -34,6 +38,9 @@ public final class KeyboardTheme {
             float keyGapDp,
             float keyRadiusDp,
             float headerHeightDp) {
+        this.id = id;
+        this.defaultBackgroundOpacity =
+                BackgroundOpacity.normalize(defaultBackgroundOpacity);
         this.backgroundTop = backgroundTop;
         this.backgroundBottom = backgroundBottom;
         this.keyFill = keyFill;

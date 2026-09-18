@@ -16,7 +16,8 @@ public final class KeyboardEngineTest {
     @Test
     public void shiftIsOneShotForText() {
         RecordingOutput output = new RecordingOutput();
-        KeyboardEngine engine = new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
 
         engine.handle(ControllerAction.SHIFT);
         engine.handle(ControllerAction.PRESS_SELECTED);
@@ -29,7 +30,8 @@ public final class KeyboardEngineTest {
     @Test
     public void directEditingActionsReachOutput() {
         RecordingOutput output = new RecordingOutput();
-        KeyboardEngine engine = new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
 
         engine.handle(ControllerAction.SPACE);
         engine.handle(ControllerAction.BACKSPACE);
@@ -46,9 +48,11 @@ public final class KeyboardEngineTest {
     @Test
     public void minimizedKeyboardOnlyCapturesRestoreActions() {
         RecordingOutput output = new RecordingOutput();
-        KeyboardEngine engine = new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
 
-        assertEquals(KeyboardEngine.Update.LAYOUT,
+        assertEquals(
+                KeyboardEngine.Update.LAYOUT,
                 engine.handle(ControllerAction.TOGGLE_MINIMIZE));
         assertTrue(engine.getState().isMinimized());
 
@@ -69,20 +73,46 @@ public final class KeyboardEngineTest {
     @Test
     public void pressSelectedRestoresMinimizedKeyboard() {
         RecordingOutput output = new RecordingOutput();
-        KeyboardEngine engine = new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
 
         engine.handle(ControllerAction.TOGGLE_MINIMIZE);
-        KeyboardEngine.Update update = engine.handle(ControllerAction.PRESS_SELECTED);
+        KeyboardEngine.Update update =
+                engine.handle(ControllerAction.PRESS_SELECTED);
 
         assertEquals(KeyboardEngine.Update.LAYOUT, update);
         assertFalse(engine.getState().isMinimized());
         assertEquals(List.of(true, false), output.minimizedStates);
     }
 
-    private static final class RecordingOutput implements KeyboardEngine.Output {
+    @Test
+    public void opacityStartsFromConfiguredValueAndNotifiesOutput() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(
+                        KeyboardLayouts.qwerty(),
+                        output,
+                        90);
+
+        engine.getState().select(4, 4);
+        assertEquals(90, engine.getState().getOpacity());
+
+        assertEquals(
+                KeyboardEngine.Update.VISUAL,
+                engine.handle(ControllerAction.PRESS_SELECTED));
+
+        assertEquals(0, engine.getState().getOpacity());
+        assertEquals(List.of(0), output.backgroundOpacities);
+    }
+
+    private static final class RecordingOutput
+            implements KeyboardEngine.Output {
+
         final List<String> text = new ArrayList<>();
         final List<Integer> cursorMoves = new ArrayList<>();
         final List<Boolean> minimizedStates = new ArrayList<>();
+        final List<Integer> backgroundOpacities = new ArrayList<>();
+
         int backspaces;
         int spaces;
         int enters;
@@ -115,6 +145,11 @@ public final class KeyboardEngineTest {
         @Override
         public void onMinimizedChanged(boolean minimized) {
             minimizedStates.add(minimized);
+        }
+
+        @Override
+        public void onBackgroundOpacityChanged(int opacity) {
+            backgroundOpacities.add(opacity);
         }
     }
 }

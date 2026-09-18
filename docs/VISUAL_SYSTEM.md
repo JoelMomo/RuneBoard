@@ -65,3 +65,18 @@ Future themes should be expressible through theme/profile data:
 - key/background opacity.
 
 Persistent user customization is the next layer on top of this theme model.
+
+
+### Persistence
+
+Background opacity is now persisted independently from the theme.
+
+The IME loads the saved opacity before constructing the keyboard view, so recreating or restarting RuneBoard does not reset `BG`.
+
+Built-in theme profiles currently defined in code:
+
+- RuneBoard Default;
+- OLED Black;
+- Transparent.
+
+A visual theme picker will sit on top of this model rather than adding theme logic to the renderer.

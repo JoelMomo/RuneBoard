@@ -24,6 +24,7 @@ import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.keyboard.KeyboardState;
+import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
 
@@ -62,10 +63,20 @@ public final class RuneKeyboardView extends View {
     private long lastAxisMoveAt;
 
     public RuneKeyboardView(Context context) {
+        this(
+                context,
+                RuneThemes.defaultTheme(),
+                BackgroundOpacity.defaultValue());
+    }
+
+    public RuneKeyboardView(
+            Context context,
+            KeyboardTheme theme,
+            int initialOpacity) {
         super(context);
         debugLogging = (context.getApplicationInfo().flags
                 & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-        theme = RuneThemes.defaultTheme();
+        this.theme = theme;
 
         engine = new KeyboardEngine(
                 KeyboardLayouts.qwerty(),
@@ -111,7 +122,15 @@ public final class RuneKeyboardView extends View {
                             listener.onMinimizedChanged(minimized);
                         }
                     }
-                });
+
+                    @Override
+                    public void onBackgroundOpacityChanged(int opacity) {
+                        if (listener != null) {
+                            listener.onBackgroundOpacityChanged(opacity);
+                        }
+                    }
+                },
+                initialOpacity);
 
         setFocusable(true);
         setFocusableInTouchMode(true);

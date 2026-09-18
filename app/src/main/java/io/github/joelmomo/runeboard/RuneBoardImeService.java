@@ -10,15 +10,21 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
+import io.github.joelmomo.runeboard.settings.RunePreferences;
+import io.github.joelmomo.runeboard.theme.KeyboardTheme;
+
 public final class RuneBoardImeService extends InputMethodService
         implements RuneKeyboardView.Listener {
 
     private static volatile RuneBoardImeService activeInstance;
+
     private RuneKeyboardView keyboardView;
+    private RunePreferences preferences;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        preferences = new RunePreferences(this);
         activeInstance = this;
     }
 
@@ -39,16 +45,24 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     public boolean shouldCaptureControllerKey(int keyCode) {
-        return keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode);
+        return keyboardView != null
+                && keyboardView.shouldCaptureKeyCode(keyCode);
     }
 
     public boolean handleControllerKey(int keyCode) {
-        return keyboardView != null && keyboardView.handleKeyCode(keyCode);
+        return keyboardView != null
+                && keyboardView.handleKeyCode(keyCode);
     }
 
     @Override
     public View onCreateInputView() {
-        keyboardView = new RuneKeyboardView(this);
+        KeyboardTheme theme = preferences.getTheme();
+        int initialOpacity = preferences.getBackgroundOpacity(theme);
+
+        keyboardView = new RuneKeyboardView(
+                this,
+                theme,
+                initialOpacity);
         keyboardView.setListener(this);
         keyboardView.setFocusable(true);
         keyboardView.setFocusableInTouchMode(true);
@@ -63,7 +77,8 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyboardView != null && event.getRepeatCount() == 0
+        if (keyboardView != null
+                && event.getRepeatCount() == 0
                 && keyboardView.handleKeyCode(keyCode)) {
             return true;
         }
@@ -72,7 +87,8 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
-        if (keyboardView != null && keyboardView.handleMotionEvent(event)) {
+        if (keyboardView != null
+                && keyboardView.handleMotionEvent(event)) {
             return true;
         }
         return super.onGenericMotionEvent(event);
@@ -142,13 +158,26 @@ public final class RuneBoardImeService extends InputMethodService
                 : KeyEvent.KEYCODE_DPAD_RIGHT;
         long now = SystemClock.uptimeMillis();
         connection.sendKeyEvent(new KeyEvent(
-                now, now, KeyEvent.ACTION_DOWN, keyCode, 0));
+                now,
+                now,
+                KeyEvent.ACTION_DOWN,
+                keyCode,
+                0));
         connection.sendKeyEvent(new KeyEvent(
-                now, now, KeyEvent.ACTION_UP, keyCode, 0));
+                now,
+                now,
+                KeyEvent.ACTION_UP,
+                keyCode,
+                0));
     }
 
     @Override
     public void onMinimizedChanged(boolean minimized) {
         // AYN Thor firmware .377 honors the requested input-view resize.
+    }
+
+    @Override
+    public void onBackgroundOpacityChanged(int opacity) {
+        preferences.setBackgroundOpacity(opacity);
     }
 }
