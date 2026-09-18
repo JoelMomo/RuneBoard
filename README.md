@@ -51,7 +51,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.3-prototype**
+Current development version: **0.0.4-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -109,6 +109,8 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 
 **Core Thor architecture: validated.**
 
-**Product/UI architecture refactor: in progress.**
+**RuneBoard Default visual system: implemented in emulator.**
+
+**Final visual tuning on the physical Thor panel: pending.**
 
 Experimental - not ready for daily use.

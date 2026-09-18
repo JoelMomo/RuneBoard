@@ -52,11 +52,11 @@ public final class KeyboardStateTest {
 
         assertEquals(255, state.getOpacity());
         state.cycleOpacity();
-        assertEquals(205, state.getOpacity());
+        assertEquals(180, state.getOpacity());
         state.cycleOpacity();
-        assertEquals(145, state.getOpacity());
+        assertEquals(90, state.getOpacity());
         state.cycleOpacity();
-        assertEquals(85, state.getOpacity());
+        assertEquals(0, state.getOpacity());
         state.cycleOpacity();
         assertEquals(255, state.getOpacity());
     }

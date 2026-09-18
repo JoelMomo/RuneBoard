@@ -1,10 +1,8 @@
 package io.github.joelmomo.runeboard.keyboard;
 
-import java.util.List;
-
 public final class KeyboardState {
 
-    private static final int[] OPACITY_LEVELS = {255, 205, 145, 85};
+    private static final int[] OPACITY_LEVELS = {255, 180, 90, 0};
 
     private final KeyboardLayout layout;
     private int selectedRow = 1;
@@ -53,11 +51,17 @@ public final class KeyboardState {
         int oldCol = selectedCol;
 
         if (dy != 0) {
-            int targetRow = Math.max(0, Math.min(layout.getRowCount() - 1, selectedRow + dy));
+            int targetRow = Math.max(
+                    0,
+                    Math.min(layout.getRowCount() - 1, selectedRow + dy));
             if (targetRow != selectedRow) {
-                float center = normalizedCenter(layout.getRow(selectedRow), selectedCol);
+                float center = normalizedCenter(
+                        layout.getRow(selectedRow),
+                        selectedCol);
                 selectedRow = targetRow;
-                selectedCol = closestColumn(layout.getRow(targetRow), center);
+                selectedCol = closestColumn(
+                        layout.getRow(targetRow),
+                        center);
             }
         } else {
             int size = layout.getRow(selectedRow).size();
@@ -67,24 +71,21 @@ public final class KeyboardState {
         return oldRow != selectedRow || oldCol != selectedCol;
     }
 
-    private float normalizedCenter(List<KeyboardKey> row, int column) {
-        float total = 0f;
-        for (KeyboardKey key : row) {
-            total += key.getWeight();
-        }
-
-        float left = 0f;
+    private float normalizedCenter(KeyboardRow row, int column) {
+        float left = row.getLeftInsetWeight();
         for (int i = 0; i < column; i++) {
-            left += row.get(i).getWeight();
+            left += row.getKey(i).getWeight();
         }
-        return (left + row.get(column).getWeight() / 2f) / total;
+        return (left + row.getKey(column).getWeight() / 2f)
+                / row.getTotalWidthWeight();
     }
 
-    private int closestColumn(List<KeyboardKey> row, float targetCenter) {
+    private int closestColumn(KeyboardRow row, float targetCenter) {
         int best = 0;
         float bestDistance = Float.MAX_VALUE;
         for (int col = 0; col < row.size(); col++) {
-            float distance = Math.abs(normalizedCenter(row, col) - targetCenter);
+            float distance =
+                    Math.abs(normalizedCenter(row, col) - targetCenter);
             if (distance < bestDistance) {
                 best = col;
                 bestDistance = distance;
