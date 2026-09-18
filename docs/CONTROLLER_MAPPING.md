@@ -15,13 +15,14 @@ RuneBoard treats the AYN Thor controller as a first-class keyboard input method.
 | L2 / R2 | Previous / next word |
 | Start | Enter |
 | Select | Minimize |
+| L3 | Next language |
 | Touch | Direct key input |
 
 D-pad navigation is intentionally fixed so a bad configuration cannot make the keyboard impossible to navigate.
 
 ## Remapping
 
-The settings activity exposes ten remappable actions:
+The settings activity exposes eleven remappable actions:
 
 - Confirm
 - Backspace
@@ -32,6 +33,7 @@ The settings activity exposes ten remappable actions:
 - Previous word
 - Next word
 - Enter
+- Next language
 - Minimize
 
 Supported assignable controls are A/B/X/Y, L1/R1, L2/R2, Start/Select and L3/R3.
@@ -62,7 +64,7 @@ Word characters currently include letters, digits, underscore and apostrophe.
 
 While RuneBoard is minimized, navigation and editing actions are allowed to pass through to the application/game below.
 
-Only explicit restore-capable actions remain captured.
+Only Confirm and Minimize remain captured for restore. Other editing actions, including Start/Enter and Next language, pass through while minimized.
 
 BUTTON_A and Android's synthetic DPAD_CENTER are deliberately distinct. Some Android devices emit DPAD_CENTER as a compatibility fallback after another gamepad button; treating it separately prevents accidental restore.
 

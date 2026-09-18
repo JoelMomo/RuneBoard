@@ -12,6 +12,7 @@ import android.view.inputmethod.InputConnection;
 
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.keyboard.WordNavigator;
+import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 
@@ -75,11 +76,13 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     private RuneKeyboardView createKeyboardView() {
+        KeyboardProfile profile = preferences.getKeyboardProfile();
         KeyboardTheme theme = preferences.getTheme();
         int initialOpacity = preferences.getBackgroundOpacity(theme);
 
         RuneKeyboardView view = new RuneKeyboardView(
                 this,
+                profile,
                 theme,
                 initialOpacity,
                 new ControllerMapper(preferences.getControllerBindings()));
@@ -227,6 +230,12 @@ public final class RuneBoardImeService extends InputMethodService
                 direction);
         int next = extracted.startOffset + localNext;
         connection.setSelection(next, next);
+    }
+
+    @Override
+    public void onNextLanguage() {
+        preferences.cycleKeyboardProfile();
+        getMainExecutor().execute(this::refreshAppearance);
     }
 
     @Override

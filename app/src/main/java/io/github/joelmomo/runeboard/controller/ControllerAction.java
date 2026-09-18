@@ -16,5 +16,6 @@ public enum ControllerAction {
     WORD_LEFT,
     WORD_RIGHT,
     ENTER,
+    LANGUAGE_NEXT,
     TOGGLE_MINIMIZE
 }

@@ -39,6 +39,10 @@ public enum BindableAction {
             "enter",
             ControllerAction.ENTER,
             KeyEvent.KEYCODE_BUTTON_START),
+    LANGUAGE_NEXT(
+            "language_next",
+            ControllerAction.LANGUAGE_NEXT,
+            KeyEvent.KEYCODE_BUTTON_THUMBL),
     MINIMIZE(
             "minimize",
             ControllerAction.TOGGLE_MINIMIZE,

@@ -16,6 +16,8 @@
     <string name="physical_controls_title">Physical controls</string>
     <string name="physical_controls_subtitle">Enable D-pad and controller buttons</string>
 
+    <string name="section_language">LANGUAGE &amp; LAYOUT</string>
+    <string name="section_language_subtitle">Choose the typing language and key arrangement</string>
     <string name="section_appearance">APPEARANCE</string>
     <string name="section_appearance_subtitle">Theme and lower-screen visibility</string>
     <string name="theme_default_title">RuneBoard</string>
@@ -39,9 +41,7 @@
     <string name="key_enter">ENTER</string>
     <string name="key_opacity">BG %1$d%%</string>
     <string name="key_minimize">MIN</string>
-    <string name="header_title">RUNEBOARD</string>
-    <string name="header_layout">QWERTY</string>
-    <string name="header_controller">D-PAD</string>
+    <string name="header_title">RUNEBOARD</string>    <string name="header_controller">D-PAD</string>
     <string name="header_background">BG %1$d%%</string>
     <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
 
@@ -56,6 +56,7 @@
     <string name="binding_word_left">Previous word</string>
     <string name="binding_word_right">Next word</string>
     <string name="binding_enter">Enter</string>
+    <string name="binding_language_next">Next language</string>
     <string name="binding_minimize">Minimize</string>
     <string name="binding_press">PRESS&#8230;</string>
     <string name="bindings_ready">Tap an action to remap it. Occupied buttons swap automatically.</string>

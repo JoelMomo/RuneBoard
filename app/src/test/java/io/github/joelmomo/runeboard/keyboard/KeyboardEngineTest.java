@@ -110,6 +110,17 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void languageActionReachesOutput() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        engine.handle(ControllerAction.LANGUAGE_NEXT);
+
+        assertEquals(1, output.languageChanges);
+    }
+
+    @Test
     public void opacityStartsFromConfiguredValueAndNotifiesOutput() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =
@@ -137,6 +148,7 @@ public final class KeyboardEngineTest {
         final List<Integer> wordMoves = new ArrayList<>();
         final List<Boolean> minimizedStates = new ArrayList<>();
         final List<Integer> backgroundOpacities = new ArrayList<>();
+        int languageChanges;
 
         int backspaces;
         int spaces;
@@ -170,6 +182,11 @@ public final class KeyboardEngineTest {
         @Override
         public void onMoveWord(int direction) {
             wordMoves.add(direction);
+        }
+
+        @Override
+        public void onNextLanguage() {
+            languageChanges++;
         }
 
         @Override

@@ -22,6 +22,8 @@ import android.widget.TextView;
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
+import io.github.joelmomo.runeboard.language.KeyboardProfile;
+import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
@@ -42,6 +44,8 @@ public final class MainActivity extends Activity {
     private final Map<String, LinearLayout> themeCards =
             new LinkedHashMap<>();
     private final Map<Integer, TextView> opacityChips =
+            new LinkedHashMap<>();
+    private final Map<String, LinearLayout> profileCards =
             new LinkedHashMap<>();
     private final Map<BindableAction, TextView> bindingChips =
             new LinkedHashMap<>();
@@ -90,6 +94,12 @@ public final class MainActivity extends Activity {
 
         addSectionHeader(
                 root,
+                R.string.section_language,
+                R.string.section_language_subtitle);
+        addLanguageCards(root);
+
+        addSectionHeader(
+                root,
                 R.string.section_appearance,
                 R.string.section_appearance_subtitle);
         addThemeCards(root);
@@ -115,6 +125,7 @@ public final class MainActivity extends Activity {
                         ScrollView.LayoutParams.WRAP_CONTENT));
         setContentView(scroll);
 
+        refreshLanguageControls();
         refreshAppearanceControls();
         refreshBindingControls();
     }
@@ -123,6 +134,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (preferences != null) {
+            refreshLanguageControls();
             refreshAppearanceControls();
             refreshBindingControls();
         }
@@ -332,6 +344,82 @@ public final class MainActivity extends Activity {
         return card;
     }
 
+    private void addLanguageCards(LinearLayout root) {
+        java.util.List<KeyboardProfile> profiles =
+                KeyboardProfiles.builtIns();
+
+        for (int index = 0; index < profiles.size(); index += 2) {
+            LinearLayout row = horizontalRow();
+            addWeighted(
+                    row,
+                    languageCard(profiles.get(index)),
+                    true);
+
+            if (index + 1 < profiles.size()) {
+                addWeighted(
+                        row,
+                        languageCard(profiles.get(index + 1)),
+                        false);
+            }
+
+            LinearLayout.LayoutParams rowParams = matchWidth();
+            rowParams.bottomMargin = dp(9);
+            root.addView(row, rowParams);
+        }
+    }
+
+    private LinearLayout languageCard(KeyboardProfile profile) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(14), dp(12), dp(14), dp(12));
+        card.setClickable(true);
+        card.setFocusable(true);
+        card.setContentDescription(
+                profile.displayName + ". " + profile.layoutName);
+        card.setOnClickListener(v -> {
+            preferences.setKeyboardProfileId(profile.id);
+            refreshLanguageControls();
+            RuneBoardImeService.requestAppearanceRefresh();
+        });
+
+        TextView title = text(
+                profile.displayName,
+                14f,
+                COLOR_TEXT,
+                true);
+        card.addView(title);
+
+        TextView subtitle = text(
+                profile.shortLabel + " / " + profile.layoutName,
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams subtitleParams = wrap();
+        subtitleParams.topMargin = dp(4);
+        card.addView(subtitle, subtitleParams);
+
+        profileCards.put(profile.id, card);
+        return card;
+    }
+
+    private void refreshLanguageControls() {
+        if (preferences == null) {
+            return;
+        }
+
+        String activeId = preferences.getKeyboardProfileId();
+        for (Map.Entry<String, LinearLayout> entry
+                : profileCards.entrySet()) {
+            boolean selected = entry.getKey().equals(activeId);
+            entry.getValue().setBackground(
+                    rounded(
+                            selected ? 0xFF201A2D : COLOR_SURFACE,
+                            selected ? COLOR_ACCENT : COLOR_BORDER,
+                            selected ? 2 : 1,
+                            12f));
+        }
+    }
+
     private void addThemeCards(LinearLayout root) {
         LinearLayout row = horizontalRow();
 
@@ -460,6 +548,7 @@ public final class MainActivity extends Activity {
         addBindingPair(root, BindableAction.CURSOR_LEFT, BindableAction.CURSOR_RIGHT);
         addBindingPair(root, BindableAction.WORD_LEFT, BindableAction.WORD_RIGHT);
         addBindingPair(root, BindableAction.ENTER, BindableAction.MINIMIZE);
+        addBindingSingle(root, BindableAction.LANGUAGE_NEXT);
 
         bindingStatus = text(
                 getString(R.string.bindings_ready),
@@ -513,6 +602,15 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams rowParams = matchWidth();
         rowParams.bottomMargin = dp(8);
         root.addView(row, rowParams);
+    }
+
+    private void addBindingSingle(
+            LinearLayout root,
+            BindableAction action) {
+        LinearLayout card = bindingCard(action);
+        LinearLayout.LayoutParams params = matchWidth();
+        params.bottomMargin = dp(8);
+        root.addView(card, params);
     }
 
     private LinearLayout bindingCard(BindableAction action) {
@@ -571,6 +669,8 @@ public final class MainActivity extends Activity {
                 return R.string.binding_word_right;
             case ENTER:
                 return R.string.binding_enter;
+            case LANGUAGE_NEXT:
+                return R.string.binding_language_next;
             case MINIMIZE:
                 return R.string.binding_minimize;
             default:
