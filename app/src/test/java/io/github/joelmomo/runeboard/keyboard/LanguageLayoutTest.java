@@ -101,6 +101,9 @@ public final class LanguageLayoutTest {
         @Override
         public void onNextLanguage() {
         }
+        @Override
+        public void onAcceptSuggestion() {
+        }
 
         @Override
         public void onMinimizedChanged(boolean minimized) {

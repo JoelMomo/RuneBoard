@@ -16,13 +16,14 @@ RuneBoard treats the AYN Thor controller as a first-class keyboard input method.
 | Start | Enter |
 | Select | Minimize |
 | L3 | Next language |
+| R3 | Accept suggestion |
 | Touch | Direct key input |
 
 D-pad navigation is intentionally fixed so a bad configuration cannot make the keyboard impossible to navigate.
 
 ## Remapping
 
-The settings activity exposes eleven remappable actions:
+The settings activity exposes twelve remappable actions:
 
 - Confirm
 - Backspace
@@ -34,6 +35,7 @@ The settings activity exposes eleven remappable actions:
 - Next word
 - Enter
 - Next language
+- Accept suggestion
 - Minimize
 
 Supported assignable controls are A/B/X/Y, L1/R1, L2/R2, Start/Select and L3/R3.
@@ -101,3 +103,10 @@ Shift uses a deterministic three-state cycle: Off -> one-shot Shift -> Caps Lock
 One-shot Shift is consumed after the next text key. Caps Lock remains active until Shift is pressed again. The on-screen Shift key changes to CAPS while locked.
 
 Action keys also render the currently mapped physical-button label, and the minimized bar shows the actual Confirm and Minimize buttons used to restore RuneBoard.
+
+
+## Suggestion control
+
+R3 accepts the first visible suggestion by default. The action is remappable and uses the same automatic conflict swap logic as every other editing action.
+
+R3 is not captured while RuneBoard is minimized, so it continues to reach the application or game below.

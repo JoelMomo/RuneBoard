@@ -19,6 +19,8 @@ public final class RunePreferences {
     private static final String KEY_THEME_ID = "theme_id";
     private static final String KEY_PROFILE_ID = "profile_id";
     private static final String KEY_BACKGROUND_OPACITY = "background_opacity";
+    private static final String KEY_SUGGESTIONS_ENABLED = "suggestions_enabled";
+    private static final String KEY_AUTOCORRECT_ENABLED = "autocorrect_enabled";
     private static final String KEY_BINDING_PREFIX = "binding_";
 
     private final SharedPreferences preferences;
@@ -88,6 +90,22 @@ public final class RunePreferences {
 
     public void resetBackgroundOpacity() {
         preferences.edit().remove(KEY_BACKGROUND_OPACITY).apply();
+    }
+
+    public boolean areSuggestionsEnabled() {
+        return preferences.getBoolean(KEY_SUGGESTIONS_ENABLED, true);
+    }
+
+    public void setSuggestionsEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_SUGGESTIONS_ENABLED, enabled).apply();
+    }
+
+    public boolean isAutocorrectEnabled() {
+        return preferences.getBoolean(KEY_AUTOCORRECT_ENABLED, true);
+    }
+
+    public void setAutocorrectEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_AUTOCORRECT_ENABLED, enabled).apply();
     }
 
     public ControllerBindings getControllerBindings() {

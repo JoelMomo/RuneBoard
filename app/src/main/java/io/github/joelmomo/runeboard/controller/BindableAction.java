@@ -43,6 +43,10 @@ public enum BindableAction {
             "language_next",
             ControllerAction.LANGUAGE_NEXT,
             KeyEvent.KEYCODE_BUTTON_THUMBL),
+    ACCEPT_SUGGESTION(
+            "accept_suggestion",
+            ControllerAction.ACCEPT_SUGGESTION,
+            KeyEvent.KEYCODE_BUTTON_THUMBR),
     MINIMIZE(
             "minimize",
             ControllerAction.TOGGLE_MINIMIZE,

@@ -12,6 +12,8 @@ Current persisted values:
 - `background_opacity`
 - `profile_id` typing language/layout
 - `binding_*` controller assignments
+- `suggestions_enabled`
+- `autocorrect_enabled`
 
 The keyboard engine does not read Android preferences directly.
 
@@ -101,3 +103,12 @@ RunePreferences stores the active typing profile as `profile_id`.
 The IME resolves that profile before constructing RuneKeyboardView, so language/layout selection survives process recreation.
 
 Profiles can be selected from the settings activity, cycled controller-first through the remappable Next language action (L3 by default), or cycled by tapping the language/layout area in the keyboard header.
+
+
+## Typing assistance
+
+Suggestions and Autocorrect are enabled by default.
+
+Disabling Suggestions also disables Autocorrect. Enabling Autocorrect automatically enables Suggestions.
+
+Changing either setting refreshes the active IME. When Suggestions is disabled RuneBoard closes its Android spell-check session.

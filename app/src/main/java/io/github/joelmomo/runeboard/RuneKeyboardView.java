@@ -40,6 +40,17 @@ public final class RuneKeyboardView extends View {
     private static final String TAG = "RuneBoard";
 
     public interface Listener extends KeyboardEngine.Output {
+        void onSuggestionSelected(String suggestion);
+    }
+
+    private static final class SuggestionTarget {
+        final RectF bounds;
+        final String suggestion;
+
+        SuggestionTarget(RectF bounds, String suggestion) {
+            this.bounds = bounds;
+            this.suggestion = suggestion;
+        }
     }
 
     private static final class HitTarget {
@@ -57,6 +68,8 @@ public final class RuneKeyboardView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<HitTarget> hitTargets = new ArrayList<>();
+    private final List<SuggestionTarget> suggestionTargets = new ArrayList<>();
+    private final List<String> suggestions = new ArrayList<>();
     private final RectF languageTarget = new RectF();
     private final boolean debugLogging;
     private final KeyboardEngine engine;
@@ -67,6 +80,7 @@ public final class RuneKeyboardView extends View {
     private Listener listener;
     private LinearGradient backgroundGradient;
     private long lastAxisMoveAt;
+    private boolean suggestionsRecommended;
 
     public RuneKeyboardView(Context context) {
         this(
@@ -168,6 +182,13 @@ public final class RuneKeyboardView extends View {
                     }
 
                     @Override
+                    public void onAcceptSuggestion() {
+                        if (listener != null) {
+                            listener.onAcceptSuggestion();
+                        }
+                    }
+
+                    @Override
                     public void onMinimizedChanged(boolean minimized) {
                         if (listener != null) {
                             listener.onMinimizedChanged(minimized);
@@ -186,6 +207,27 @@ public final class RuneKeyboardView extends View {
 
         setFocusable(true);
         setFocusableInTouchMode(true);
+    }
+
+    public void setSuggestions(List<String> values, boolean recommended) {
+        suggestions.clear();
+        suggestionTargets.clear();
+        if (values != null) {
+            for (String value : values) {
+                if (value != null && !value.isBlank()) {
+                    suggestions.add(value);
+                    if (suggestions.size() == 3) {
+                        break;
+                    }
+                }
+            }
+        }
+        suggestionsRecommended = recommended;
+        invalidate();
+    }
+
+    public void clearSuggestions() {
+        setSuggestions(null, false);
     }
 
     public void setListener(Listener listener) {
@@ -324,6 +366,7 @@ public final class RuneKeyboardView extends View {
     }
 
     private void drawHeader(Canvas canvas) {
+        suggestionTargets.clear();
         KeyboardState state = engine.getState();
         float outer = dp(theme.outerMarginDp);
         float headerHeight = dp(theme.headerHeightDp);
@@ -377,26 +420,30 @@ public final class RuneKeyboardView extends View {
                 outer + dp(30),
                 paint);
 
-        paint.setTypeface(Typeface.DEFAULT_BOLD);
-        paint.setTextAlign(Paint.Align.RIGHT);
-        paint.setColor(theme.accent);
-        paint.setTextSize(dp(10));
-        canvas.drawText(
-                getContext().getString(R.string.header_controller),
-                getWidth() - outer,
-                outer + dp(14),
-                paint);
+        if (suggestions.isEmpty()) {
+            paint.setTypeface(Typeface.DEFAULT_BOLD);
+            paint.setTextAlign(Paint.Align.RIGHT);
+            paint.setColor(theme.accent);
+            paint.setTextSize(dp(10));
+            canvas.drawText(
+                    getContext().getString(R.string.header_controller),
+                    getWidth() - outer,
+                    outer + dp(14),
+                    paint);
 
-        paint.setTypeface(Typeface.DEFAULT);
-        paint.setColor(theme.textSecondary);
-        paint.setTextSize(dp(9));
-        canvas.drawText(
-                getContext().getString(
-                        R.string.header_background,
-                        state.getOpacityPercent()),
-                getWidth() - outer,
-                outer + dp(30),
-                paint);
+            paint.setTypeface(Typeface.DEFAULT);
+            paint.setColor(theme.textSecondary);
+            paint.setTextSize(dp(9));
+            canvas.drawText(
+                    getContext().getString(
+                            R.string.header_background,
+                            state.getOpacityPercent()),
+                    getWidth() - outer,
+                    outer + dp(30),
+                    paint);
+        } else {
+            drawSuggestions(canvas, outer, headerHeight);
+        }
 
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(theme.accent);
@@ -404,6 +451,67 @@ public final class RuneKeyboardView extends View {
         float lineY = outer + headerHeight + dp(2);
         canvas.drawRect(outer, lineY, getWidth() - outer, lineY + dp(1), paint);
         paint.setAlpha(255);
+    }
+
+    private void drawSuggestions(
+            Canvas canvas,
+            float outer,
+            float headerHeight) {
+        int count = Math.min(3, suggestions.size());
+        float left = Math.max(languageTarget.right + dp(10), getWidth() * 0.48f);
+        float right = getWidth() - outer;
+        float gap = dp(5);
+        float width = (right - left - gap * (count - 1)) / count;
+        float top = outer + dp(3);
+        float bottom = outer + headerHeight - dp(3);
+
+        for (int index = 0; index < count; index++) {
+            float chipLeft = left + index * (width + gap);
+            RectF bounds = new RectF(chipLeft, top, chipLeft + width, bottom);
+            String suggestion = suggestions.get(index);
+            suggestionTargets.add(new SuggestionTarget(bounds, suggestion));
+
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(index == 0 && suggestionsRecommended
+                    ? theme.selectedFill
+                    : theme.utilityKeyFill);
+            paint.setAlpha(index == 0 && suggestionsRecommended ? 115 : 210);
+            canvas.drawRoundRect(bounds, dp(8), dp(8), paint);
+            paint.setAlpha(255);
+
+            if (index == 0) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(dp(1));
+                paint.setColor(theme.accent);
+                canvas.drawRoundRect(bounds, dp(8), dp(8), paint);
+            }
+
+            String label = suggestion;
+            if (index == 0) {
+                label += "  " + ControllerKeyNames.nameFor(
+                        controllerMapper.getBindings().getKeyCode(
+                                BindableAction.ACCEPT_SUGGESTION));
+            }
+
+            paint.setStyle(Paint.Style.FILL);
+            paint.setTypeface(index == 0 ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setTextSize(dp(9));
+            paint.setColor(theme.textPrimary);
+            String fitted = fitText(label, Math.max(1f, width - dp(12)));
+            float baseline = bounds.centerY()
+                    - (paint.ascent() + paint.descent()) / 2f;
+            canvas.drawText(fitted, bounds.centerX(), baseline, paint);
+        }
+    }
+
+    private String fitText(String value, float maxWidth) {
+        if (paint.measureText(value) <= maxWidth) {
+            return value;
+        }
+        int count = paint.breakText(value, true, maxWidth, null);
+        int keep = Math.max(1, count - 3);
+        return value.substring(0, Math.min(keep, value.length())) + "...";
     }
 
     private void drawKey(
@@ -647,6 +755,15 @@ public final class RuneKeyboardView extends View {
         if (engine.getState().isMinimized()) {
             applyUpdate(engine.pressSelected());
             return true;
+        }
+
+        for (SuggestionTarget target : suggestionTargets) {
+            if (target.bounds.contains(event.getX(), event.getY())) {
+                if (listener != null) {
+                    listener.onSuggestionSelected(target.suggestion);
+                }
+                return true;
+            }
         }
 
         if (languageTarget.contains(event.getX(), event.getY())) {

@@ -18,6 +18,14 @@
 
     <string name="section_language">LANGUAGE &amp; LAYOUT</string>
     <string name="section_language_subtitle">Choose the typing language and key arrangement</string>
+    <string name="section_typing_assistance">TYPING ASSISTANCE</string>
+    <string name="section_typing_assistance_subtitle">Uses Android system spelling; RuneBoard itself has no Internet permission</string>
+    <string name="suggestions_title">Suggestions</string>
+    <string name="suggestions_subtitle">Show up to three spelling candidates</string>
+    <string name="autocorrect_title">Autocorrect</string>
+    <string name="autocorrect_subtitle">Correct strong typo recommendations on Space</string>
+    <string name="toggle_on">ON</string>
+    <string name="toggle_off">OFF</string>
     <string name="section_appearance">APPEARANCE</string>
     <string name="section_appearance_subtitle">Theme and lower-screen visibility</string>
     <string name="theme_default_title">RuneBoard</string>
@@ -57,6 +65,7 @@
     <string name="binding_word_right">Next word</string>
     <string name="binding_enter">Enter</string>
     <string name="binding_language_next">Next language</string>
+    <string name="binding_accept_suggestion">Accept suggestion</string>
     <string name="binding_minimize">Minimize</string>
     <string name="binding_press">PRESS&#8230;</string>
     <string name="bindings_ready">Tap an action to remap it. Occupied buttons swap automatically.</string>

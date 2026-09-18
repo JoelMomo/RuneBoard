@@ -15,6 +15,7 @@ public final class KeyboardEngine {
         void onMoveCursor(int direction);
         void onMoveWord(int direction);
         void onNextLanguage();
+        void onAcceptSuggestion();
         void onMinimizedChanged(boolean minimized);
         void onBackgroundOpacityChanged(int opacity);
     }
@@ -124,6 +125,9 @@ public final class KeyboardEngine {
                 return Update.NONE;
             case LANGUAGE_NEXT:
                 output.onNextLanguage();
+                return Update.NONE;
+            case ACCEPT_SUGGESTION:
+                output.onAcceptSuggestion();
                 return Update.NONE;
             case TOGGLE_MINIMIZE:
                 return setMinimized(true);

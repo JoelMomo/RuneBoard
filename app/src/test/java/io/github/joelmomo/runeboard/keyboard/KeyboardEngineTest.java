@@ -87,6 +87,7 @@ public final class KeyboardEngineTest {
         assertFalse(engine.shouldCapture(ControllerAction.SHIFT));
         assertFalse(engine.shouldCapture(ControllerAction.CURSOR_LEFT));
         assertFalse(engine.shouldCapture(ControllerAction.CURSOR_RIGHT));
+        assertFalse(engine.shouldCapture(ControllerAction.ACCEPT_SUGGESTION));
 
         assertTrue(engine.shouldCapture(ControllerAction.PRESS_SELECTED));
         assertFalse(engine.shouldCapture(ControllerAction.PRESS_CENTER));
@@ -121,6 +122,17 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void acceptSuggestionActionReachesOutput() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        engine.handle(ControllerAction.ACCEPT_SUGGESTION);
+
+        assertEquals(1, output.suggestionAccepts);
+    }
+
+    @Test
     public void opacityStartsFromConfiguredValueAndNotifiesOutput() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =
@@ -149,6 +161,7 @@ public final class KeyboardEngineTest {
         final List<Boolean> minimizedStates = new ArrayList<>();
         final List<Integer> backgroundOpacities = new ArrayList<>();
         int languageChanges;
+        int suggestionAccepts;
 
         int backspaces;
         int spaces;
@@ -187,6 +200,10 @@ public final class KeyboardEngineTest {
         @Override
         public void onNextLanguage() {
             languageChanges++;
+        }
+        @Override
+        public void onAcceptSuggestion() {
+            suggestionAccepts++;
         }
 
         @Override

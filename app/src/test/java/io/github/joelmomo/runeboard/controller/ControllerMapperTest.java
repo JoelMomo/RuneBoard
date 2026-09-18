@@ -53,6 +53,9 @@ public final class ControllerMapperTest {
                 ControllerAction.LANGUAGE_NEXT,
                 mapper.fromKeyCode(KeyEvent.KEYCODE_BUTTON_THUMBL));
         assertEquals(
+                ControllerAction.ACCEPT_SUGGESTION,
+                mapper.fromKeyCode(KeyEvent.KEYCODE_BUTTON_THUMBR));
+        assertEquals(
                 ControllerAction.TOGGLE_MINIMIZE,
                 mapper.fromKeyCode(KeyEvent.KEYCODE_BUTTON_SELECT));
     }
