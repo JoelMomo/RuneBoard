@@ -4,16 +4,7 @@
 
 RuneBoard is an experimental dual-screen Android keyboard designed primarily for the **AYN Thor**.
 
-The project is currently in **Prototype 0**. The core Thor-specific architecture has been validated on physical hardware; visual/product development comes next.
-
-## Prototype goals
-
-The first prototype must prove four things on real hardware:
-
-1. RuneBoard works as a normal Android IME and can be pinned by the Thor to the lower display.
-2. The keyboard can be operated with the Thor's physical controls as well as touch.
-3. The keyboard surface can become translucent so the lower-screen app remains visible.
-4. RuneBoard can collapse into a compact bar and restore without disabling the IME.
+The project is currently in **Prototype 0**. The Thor-specific architecture has been validated on physical hardware and is now being refactored into a modular product foundation.
 
 ## Prototype controls
 
@@ -21,74 +12,124 @@ The first prototype must prove four things on real hardware:
 - A: press selected key
 - B: backspace
 - X: space
-- Y: shift
+- Y: Shift -> Caps Lock -> off
 - L1 / R1: move text cursor left / right
+- L2 / R2: previous / next word
 - Start: enter
 - Select: minimize
 - Touch: direct key input
 
-The DS-style D-pad/button mappings are validated on AYN Thor hardware. Analog-stick navigation remains experimental.
+The DS-style controls are validated on AYN Thor hardware. Ten editing actions can be remapped; D-pad navigation remains fixed. Analog-stick navigation remains experimental.
 
 ## Current implementation
 
-Prototype 0 already contains:
+Prototype 0 contains:
 
 - a real Android `InputMethodService`;
 - a touch QWERTY keyboard with an always-visible number row;
-- validated D-pad/button navigation through a narrowly scoped accessibility service;
-- L1/R1 text-cursor movement through the active `InputConnection`;
+- a narrowly scoped accessibility service for physical controller buttons;
+- a separate keyboard model, state engine and controller mapper;
+- geometry-aware D-pad navigation across rows with different key widths;
+- L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
+- persistent physical-button remapping with automatic conflict swapping;
+- one-shot Shift plus persistent Caps Lock;
+- action keys show the currently mapped physical button;
 - four keyboard opacity levels;
-- compact/minimized mode that the Thor firmware resizes correctly;
-- a setup/test activity with shortcuts for IME and Physical Controls settings;
-- a Thor hardware test plan;
-- GitHub Actions CI that assembles a debug APK successfully.
+- persistent background opacity across IME recreation;
+- built-in theme profiles: Default, OLED Black and Transparent;
+- custom settings UI with live theme and background controls;
+- compact/minimized mode;
+- a setup/test activity;
+- unit tests for state, controller mappings and minimized capture policy;
+- GitHub Actions running unit tests, lint and APK assembly;
+- a dedicated Android emulator for non-Thor regression testing.
 
-The Android project has no third-party runtime dependencies at this stage.
+There are no third-party runtime dependencies.
 
-## Scope
+## Architecture
 
-This prototype intentionally does **not** include swipe typing, advanced prediction, cloud services, telemetry, persistent customization, or the final visual design.
+The product code is split into independent layers:
 
-RuneBoard is being designed Thor-first. General Android compatibility can be evaluated later.
+- `keyboard/`: layout, key model, state and keyboard engine;
+- `controller/`: controller actions and Android key-code mapping;
+- `theme/`: visual profiles and supported background-opacity levels;
+- `settings/`: persistent user preferences;
+- `RuneKeyboardView`: rendering, touch hit testing and motion-event adapter;
+- `RuneBoardImeService`: Android IME and `InputConnection` adapter;
+- `RuneBoardControlService`: physical-button filtering while RuneBoard is active.
+
+See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-GitHub Actions builds a debug APK on each push and pull request.
+Current development version: **0.0.8-prototype**
 
-Current prototype target: **Android 13+**.
+Current minimum Android version: **Android 13 / API 33**.
 
-The latest successful workflow exposes the APK as the `RuneBoard-prototype-debug` artifact.
+GitHub Actions runs:
+
+1. unit tests;
+2. Android lint;
+3. debug APK assembly.
+
+The successful workflow exposes `RuneBoard-prototype-debug` as an artifact.
 
 ## Hardware validation
 
-Prototype 0 has been tested on an AYN Thor running Android 13 / firmware `.377`.
+Prototype 0 was tested on an AYN Thor running Android 13 / firmware `.377`.
 
 Validated on the physical device:
 
-- IME pinned by AYN to the lower display while typing into the upper display;
-- direct touch input on the lower display;
-- D-pad plus A/B/X/Y controller typing;
-- L1/R1 text-cursor movement;
-- minimize/restore: approximately `1240×595` px full and `1240×134` px compact;
-- opacity-state switching while the IME remains active.
+- AYN pins RuneBoard to the lower display while the editor remains on the upper display;
+- touch input on the lower display writes into the upper-display editor;
+- D-pad and A/B/X/Y controller typing;
+- L1/R1 text-cursor movement and L2/R2 word navigation;
+- live physical-button remapping, including conflict swapping and reset;
+- Shift/Caps state cycling and compact-mode Start pass-through;
+- compact minimize/restore with controller pass-through;
+- opacity-state switching.
 
-The lower panel is `1080×1240` native and `1240×1080` in landscape.
+Measured lower-display keyboard sizes during the prototype:
+
+- full: approximately `1240x595` px;
+- compact: approximately `1240x134` px.
+
+The lower panel is `1080x1240` native and `1240x1080` in landscape.
 
 See:
 
 - `docs/PROTOTYPE_0_TEST_PLAN.md`
 - `docs/PROTOTYPE_0_RESULTS.md`
-- GitHub issue **#1 — Prototype 0: validate Thor hardware gates**
+- `docs/EMULATOR_TESTING.md`
+- `docs/CONTROLLER_MAPPING.md`
+
+## Emulator limitation
+
+A dedicated Android 15 emulator can simulate a second `1240x1080` display and RuneBoard activities can run on it.
+
+Stock Android still places the IME on display 0 even when the focused editor is on display 2. The emulator therefore cannot reproduce AYN's special cross-display IME policy.
+
+Thor-specific display placement remains a real-hardware test.
+
+## Scope
+
+Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts or telemetry. Dictionary-backed suggestions and autocorrection belong to the next product phase.
+
+RuneBoard is Thor-first. General Android support can be evaluated later.
 
 ## Status
 
-**Build and lint: passing.**
+**Build, unit tests and lint: passing.**
 
 **Core Thor architecture: validated.**
 
-Transparency is functional but still needs final visual tuning on-panel. Analog-stick navigation is not yet validated.
+**RuneBoard Default visual system: implemented in emulator.**
 
-Experimental — not ready for daily use.
+**Physical controller remapping, Shift/Caps and compact capture policy: validated on the real Thor.**
+
+**Final visual tuning on the physical Thor panel: pending.**
+
+Experimental â€” not ready for daily use.
 
 ## Contributing
 

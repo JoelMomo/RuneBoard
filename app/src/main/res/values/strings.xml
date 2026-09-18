@@ -3,11 +3,63 @@
     <string name="ime_name">RuneBoard Keyboard</string>
     <string name="control_service_name">RuneBoard Physical Controls</string>
     <string name="control_service_description">Lets RuneBoard use the AYN Thor physical buttons while the keyboard is visible.</string>
-    <string name="setup_description">Prototype 0\n\nEnable RuneBoard, select it as the active keyboard, and enable Physical Controls for D-pad and controller input.</string>
-    <string name="enable_keyboard">1. Enable RuneBoard</string>
-    <string name="choose_keyboard">2. Choose active keyboard</string>
-    <string name="enable_physical_controls">3. Enable Physical Controls</string>
-    <string name="physical_controls_note">RuneBoard only filters controller buttons while its keyboard is visible. It does not read screen content.</string>
+
+    <string name="settings_subtitle">Dual-screen keyboard built for AYN Thor</string>
+    <string name="prototype_badge">PROTOTYPE</string>
+
+    <string name="section_setup">SETUP</string>
+    <string name="section_setup_subtitle">Android integration and physical controls</string>
+    <string name="enable_keyboard_title">Enable keyboard</string>
+    <string name="enable_keyboard_subtitle">Open Android input settings</string>
+    <string name="choose_keyboard_title">Select RuneBoard</string>
+    <string name="choose_keyboard_subtitle">Choose the active input method</string>
+    <string name="physical_controls_title">Physical controls</string>
+    <string name="physical_controls_subtitle">Enable D-pad and controller buttons</string>
+
+    <string name="section_appearance">APPEARANCE</string>
+    <string name="section_appearance_subtitle">Theme and lower-screen visibility</string>
+    <string name="theme_default_title">RuneBoard</string>
+    <string name="theme_default_subtitle">Balanced dark</string>
+    <string name="theme_oled_title">OLED Black</string>
+    <string name="theme_oled_subtitle">Pure black</string>
+    <string name="theme_transparent_title">Transparent</string>
+    <string name="theme_transparent_subtitle">See the app below</string>
+    <string name="background_title">Background</string>
+    <string name="background_subtitle" formatted="false">Keys remain readable even at 0%</string>
+
+    <string name="section_test">TEST</string>
+    <string name="section_test_subtitle">Open RuneBoard here without leaving settings</string>
     <string name="test_hint">Tap here and type with RuneBoard</string>
     <string name="more_apps_support">More apps &amp; support</string>
+
+    <string name="key_shift">SHIFT</string>
+    <string name="key_caps">CAPS</string>
+    <string name="key_space">SPACE</string>
+    <string name="key_backspace">BACK</string>
+    <string name="key_enter">ENTER</string>
+    <string name="key_opacity">BG %1$d%%</string>
+    <string name="key_minimize">MIN</string>
+    <string name="header_title">RUNEBOARD</string>
+    <string name="header_layout">QWERTY</string>
+    <string name="header_controller">D-PAD</string>
+    <string name="header_background">BG %1$d%%</string>
+    <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
+
+    <string name="section_controls">PHYSICAL MAPPING</string>
+    <string name="section_controls_subtitle">Tap an action, then press the controller button to assign</string>
+    <string name="binding_confirm">Confirm</string>
+    <string name="binding_backspace">Backspace</string>
+    <string name="binding_space">Space</string>
+    <string name="binding_shift">Shift</string>
+    <string name="binding_cursor_left">Cursor left</string>
+    <string name="binding_cursor_right">Cursor right</string>
+    <string name="binding_word_left">Previous word</string>
+    <string name="binding_word_right">Next word</string>
+    <string name="binding_enter">Enter</string>
+    <string name="binding_minimize">Minimize</string>
+    <string name="binding_press">PRESS&#8230;</string>
+    <string name="bindings_ready">Tap an action to remap it. Occupied buttons swap automatically.</string>
+    <string name="bindings_waiting">Press a controller button for %1$s. Back cancels.</string>
+    <string name="bindings_reset">RESET CONTROLS</string>
+    <string name="bindings_dpad_fixed">D-pad navigation is fixed and cannot be remapped.</string>
 </resources>

@@ -1,45 +1,173 @@
-# RuneBoard architecture — Prototype 0
+# RuneBoard architecture - Prototype 0.0.8
 
 ## Principle
 
-RuneBoard is a normal Android IME. AYN Thor firmware remains responsible for pinning the IME to the lower display.
+RuneBoard is a standard Android IME. AYN Thor firmware is responsible for placing the IME on the lower display.
 
-## Components
+The application separates keyboard behavior from Android rendering so the product UI can evolve without destabilizing text input or physical controls.
 
-### `MainActivity`
+## Layers
 
-Small setup/test screen used to enable RuneBoard, open the input-method picker, and provide a local text field.
+### keyboard/KeyboardKey
 
-### `RuneBoardImeService`
+Immutable description of one key:
 
-Android `InputMethodService` implementation. It owns the active `InputConnection` and converts RuneBoard actions into text, deletion, editor actions, and cursor movement.
+- key type;
+- optional text value;
+- relative width/weight.
 
-### `RuneKeyboardView`
+### keyboard/KeyboardLayout
 
-Dependency-free custom View responsible for:
+Immutable collection of keyboard rows and keys.
 
-- drawing the prototype keyboard;
-- touch hit-testing;
-- keyboard selection;
-- physical key mapping;
-- joystick / hat-axis navigation;
-- opacity switching;
-- compact/minimized state.
+The view does not own the layout definition.
 
-## Deliberate Prototype 0 constraints
+### keyboard/KeyboardLayouts
 
-- Android 13+ / Thor-first.
-- Java/platform APIs only.
-- No prediction engine yet.
-- No persistent settings yet.
-- No final layout or visual system yet.
-- Physical mappings are provisional until captured on real Thor hardware.
+Factory for built-in layouts.
 
-## Risk gates
+Prototype 0 currently exposes QWERTY with an always-visible number row.
 
-The architecture is accepted only after real-device validation of:
+### keyboard/KeyboardState
 
-1. lower-display IME pinning;
-2. controller input reaching the IME reliably;
-3. translucency over the lower-screen application;
-4. IME window resizing cleanly between full and compact states.
+Owns mutable keyboard state:
+
+- selected row/column;
+- shift mode (off / one-shot / Caps Lock);
+- opacity;
+- minimized state.
+
+Vertical D-pad movement follows the physical center of weighted keys rather than assuming equal column counts.
+
+### keyboard/KeyboardEngine
+
+Pure keyboard behavior.
+
+It receives abstract `ControllerAction` values or touch selection changes and produces output callbacks:
+
+- commit text;
+- backspace;
+- space;
+- enter;
+- cursor movement;
+- word movement;
+- minimize/restore.
+
+This layer has no Android View dependency and is unit tested.
+
+### controller/ControllerAction
+
+Platform-independent actions such as:
+
+- MOVE_LEFT;
+- PRESS_SELECTED;
+- BACKSPACE;
+- CURSOR_RIGHT;
+- WORD_LEFT / WORD_RIGHT;
+- TOGGLE_MINIMIZE.
+
+### controller/ControllerMapper
+
+Maps Android `KeyEvent` codes to `ControllerAction`. D-pad navigation remains fixed; editing actions resolve through persisted `ControllerBindings`.
+
+`BUTTON_A` and `DPAD_CENTER` intentionally map to different actions. Some Android devices synthesize DPAD_CENTER after other gamepad buttons; keeping them separate prevents accidental restore while RuneBoard is minimized.
+
+### controller/ControllerBindings
+
+Owns the remappable A/B/X/Y, L1/R1, L2/R2, Start/Select and L3/R3 assignments.
+
+Assigning an occupied button swaps the two actions, guaranteeing unique and reachable bindings. Repeatability follows the resolved action, so a remapped Backspace button still repeats.
+
+### RuneKeyboardView
+
+Custom Android View responsible for:
+
+- rendering;
+- cached key geometry;
+- touch hit testing;
+- converting joystick/hat motion into controller actions;
+- applying visual/layout invalidations.
+
+Keyboard logic no longer lives in the renderer.
+
+### RuneBoardImeService
+
+Android `InputMethodService` adapter.
+
+It owns the active `InputConnection` and converts engine output into:
+
+- text commits;
+- deletion;
+- editor actions;
+- cursor selection changes;
+- previous/next word selection through `WordNavigator`.
+
+### RuneBoardControlService
+
+Accessibility service used only for physical key filtering.
+
+It does not retrieve window content.
+
+While RuneBoard is expanded, mapped controller buttons are captured for keyboard operation.
+
+While RuneBoard is minimized, navigation/editing buttons are allowed to pass through. Only explicit restore actions remain captured.
+
+### MainActivity
+
+Setup and local test screen:
+
+- enable RuneBoard;
+- select the active IME;
+- open Physical Controls accessibility settings;
+- select visual themes and background opacity;
+- remap physical controller actions;
+- reset mappings to the Thor defaults;
+- test text field.
+
+## Rendering
+
+Key rectangles are calculated when the View size/layout changes and cached for drawing and touch hit testing.
+
+Normal redraws for selection, shift or opacity do not allocate new key geometry.
+
+## Validation
+
+### Unit tests
+
+Current JVM tests cover:
+
+- initial selection;
+- horizontal wrapping;
+- weighted vertical navigation;
+- opacity cycling;
+- minimized movement policy;
+- one-shot shift;
+- text/editing output callbacks;
+- minimize/restore capture policy;
+- controller mapping and occupied-button swapping;
+- repeatability after remapping;
+- word-boundary navigation;
+- BUTTON_A vs DPAD_CENTER behavior.
+
+### Emulator
+
+Dedicated AVD:
+
+- Android 15 / API 35;
+- 1240x1080;
+- 320 dpi.
+
+Useful for general IME/controller regressions.
+
+A simulated secondary display works for Activities, but stock Android keeps the IME on display 0. It cannot reproduce AYN's lower-display IME policy.
+
+### AYN Thor
+
+Real-hardware validation remains authoritative for:
+
+- cross-display IME placement;
+- physical controller behavior specific to Thor firmware;
+- lower-panel transparency;
+- final minimize/restore behavior.
+
+The Thor must only be used after explicit user permission.
