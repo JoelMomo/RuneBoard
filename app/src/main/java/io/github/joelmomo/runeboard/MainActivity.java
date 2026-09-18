@@ -3,6 +3,7 @@ package io.github.joelmomo.runeboard;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -80,6 +81,16 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams editParams = matchWidth();
         editParams.topMargin = dp(20);
         root.addView(testField, editParams);
+
+        Button moreApps = new Button(this);
+        moreApps.setText(R.string.more_apps_support);
+        moreApps.setOnClickListener(v ->
+                startActivity(new Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://joelmomo.github.io/#support"))));
+        LinearLayout.LayoutParams moreAppsParams = matchWidth();
+        moreAppsParams.topMargin = dp(16);
+        root.addView(moreApps, moreAppsParams);
 
         setContentView(root);
     }
