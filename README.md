@@ -1,5 +1,7 @@
 # RuneBoard
 
+[![Android CI](https://github.com/JoelMomo/RuneBoard/actions/workflows/android.yml/badge.svg)](https://github.com/JoelMomo/RuneBoard/actions/workflows/android.yml) [![Apps & tools](https://img.shields.io/badge/Apps%20%26%20tools-Browse-6F8F72?style=flat-square)](https://joelmomo.github.io/)
+
 RuneBoard is an experimental dual-screen Android keyboard designed primarily for the **AYN Thor**.
 
 The project is currently in **Prototype 0**. The core Thor-specific architecture has been validated on physical hardware; visual/product development comes next.
