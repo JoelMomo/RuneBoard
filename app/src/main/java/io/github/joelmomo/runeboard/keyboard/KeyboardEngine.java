@@ -233,7 +233,7 @@ public final class KeyboardEngine {
                 output.onBackspace();
                 return Update.NONE;
             case ENTER:
-                output.onEnter();
+                output.onText("\n");
                 return Update.NONE;
             case OPACITY:
                 state.cycleOpacity();

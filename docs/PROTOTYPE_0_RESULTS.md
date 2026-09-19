@@ -17,6 +17,8 @@ AYN settings already pin RuneBoard to the lower display. Android reports RuneBoa
 
 Touch input on the lower display successfully inserts text into the editor on the upper display.
 
+RuneBoard 0.17.2 also requests its input view when Android starts a valid text connection. This was validated outside RuneBoard itself with Chrome on the upper display: before focus the IME was hidden; focusing the browser address field triggered `onStartInput`, assigned the IME token to display 4 and produced a visible, drawn RuneBoard surface on the lower display.
+
 ## Gate B — physical controls
 
 **PASS for the DS-style control scheme.**
@@ -35,7 +37,11 @@ Validated:
 
 L1/R1 use `InputConnection.setSelection()` because synthetic DPAD cursor events were not reliable on the Thor.
 
-Left-stick navigation is now validated on the physical Thor. While the RuneBoard IME view is active on display 4, Android delivers the Xbox Wireless Controller's `ABS_X` / `ABS_Y` axes through the IME generic-motion path. Horizontal and vertical axis events moved the keyboard selection and A committed the expected keys. The accessibility service remains key-filter-only; it is not used as the analog-axis source.
+Left-stick navigation is now validated on the physical Thor. While the RuneBoard IME view is active on display 4, Android delivers the Xbox Wireless Controller's `ABS_X` / `ABS_Y` axes through the IME generic-motion path.
+
+Physical testing found that Thor/Android also emits a matching synthetic `KEYCODE_DPAD_*` approximately 1 ms after analog deflection. RuneBoard now deduplicates that compatibility event. Controlled tests on the real controller input node verified: moderate analog deflection = 0 moves; held analog with jitter = 1 move; two deliberate flicks after a stable center = 2 moves; short center bounce = 1 move; all four cardinal directions work; diagonal input chooses one dominant axis. Physical D-pad tap still moves once and D-pad hold begins autorepeat after the initial delay.
+
+The accessibility service remains key-filter-only; it is not used as the analog-axis source.
 
 ## Gate C — transparency
 

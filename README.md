@@ -21,7 +21,7 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - R3: accept primary suggestion
 - Touch: direct key input
 
-The DS-style controls are validated on AYN Thor hardware. Twelve editing actions can be remapped; D-pad navigation remains fixed. Left-stick keyboard navigation is also validated on the Thor while the IME view is active.
+The DS-style controls are validated on AYN Thor hardware. Twelve editing actions can be remapped; D-pad navigation remains fixed. Left-stick keyboard navigation is also validated on the Thor while the IME view is active: each deliberate stick gesture advances one key, while D-pad hold uses delayed autorepeat.
 
 ## Current implementation
 
@@ -35,13 +35,14 @@ Prototype 0 contains:
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
 - hold-to-repeat for D-pad navigation, Backspace, cursor movement and word movement, with touch autorepeat on repeatable editing keys;
 - controller-first EDIT mode with Select All, Cut, Copy, Paste, Undo, Redo, Home, End, cursor/word navigation and character/word selection extension;
-- context-aware Enter key behavior and labels for Go, Search, Send, Next, Done, Previous and custom Android editor actions;
+- a dedicated on-screen ↵ key that always inserts a newline, while the remappable physical Enter action (Start by default) keeps Android's contextual Go/Search/Send/Next/Done/Previous behavior;
 - field-aware capitalization: sentence starts for prose, word starts for names/addresses, explicit Android cap flags when present, and no automatic caps for email/URL/password/non-text editors;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
 - quick language cycling from L3 or the keyboard header;
 - ABC/SYM mode switching without closing the IME;
 - direct comma/period keys plus language-specific accent and punctuation pages;
 - lower-display geometry that fills Android's available IME bounds without double-applying the navigation-bar inset;
+- automatic IME presentation when an external text field gains focus, including a Thor-specific delayed show pass for the secondary display;
 - system spell-check suggestions with up to three header candidates;
 - touch or remappable R3 acceptance of the primary suggestion;
 - conservative autocorrect on Space for strong typo recommendations;
@@ -81,7 +82,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.17.1-prototype**
+Current development version: **0.17.2-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -101,7 +102,8 @@ Validated on the physical device:
 
 - AYN pins RuneBoard to the lower display while the editor remains on the upper display;
 - touch input on the lower display writes into the upper-display editor;
-- D-pad and A/B/X/Y controller typing;
+- D-pad and A/B/X/Y controller typing, including delayed D-pad autorepeat while held;
+- one-step analog-stick navigation with Android's synthetic D-pad compatibility events deduplicated;
 - L1/R1 text-cursor movement and L2/R2 word navigation;
 - EN/ES/FR/RU layout switching, persisted across IME recreation;
 - L3 quick-cycle language switching;

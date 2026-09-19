@@ -37,15 +37,15 @@ public final class LanguageLayoutTest {
         assertEquals(12, layout.getRow(2).size());
         assertEquals("\u0439", layout.getKey(2, 0).getText());
         assertEquals("\u044a", layout.getKey(2, 11).getText());
-        assertEquals("\u044f", layout.getKey(4, 0).getText());
+        assertEquals("\u044f", layout.getKey(4, 1).getText());
     }
 
     @Test
     public void alphabetLayoutsExposeCommaAndPeriod() {
         KeyboardLayout layout = KeyboardLayouts.englishQwerty();
 
-        assertEquals(",", layout.getKey(5, 2).getText());
-        assertEquals(".", layout.getKey(5, 4).getText());
+        assertEquals(",", layout.getKey(5, 1).getText());
+        assertEquals(".", layout.getKey(5, 3).getText());
     }
 
     @Test

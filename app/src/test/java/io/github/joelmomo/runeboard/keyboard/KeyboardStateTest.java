@@ -45,8 +45,9 @@ public final class KeyboardStateTest {
 
         assertTrue(state.move(0, 1));
         assertEquals(4, state.getSelectedRow());
-        assertEquals(6, state.getSelectedCol());
-        assertEquals("m", state.getSelectedKey().getText());
+        assertEquals(8, state.getSelectedCol());
+        assertEquals(KeyboardKey.Type.BACKSPACE,
+                state.getSelectedKey().getType());
     }
 
     @Test
@@ -131,7 +132,7 @@ public final class KeyboardStateTest {
                 255);
 
         state.advanceShiftMode();
-        state.select(5, 1);
+        state.select(5, 0);
         assertTrue(state.toggleSymbols());
 
         assertTrue(state.isSymbols());
@@ -144,7 +145,7 @@ public final class KeyboardStateTest {
 
         assertTrue(state.toggleSymbols());
         assertFalse(state.isSymbols());
-        assertEquals(1, state.getSelectedCol());
+        assertEquals(0, state.getSelectedCol());
         assertEquals(KeyboardKey.Type.MODE,
                 state.getSelectedKey().getType());
         assertEquals("q", state.getLayout().getKey(2, 0).getText());

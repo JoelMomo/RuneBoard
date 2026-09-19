@@ -142,35 +142,49 @@ public final class KeyboardLayouts {
             float middleInset,
             float bottomInset) {
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.58f));
-        rows.add(row(textKeys("1234567890"), 0.35f, 0.35f, 0.68f));
+        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.82f));
+        rows.add(row(textKeys("1234567890"), 0.35f, 0.35f, 1f));
         rows.add(row(textKeys(top), topInset, topInset, 1f));
         rows.add(row(textKeys(middle), middleInset, middleInset, 1f));
-        rows.add(row(textKeys(bottom), bottomInset, bottomInset, 1f));
+        rows.add(row(alphabetBottomKeys(bottom), 0f, 0f, 1f));
         rows.add(row(alphabetActionKeys(), 0f, 0f, 0.72f));
         return new KeyboardLayout(rows);
     }
 
     private static KeyboardLayout symbolLayout(String extras) {
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.58f));
-        rows.add(row(literalKeys("1234567890"), 0.35f, 0.35f, 0.68f));
+        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.82f));
+        rows.add(row(literalKeys("1234567890"), 0.35f, 0.35f, 1f));
         rows.add(row(literalKeys(COMMON_SYMBOLS_TOP), 0f, 0f, 1f));
         rows.add(row(literalKeys(extras), 0f, 0f, 1f));
-        rows.add(row(literalKeys(COMMON_SYMBOLS_BOTTOM), 0f, 0f, 1f));
+        rows.add(row(symbolBottomKeys(), 0f, 0f, 1f));
         rows.add(row(symbolActionKeys(), 0f, 0f, 0.72f));
         return new KeyboardLayout(rows);
     }
 
+    private static List<KeyboardKey> alphabetBottomKeys(
+            String characters) {
+        List<KeyboardKey> keys = new ArrayList<>();
+        keys.add(KeyboardKey.action(KeyboardKey.Type.SHIFT, 1.2f));
+        keys.addAll(textKeys(characters));
+        keys.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.3f));
+        return keys;
+    }
+
+    private static List<KeyboardKey> symbolBottomKeys() {
+        List<KeyboardKey> keys = new ArrayList<>(
+                literalKeys(COMMON_SYMBOLS_BOTTOM));
+        keys.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.3f));
+        return keys;
+    }
+
     private static List<KeyboardKey> alphabetActionKeys() {
         List<KeyboardKey> actions = new ArrayList<>();
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SHIFT, 1.05f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 0.95f));
-        actions.add(KeyboardKey.text(",", 0.8f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 1.9f));
-        actions.add(KeyboardKey.text(".", 0.8f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.2f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.2f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1.15f));
+        actions.add(KeyboardKey.text(",", 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 4.4f));
+        actions.add(KeyboardKey.text(".", 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.45f));
         return actions;
     }
 
@@ -189,12 +203,11 @@ public final class KeyboardLayouts {
 
     private static List<KeyboardKey> symbolActionKeys() {
         List<KeyboardKey> actions = new ArrayList<>();
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1f));
-        actions.add(KeyboardKey.text(",", 0.85f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 2f));
-        actions.add(KeyboardKey.text(".", 0.85f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.25f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.25f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1.15f));
+        actions.add(KeyboardKey.text(",", 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 4.4f));
+        actions.add(KeyboardKey.text(".", 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.45f));
         return actions;
     }
 

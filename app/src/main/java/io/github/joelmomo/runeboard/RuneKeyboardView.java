@@ -21,6 +21,7 @@ import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
+import io.github.joelmomo.runeboard.controller.AxisNavigationPolicy;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
@@ -80,12 +81,13 @@ public final class RuneKeyboardView extends View {
     private final KeyboardEngine engine;
     private final KeyboardTheme theme;
     private final ControllerMapper controllerMapper;
+    private final AxisNavigationPolicy axisNavigationPolicy =
+            new AxisNavigationPolicy();
     private final KeyboardProfile profile;
 
     private EditorActionSpec editorAction = EditorActionSpec.enter();
     private Listener listener;
     private LinearGradient backgroundGradient;
-    private long lastAxisMoveAt;
     private boolean suggestionsRecommended;
     private final Runnable touchRepeatRunnable;
     private final RectF touchRepeatBounds = new RectF();
@@ -346,9 +348,13 @@ public final class RuneKeyboardView extends View {
                 outer + headerHeight);
         float contentTop = outer + headerHeight + gap;
         float rowGaps = gap * (layout.getRowCount() - 1);
+        // Keep the utility row at the top, then shift the typing block
+        // downward by exactly the old bottom margin. This preserves key
+        // heights while making the thumb row finish flush with the bottom.
+        float typingBlockOffset = outer;
         float availableHeight = Math.max(
                 1f,
-                height - contentTop - outer - rowGaps);
+                height - contentTop - typingBlockOffset - rowGaps);
         float heightUnit =
                 availableHeight / layout.getTotalHeightWeight();
 
@@ -375,6 +381,9 @@ public final class RuneKeyboardView extends View {
             }
 
             top += rowHeight + gap;
+            if (rowIndex == 0 && layout.getRowCount() > 1) {
+                top += typingBlockOffset;
+            }
         }
 
     }
@@ -644,7 +653,11 @@ public final class RuneKeyboardView extends View {
                         : theme.textPrimary);
 
         float textSize;
-        if (key.getType() != KeyboardKey.Type.TEXT) {
+        if (key.getType() == KeyboardKey.Type.BACKSPACE) {
+            textSize = dp(27);
+        } else if (key.getType() == KeyboardKey.Type.ENTER) {
+            textSize = dp(22);
+        } else if (key.getType() != KeyboardKey.Type.TEXT) {
             textSize = dp(11);
         } else if (row == 0) {
             textSize = dp(15);
@@ -749,9 +762,9 @@ public final class RuneKeyboardView extends View {
             case SPACE:
                 return getContext().getString(R.string.key_space);
             case BACKSPACE:
-                return getContext().getString(R.string.key_backspace);
+                return "⌫";
             case ENTER:
-                return displayEnterLabel();
+                return "↵";
             case OPACITY:
                 return getContext().getString(
                         R.string.key_opacity,
@@ -760,29 +773,6 @@ public final class RuneKeyboardView extends View {
                 return getContext().getString(R.string.key_minimize);
             default:
                 return "";
-        }
-    }
-
-    private String displayEnterLabel() {
-        switch (editorAction.kind()) {
-            case GO:
-                return getContext().getString(R.string.key_go);
-            case SEARCH:
-                return getContext().getString(R.string.key_search);
-            case SEND:
-                return getContext().getString(R.string.key_send);
-            case NEXT:
-                return getContext().getString(R.string.key_next);
-            case DONE:
-                return getContext().getString(R.string.key_done);
-            case PREVIOUS:
-                return getContext().getString(R.string.key_previous);
-            case CUSTOM:
-                return editorAction.customLabel()
-                        .toUpperCase(profile.locale);
-            case ENTER:
-            default:
-                return getContext().getString(R.string.key_enter);
         }
     }
 
@@ -957,6 +947,7 @@ public final class RuneKeyboardView extends View {
     @Override
     protected void onDetachedFromWindow() {
         cancelTouchRepeat();
+        axisNavigationPolicy.reset();
         super.onDetachedFromWindow();
     }
 
@@ -984,6 +975,18 @@ public final class RuneKeyboardView extends View {
             return true;
         }
         return super.onGenericMotionEvent(event);
+    }
+
+    public boolean shouldSuppressSyntheticDpad(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+        if (keyCode != KeyEvent.KEYCODE_DPAD_LEFT
+                && keyCode != KeyEvent.KEYCODE_DPAD_RIGHT
+                && keyCode != KeyEvent.KEYCODE_DPAD_UP
+                && keyCode != KeyEvent.KEYCODE_DPAD_DOWN) {
+            return false;
+        }
+        return axisNavigationPolicy.shouldSuppressSyntheticDpad(
+                event.getEventTime());
     }
 
     public boolean handleKeyCode(int keyCode) {
@@ -1047,36 +1050,26 @@ public final class RuneKeyboardView extends View {
             return false;
         }
 
-        long now = event.getEventTime();
-        if (now - lastAxisMoveAt < 140L) {
-            return true;
-        }
+        float x = event.getAxisValue(MotionEvent.AXIS_X);
+        float y = event.getAxisValue(MotionEvent.AXIS_Y);
+        ControllerAction action = axisNavigationPolicy.onSample(
+                x,
+                y,
+                event.getEventTime());
 
-        float x = event.getAxisValue(MotionEvent.AXIS_HAT_X);
-        float y = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
-
-        if (Math.abs(x) < 0.55f && Math.abs(y) < 0.55f) {
-            x = event.getAxisValue(MotionEvent.AXIS_X);
-            y = event.getAxisValue(MotionEvent.AXIS_Y);
-        }
-
-        if (Math.abs(x) < 0.55f && Math.abs(y) < 0.55f) {
+        if (action == null) {
             return false;
         }
 
-        ControllerAction action;
-        if (Math.abs(x) >= Math.abs(y)) {
-            action = x < 0
-                    ? ControllerAction.MOVE_LEFT
-                    : ControllerAction.MOVE_RIGHT;
-        } else {
-            action = y < 0
-                    ? ControllerAction.MOVE_UP
-                    : ControllerAction.MOVE_DOWN;
-        }
-
         applyUpdate(engine.handle(action));
-        lastAxisMoveAt = now;
+        if (debugLogging) {
+            KeyboardState state = engine.getState();
+            Log.d(TAG, "axisSelection x=" + x
+                    + " y=" + y
+                    + " row=" + state.getSelectedRow()
+                    + " col=" + state.getSelectedCol()
+                    + " type=" + state.getSelectedKey().getType());
+        }
         return true;
     }
 

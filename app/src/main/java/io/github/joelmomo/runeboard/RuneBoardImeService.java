@@ -2,7 +2,10 @@ package io.github.joelmomo.runeboard;
 
 import android.content.pm.ApplicationInfo;
 import android.inputmethodservice.InputMethodService;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -145,6 +148,46 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     @Override
+    public boolean onEvaluateInputViewShown() {
+        super.onEvaluateInputViewShown();
+        // RuneBoard is intentionally a software IME even though the Thor
+        // exposes physical controller/keyboard capabilities.
+        return true;
+    }
+
+    @Override
+    public void onStartInput(EditorInfo info, boolean restarting) {
+        super.onStartInput(info, restarting);
+        setExtractViewShown(false);
+
+        if (info == null || info.inputType == InputType.TYPE_NULL) {
+            return;
+        }
+
+        if (debugLogging) {
+            Log.d(TAG, "autoShow inputType=" + info.inputType
+                    + " restarting=" + restarting);
+        }
+
+        // First ask Android to show the IME normally. The Thor can leave
+        // a secondary-display IME stuck in READY_TO_SHOW while its display
+        // token/insets animation is still being assigned, so perform one
+        // delayed showWindow pass after that binding has settled.
+        requestShowSelf(0);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (getCurrentInputConnection() == null) {
+                return;
+            }
+            showWindow(true);
+            setExtractViewShown(false);
+            if (keyboardView != null) {
+                keyboardView.requestLayout();
+                keyboardView.invalidate();
+            }
+        }, 140L);
+    }
+
+    @Override
     public void onWindowShown() {
         super.onWindowShown();
         setExtractViewShown(false);
@@ -198,6 +241,14 @@ public final class RuneBoardImeService extends InputMethodService
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyboardView != null
+                && keyboardView.shouldSuppressSyntheticDpad(event)) {
+            if (debugLogging) {
+                Log.d(TAG, "suppressedSyntheticDpad keyCode=" + keyCode);
+            }
+            return true;
+        }
+
+        if (keyboardView != null
                 && keyboardView.shouldCaptureKeyCode(keyCode)) {
             if (event.getRepeatCount() == 0
                     || keyboardView.isRepeatableKeyCode(keyCode)) {
@@ -206,6 +257,15 @@ public final class RuneBoardImeService extends InputMethodService
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyboardView != null
+                && keyboardView.shouldCaptureKeyCode(keyCode)) {
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override
