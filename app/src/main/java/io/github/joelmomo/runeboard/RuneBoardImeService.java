@@ -14,6 +14,7 @@ import android.view.inputmethod.InputConnection;
 
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
+import io.github.joelmomo.runeboard.keyboard.SelectionController;
 import io.github.joelmomo.runeboard.keyboard.WordNavigator;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
@@ -35,6 +36,9 @@ public final class RuneBoardImeService extends InputMethodService
     private static final int WORD_LOOKBACK = 96;
 
     private static volatile RuneBoardImeService activeInstance;
+
+    private final SelectionController selectionController =
+            new SelectionController();
 
     private RuneKeyboardView keyboardView;
     private RunePreferences preferences;
@@ -140,12 +144,14 @@ public final class RuneBoardImeService extends InputMethodService
             EditorInfo info,
             boolean restarting) {
         super.onStartInputView(info, restarting);
+        selectionController.reset();
         ensureSuggestionSource(preferences.getKeyboardProfile());
         getMainExecutor().execute(this::requestSuggestions);
     }
 
     @Override
     public void onFinishInputView(boolean finishingInput) {
+        selectionController.reset();
         clearSuggestions();
         super.onFinishInputView(finishingInput);
     }
@@ -189,6 +195,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onText(String text) {
+        selectionController.reset();
         InputConnection connection = getCurrentInputConnection();
         if (connection != null) {
             connection.commitText(text, 1);
@@ -198,6 +205,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onBackspace() {
+        selectionController.reset();
         InputConnection connection = getCurrentInputConnection();
         if (connection != null) {
             connection.deleteSurroundingText(1, 0);
@@ -207,6 +215,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onSpace() {
+        selectionController.reset();
         InputConnection connection = getCurrentInputConnection();
         if (connection == null) {
             return;
@@ -232,6 +241,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onEnter() {
+        selectionController.reset();
         clearSuggestions();
 
         EditorInfo info = getCurrentInputEditorInfo();
@@ -253,6 +263,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onMoveCursor(int direction) {
+        selectionController.reset();
         InputConnection connection = getCurrentInputConnection();
         if (connection == null) {
             return;
@@ -293,6 +304,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onMoveWord(int direction) {
+        selectionController.reset();
         InputConnection connection = getCurrentInputConnection();
         if (connection == null) {
             return;
@@ -322,12 +334,14 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onNextLanguage() {
+        selectionController.reset();
         preferences.cycleKeyboardProfile();
         getMainExecutor().execute(this::refreshAppearance);
     }
 
     @Override
     public void onAcceptSuggestion() {
+        selectionController.reset();
         String primary = suggestionResult.primary();
         if (primary != null) {
             applySuggestion(primary);
@@ -345,27 +359,38 @@ public final class RuneBoardImeService extends InputMethodService
         boolean textChanged = false;
         switch (command) {
             case SELECT_ALL:
+                selectionController.reset();
                 connection.performContextMenuAction(android.R.id.selectAll);
                 break;
             case CUT:
-                textChanged = connection.performContextMenuAction(android.R.id.cut);
+                selectionController.reset();
+                textChanged =
+                        connection.performContextMenuAction(android.R.id.cut);
                 break;
             case COPY:
                 connection.performContextMenuAction(android.R.id.copy);
                 break;
             case PASTE:
-                textChanged = connection.performContextMenuAction(android.R.id.paste);
+                selectionController.reset();
+                textChanged =
+                        connection.performContextMenuAction(android.R.id.paste);
                 break;
             case UNDO:
-                textChanged = connection.performContextMenuAction(android.R.id.undo);
+                selectionController.reset();
+                textChanged =
+                        connection.performContextMenuAction(android.R.id.undo);
                 break;
             case REDO:
-                textChanged = connection.performContextMenuAction(android.R.id.redo);
+                selectionController.reset();
+                textChanged =
+                        connection.performContextMenuAction(android.R.id.redo);
                 break;
             case HOME:
+                selectionController.reset();
                 sendEditorKey(connection, KeyEvent.KEYCODE_MOVE_HOME);
                 break;
             case END:
+                selectionController.reset();
                 sendEditorKey(connection, KeyEvent.KEYCODE_MOVE_END);
                 break;
             case CURSOR_LEFT:
@@ -380,7 +405,20 @@ public final class RuneBoardImeService extends InputMethodService
             case WORD_RIGHT:
                 onMoveWord(1);
                 break;
+            case SELECT_LEFT:
+                extendSelection(connection, -1, false);
+                break;
+            case SELECT_RIGHT:
+                extendSelection(connection, 1, false);
+                break;
+            case SELECT_WORD_LEFT:
+                extendSelection(connection, -1, true);
+                break;
+            case SELECT_WORD_RIGHT:
+                extendSelection(connection, 1, true);
+                break;
             case DELETE_FORWARD:
+                selectionController.reset();
                 connection.deleteSurroundingText(0, 1);
                 textChanged = true;
                 break;
@@ -395,6 +433,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public void onSuggestionSelected(String suggestion) {
+        selectionController.reset();
         applySuggestion(suggestion);
     }
 
@@ -569,6 +608,46 @@ public final class RuneBoardImeService extends InputMethodService
         } finally {
             connection.endBatchEdit();
         }
+    }
+
+    private void extendSelection(
+            InputConnection connection,
+            int direction,
+            boolean byWord) {
+        ExtractedText extracted = connection.getExtractedText(
+                new ExtractedTextRequest(),
+                0);
+        if (extracted == null
+                || extracted.text == null
+                || extracted.selectionStart < 0
+                || extracted.selectionEnd < 0) {
+            selectionController.reset();
+            return;
+        }
+
+        String text = extracted.text.toString();
+        int localStart =
+                extracted.selectionStart - extracted.startOffset;
+        int localEnd =
+                extracted.selectionEnd - extracted.startOffset;
+        if (localStart < 0
+                || localStart > text.length()
+                || localEnd < 0
+                || localEnd > text.length()) {
+            selectionController.reset();
+            return;
+        }
+
+        SelectionController.Range range =
+                selectionController.extend(
+                        text,
+                        localStart,
+                        localEnd,
+                        direction,
+                        byWord);
+        connection.setSelection(
+                extracted.startOffset + range.anchor,
+                extracted.startOffset + range.caret);
     }
 
     private void sendEditorKey(

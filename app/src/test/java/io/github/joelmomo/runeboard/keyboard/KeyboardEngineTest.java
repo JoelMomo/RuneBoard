@@ -106,7 +106,7 @@ public final class KeyboardEngineTest {
                 List.of(EditorCommand.SELECT_ALL),
                 output.editorCommands);
 
-        engine.getState().select(4, 0);
+        engine.getState().select(5, 0);
         engine.pressSelected();
         assertFalse(engine.getState().isEditing());
     }

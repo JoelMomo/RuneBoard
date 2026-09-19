@@ -13,5 +13,9 @@ public enum EditorCommand {
     CURSOR_RIGHT,
     WORD_LEFT,
     WORD_RIGHT,
+    SELECT_LEFT,
+    SELECT_RIGHT,
+    SELECT_WORD_LEFT,
+    SELECT_WORD_RIGHT,
     DELETE_FORWARD
 }
