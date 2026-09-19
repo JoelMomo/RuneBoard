@@ -22,9 +22,11 @@ import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
+import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
@@ -133,6 +135,7 @@ public final class RuneKeyboardView extends View {
         engine = new KeyboardEngine(
                 profile.layout,
                 profile.symbolLayout,
+                KeyboardLayouts.editorLayout(),
                 new KeyboardEngine.Output() {
                     @Override
                     public void onText(String text) {
@@ -187,6 +190,13 @@ public final class RuneKeyboardView extends View {
                     public void onAcceptSuggestion() {
                         if (listener != null) {
                             listener.onAcceptSuggestion();
+                        }
+                    }
+
+                    @Override
+                    public void onEditorCommand(EditorCommand command) {
+                        if (listener != null) {
+                            listener.onEditorCommand(command);
                         }
                     }
 
@@ -432,9 +442,11 @@ public final class RuneKeyboardView extends View {
         canvas.drawText(
                 profile.shortLabel
                         + " / "
-                        + (state.isSymbols()
-                                ? "SYM"
-                                : profile.layoutName)
+                        + (state.isEditing()
+                                ? "EDIT"
+                                : state.isSymbols()
+                                        ? "SYM"
+                                        : profile.layoutName)
                         + "  "
                         + ControllerKeyNames.nameFor(
                                 controllerMapper.getBindings().getKeyCode(
@@ -443,7 +455,7 @@ public final class RuneKeyboardView extends View {
                 outer + dp(30),
                 paint);
 
-        if (suggestions.isEmpty()) {
+        if (state.isEditing() || suggestions.isEmpty()) {
             paint.setTypeface(Typeface.DEFAULT_BOLD);
             paint.setTextAlign(Paint.Align.RIGHT);
             paint.setColor(theme.accent);
@@ -673,7 +685,10 @@ public final class RuneKeyboardView extends View {
 
         if (key.getType() == KeyboardKey.Type.TEXT) {
             String text = key.getText();
-            if (state.isShifted() && Character.isLetter(text.charAt(0))) {
+            if (state.isShifted()
+                    && !state.isSymbols()
+                    && !state.isEditing()
+                    && Character.isLetter(text.charAt(0))) {
                 return text.toUpperCase(profile.locale);
             }
             return text;
@@ -690,6 +705,13 @@ public final class RuneKeyboardView extends View {
                         state.isSymbols()
                                 ? R.string.key_letters
                                 : R.string.key_symbols);
+            case EDIT:
+                return getContext().getString(
+                        state.isEditing()
+                                ? R.string.key_letters
+                                : R.string.key_edit);
+            case COMMAND:
+                return key.getText();
             case SPACE:
                 return getContext().getString(R.string.key_space);
             case BACKSPACE:
@@ -951,6 +973,10 @@ public final class RuneKeyboardView extends View {
             requestLayout();
             invalidate();
         } else if (update == KeyboardEngine.Update.GEOMETRY) {
+            if (engine.getState().isEditing()) {
+                suggestions.clear();
+                suggestionTargets.clear();
+            }
             if (getWidth() > 0 && getHeight() > 0) {
                 rebuildGeometry(getWidth(), getHeight());
             }

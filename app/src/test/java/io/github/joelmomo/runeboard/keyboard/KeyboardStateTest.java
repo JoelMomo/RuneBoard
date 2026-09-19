@@ -151,6 +151,31 @@ public final class KeyboardStateTest {
     }
 
     @Test
+    public void editModeUsesEditorLayoutAndReturnsToAlphabet() {
+        KeyboardState state = new KeyboardState(
+                KeyboardLayouts.englishQwerty(),
+                KeyboardLayouts.englishSymbols(),
+                KeyboardLayouts.editorLayout(),
+                255);
+
+        state.advanceShiftMode();
+        state.toggleEditing();
+
+        assertTrue(state.isEditing());
+        assertFalse(state.isShifted());
+        assertEquals(KeyboardState.Mode.EDIT, state.getMode());
+        assertEquals(KeyboardKey.Type.EDIT,
+                state.getSelectedKey().getType());
+
+        state.toggleEditing();
+
+        assertFalse(state.isEditing());
+        assertEquals(KeyboardState.Mode.ALPHABET, state.getMode());
+        assertEquals(KeyboardKey.Type.EDIT,
+                state.getSelectedKey().getType());
+    }
+
+    @Test
     public void movementStopsWhileMinimized() {
         KeyboardState state =
                 new KeyboardState(KeyboardLayouts.qwerty());

@@ -16,7 +16,7 @@ public final class KeyboardLayoutTest {
         assertEquals(10, layout.getRow(1).size());
         assertEquals(9, layout.getRow(2).size());
         assertEquals(7, layout.getRow(3).size());
-        assertEquals(9, layout.getRow(4).size());
+        assertEquals(10, layout.getRow(4).size());
 
         assertTrue(layout.getRow(2).getLeftInsetWeight() > 0f);
         assertTrue(layout.getRow(3).getLeftInsetWeight()

@@ -81,6 +81,37 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void editModeDispatchesEditorCommands() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine = new KeyboardEngine(
+                KeyboardLayouts.englishQwerty(),
+                KeyboardLayouts.englishSymbols(),
+                KeyboardLayouts.editorLayout(),
+                output,
+                255,
+                Locale.US);
+
+        engine.getState().select(4, 9);
+        assertEquals(
+                KeyboardEngine.Update.GEOMETRY,
+                engine.pressSelected());
+        assertTrue(engine.getState().isEditing());
+        assertEquals(
+                KeyboardKey.Type.EDIT,
+                engine.getState().getSelectedKey().getType());
+
+        engine.getState().select(0, 0);
+        engine.pressSelected();
+        assertEquals(
+                List.of(EditorCommand.SELECT_ALL),
+                output.editorCommands);
+
+        engine.getState().select(4, 0);
+        engine.pressSelected();
+        assertFalse(engine.getState().isEditing());
+    }
+
+    @Test
     public void directEditingActionsReachOutput() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =
@@ -192,6 +223,7 @@ public final class KeyboardEngineTest {
         final List<Integer> wordMoves = new ArrayList<>();
         final List<Boolean> minimizedStates = new ArrayList<>();
         final List<Integer> backgroundOpacities = new ArrayList<>();
+        final List<EditorCommand> editorCommands = new ArrayList<>();
         int languageChanges;
         int suggestionAccepts;
 
@@ -236,6 +268,11 @@ public final class KeyboardEngineTest {
         @Override
         public void onAcceptSuggestion() {
             suggestionAccepts++;
+        }
+
+        @Override
+        public void onEditorCommand(EditorCommand command) {
+            editorCommands.add(command);
         }
 
         @Override

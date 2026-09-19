@@ -33,6 +33,7 @@ Prototype 0 contains:
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
+- controller-first EDIT mode with Select All, Cut, Copy, Paste, Undo, Redo, Home, End and navigation commands;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
 - quick language cycling from L3 or the keyboard header;
 - ABC/SYM mode switching without closing the IME;
@@ -50,6 +51,7 @@ Prototype 0 contains:
 - theme profiles: Default, OLED Black, Transparent and persistent Custom;
 - custom settings UI with live theme/background controls, palette presets and key geometry;
 - compact/minimized mode;
+- standard Android clipboard actions without maintaining a private clipboard history;
 - a setup/test activity;
 - unit tests for state, controller mappings and minimized capture policy;
 - GitHub Actions running unit tests, lint and APK assembly;
@@ -61,7 +63,7 @@ There are no third-party runtime dependencies.
 
 The product code is split into independent layers:
 
-- `keyboard/`: layout, key model, state and keyboard engine;
+- `keyboard/`: layout, key model, ABC/SYM/EDIT state and keyboard engine;
 - `controller/`: controller actions and Android key-code mapping;
 - `theme/`: visual profiles, persistent custom-theme data and supported background-opacity levels;
 - `language/`: typing-language profiles and layout metadata;
@@ -75,7 +77,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.12.0-prototype**
+Current development version: **0.13.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -104,7 +106,8 @@ Validated on the physical device:
 - live physical-button remapping, including conflict swapping and reset;
 - Shift/Caps state cycling and compact-mode Start pass-through;
 - compact minimize/restore with controller pass-through;
-- opacity-state switching.
+- opacity-state switching;
+- controller/touch EDIT panel with clipboard and document-navigation actions.
 
 Measured lower-display keyboard sizes during the prototype:
 
@@ -123,6 +126,7 @@ See:
 - `docs/SUGGESTIONS.md`
 - `docs/SYMBOLS.md`
 - `docs/CUSTOMIZATION.md`
+- `docs/EDITING.md`
 
 ## Emulator limitation
 

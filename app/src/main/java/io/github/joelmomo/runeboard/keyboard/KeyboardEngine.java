@@ -16,6 +16,7 @@ public final class KeyboardEngine {
         void onMoveWord(int direction);
         void onNextLanguage();
         void onAcceptSuggestion();
+        void onEditorCommand(EditorCommand command);
         void onMinimizedChanged(boolean minimized);
         void onBackgroundOpacityChanged(int opacity);
     }
@@ -35,6 +36,7 @@ public final class KeyboardEngine {
         this(
                 layout,
                 layout,
+                KeyboardLayouts.editorLayout(),
                 output,
                 BackgroundOpacity.defaultValue(),
                 Locale.ROOT);
@@ -47,6 +49,7 @@ public final class KeyboardEngine {
         this(
                 layout,
                 layout,
+                KeyboardLayouts.editorLayout(),
                 output,
                 initialOpacity,
                 Locale.ROOT);
@@ -60,6 +63,7 @@ public final class KeyboardEngine {
         this(
                 layout,
                 layout,
+                KeyboardLayouts.editorLayout(),
                 output,
                 initialOpacity,
                 locale);
@@ -71,9 +75,26 @@ public final class KeyboardEngine {
             Output output,
             int initialOpacity,
             Locale locale) {
+        this(
+                alphabetLayout,
+                symbolLayout,
+                KeyboardLayouts.editorLayout(),
+                output,
+                initialOpacity,
+                locale);
+    }
+
+    public KeyboardEngine(
+            KeyboardLayout alphabetLayout,
+            KeyboardLayout symbolLayout,
+            KeyboardLayout editorLayout,
+            Output output,
+            int initialOpacity,
+            Locale locale) {
         this.state = new KeyboardState(
                 alphabetLayout,
                 symbolLayout,
+                editorLayout,
                 initialOpacity);
         this.output = output;
         this.locale = locale == null ? Locale.ROOT : locale;
@@ -172,6 +193,7 @@ public final class KeyboardEngine {
                 String text = key.getText();
                 if (state.isShifted()
                         && !state.isSymbols()
+                        && !state.isEditing()
                         && Character.isLetter(text.charAt(0))) {
                     text = text.toUpperCase(locale);
                 }
@@ -186,6 +208,12 @@ public final class KeyboardEngine {
             case MODE:
                 state.toggleSymbols();
                 return Update.GEOMETRY;
+            case EDIT:
+                state.toggleEditing();
+                return Update.GEOMETRY;
+            case COMMAND:
+                output.onEditorCommand(key.getCommand());
+                return Update.NONE;
             case SPACE:
                 output.onSpace();
                 return Update.NONE;

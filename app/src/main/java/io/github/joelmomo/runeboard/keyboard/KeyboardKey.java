@@ -6,6 +6,8 @@ public final class KeyboardKey {
         TEXT,
         SHIFT,
         MODE,
+        EDIT,
+        COMMAND,
         SPACE,
         BACKSPACE,
         ENTER,
@@ -15,11 +17,17 @@ public final class KeyboardKey {
 
     private final Type type;
     private final String text;
+    private final EditorCommand command;
     private final float weight;
 
-    private KeyboardKey(Type type, String text, float weight) {
+    private KeyboardKey(
+            Type type,
+            String text,
+            EditorCommand command,
+            float weight) {
         this.type = type;
         this.text = text;
+        this.command = command;
         this.weight = weight;
     }
 
@@ -34,17 +42,40 @@ public final class KeyboardKey {
         if (weight <= 0f) {
             throw new IllegalArgumentException("Key weight must be positive");
         }
-        return new KeyboardKey(Type.TEXT, text, weight);
+        return new KeyboardKey(Type.TEXT, text, null, weight);
     }
 
     public static KeyboardKey action(Type type, float weight) {
-        if (type == Type.TEXT) {
-            throw new IllegalArgumentException("Use text() for text keys");
+        if (type == Type.TEXT || type == Type.COMMAND) {
+            throw new IllegalArgumentException(
+                    "Use text() or command() for this key type");
         }
         if (weight <= 0f) {
             throw new IllegalArgumentException("Key weight must be positive");
         }
-        return new KeyboardKey(type, null, weight);
+        return new KeyboardKey(type, null, null, weight);
+    }
+
+    public static KeyboardKey command(
+            EditorCommand command,
+            String label,
+            float weight) {
+        if (command == null) {
+            throw new IllegalArgumentException(
+                    "Editor command cannot be null");
+        }
+        if (label == null || label.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Editor command label cannot be empty");
+        }
+        if (weight <= 0f) {
+            throw new IllegalArgumentException("Key weight must be positive");
+        }
+        return new KeyboardKey(
+                Type.COMMAND,
+                label,
+                command,
+                weight);
     }
 
     public Type getType() {
@@ -53,6 +84,10 @@ public final class KeyboardKey {
 
     public String getText() {
         return text;
+    }
+
+    public EditorCommand getCommand() {
+        return command;
     }
 
     public float getWeight() {
