@@ -1,4 +1,4 @@
-# RuneBoard architecture - Prototype 0.0.11
+# RuneBoard architecture - 0.13.0 prototype
 
 ## Principle
 
@@ -14,6 +14,7 @@ Immutable description of one key:
 
 - key type;
 - optional text value;
+- optional `EditorCommand`;
 - relative width/weight.
 
 ### keyboard/KeyboardLayout
@@ -26,7 +27,11 @@ The view does not own the layout definition.
 
 Factory for built-in layouts.
 
-Prototype 0 exposes language-specific alphabet layouts plus a secondary symbol layout, both with an always-visible number row.
+RuneBoard exposes language-specific alphabet layouts, secondary symbol layouts and one shared controller-first editing layout. Alphabet and symbol layouts keep the always-visible number row; EDIT replaces typing rows with editing commands while preserving the same renderer/navigation model.
+
+### keyboard/EditorCommand
+
+Platform-independent editing commands for selection, clipboard actions, undo/redo, document navigation and forward deletion. The keyboard engine emits these without depending on Android APIs.
 
 ### keyboard/KeyboardState
 
@@ -35,7 +40,8 @@ Owns mutable keyboard state:
 - selected row/column;
 - shift mode (off / one-shot / Caps Lock);
 - opacity;
-- minimized state.
+- minimized state;
+- current mode: `ALPHABET`, `SYMBOLS` or `EDIT`.
 
 Vertical D-pad movement follows the physical center of weighted keys rather than assuming equal column counts.
 
@@ -51,6 +57,7 @@ It receives abstract `ControllerAction` values or touch selection changes and pr
 - enter;
 - cursor movement;
 - word movement;
+- abstract `EditorCommand` dispatch;
 - minimize/restore.
 
 This layer has no Android View dependency and is unit tested.
@@ -100,7 +107,9 @@ It owns the active `InputConnection` and converts engine output into:
 - deletion;
 - editor actions;
 - cursor selection changes;
-- previous/next word selection through `WordNavigator`.
+- previous/next word selection through `WordNavigator`;
+- Android context-menu editing actions such as Select All, Cut, Copy, Paste, Undo and Redo;
+- Home/End key events and forward deletion.
 
 ### RuneBoardControlService
 
@@ -130,7 +139,7 @@ Key rectangles are calculated when the View size/layout changes and cached for d
 
 Normal redraws for selection, shift or opacity do not allocate new key geometry.
 
-ABC/SYM switching uses `KeyboardEngine.Update.GEOMETRY`: RuneKeyboardView rebuilds hit targets and redraws without requesting a new IME window layout. `Update.LAYOUT` remains reserved for real size changes such as minimize/restore.
+ABC/SYM/EDIT switching uses `KeyboardEngine.Update.GEOMETRY`: RuneKeyboardView rebuilds hit targets and redraws without requesting a new IME window layout. `Update.LAYOUT` remains reserved for real size changes such as minimize/restore.
 
 The view also subtracts the bottom navigation-bar inset before distributing row height so the utility row remains above Android system navigation.
 
@@ -147,6 +156,7 @@ Current JVM tests cover:
 - minimized movement policy;
 - one-shot shift;
 - text/editing output callbacks;
+- editor-layout command mapping and EDIT mode entry/exit;
 - minimize/restore capture policy;
 - controller mapping and occupied-button swapping;
 - repeatability after remapping;

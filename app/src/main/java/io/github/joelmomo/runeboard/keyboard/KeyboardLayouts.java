@@ -79,6 +79,55 @@ public final class KeyboardLayouts {
         return symbolLayout(RU_EXTRAS);
     }
 
+    public static KeyboardLayout editorLayout() {
+        List<KeyboardRow> rows = new ArrayList<>();
+        rows.add(row(List.of(
+                command(EditorCommand.SELECT_ALL, "SELECT ALL", 2.1f),
+                command(EditorCommand.CUT, "CUT", 1.6f),
+                command(EditorCommand.COPY, "COPY", 1.8f),
+                command(EditorCommand.PASTE, "PASTE", 1.9f)),
+                0.25f, 0.25f, 0.9f));
+        rows.add(row(List.of(
+                command(EditorCommand.UNDO, "UNDO", 2f),
+                command(EditorCommand.REDO, "REDO", 2f),
+                command(EditorCommand.HOME, "HOME", 2f),
+                command(EditorCommand.END, "END", 2f)),
+                0.25f, 0.25f, 1f));
+        rows.add(row(List.of(
+                command(EditorCommand.CURSOR_LEFT, "LEFT", 2f),
+                command(EditorCommand.CURSOR_RIGHT, "RIGHT", 2f),
+                command(EditorCommand.WORD_LEFT, "WORD LEFT", 2f),
+                command(EditorCommand.WORD_RIGHT, "WORD RIGHT", 2f)),
+                0.25f, 0.25f, 1f));
+        rows.add(row(List.of(
+                KeyboardKey.action(
+                        KeyboardKey.Type.BACKSPACE,
+                        1.7f),
+                command(
+                        EditorCommand.DELETE_FORWARD,
+                        "DELETE",
+                        1.7f),
+                KeyboardKey.action(
+                        KeyboardKey.Type.SPACE,
+                        2.6f),
+                KeyboardKey.action(
+                        KeyboardKey.Type.ENTER,
+                        1.7f)),
+                0.25f, 0.25f, 1f));
+        rows.add(row(List.of(
+                KeyboardKey.action(
+                        KeyboardKey.Type.EDIT,
+                        1.2f),
+                KeyboardKey.action(
+                        KeyboardKey.Type.OPACITY,
+                        1f),
+                KeyboardKey.action(
+                        KeyboardKey.Type.MINIMIZE,
+                        1f)),
+                2.2f, 2.2f, 1.08f));
+        return new KeyboardLayout(rows);
+    }
+
     private static KeyboardLayout alphabetLayout(
             String top,
             String middle,
@@ -116,6 +165,7 @@ public final class KeyboardLayouts {
         actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.05f));
         actions.add(KeyboardKey.action(KeyboardKey.Type.OPACITY, 0.85f));
         actions.add(KeyboardKey.action(KeyboardKey.Type.MINIMIZE, 0.85f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.EDIT, 0.85f));
         return actions;
     }
 
@@ -129,7 +179,15 @@ public final class KeyboardLayouts {
         actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.15f));
         actions.add(KeyboardKey.action(KeyboardKey.Type.OPACITY, 0.9f));
         actions.add(KeyboardKey.action(KeyboardKey.Type.MINIMIZE, 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.EDIT, 0.9f));
         return actions;
+    }
+
+    private static KeyboardKey command(
+            EditorCommand command,
+            String label,
+            float weight) {
+        return KeyboardKey.command(command, label, weight);
     }
 
     private static KeyboardRow row(

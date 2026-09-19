@@ -141,6 +141,10 @@ public final class LanguageLayoutTest {
         }
 
         @Override
+        public void onEditorCommand(EditorCommand command) {
+        }
+
+        @Override
         public void onMinimizedChanged(boolean minimized) {
         }
 

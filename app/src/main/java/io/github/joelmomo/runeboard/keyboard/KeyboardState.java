@@ -10,10 +10,17 @@ public final class KeyboardState {
         CAPS_LOCK
     }
 
+    public enum Mode {
+        ALPHABET,
+        SYMBOLS,
+        EDIT
+    }
+
     private final KeyboardLayout alphabetLayout;
     private final KeyboardLayout symbolLayout;
+    private final KeyboardLayout editorLayout;
     private KeyboardLayout layout;
-    private boolean symbols;
+    private Mode mode = Mode.ALPHABET;
     private int selectedRow = 1;
     private int selectedCol = 0;
     private ShiftMode shiftMode = ShiftMode.OFF;
@@ -24,24 +31,40 @@ public final class KeyboardState {
         this(
                 layout,
                 layout,
+                layout,
                 BackgroundOpacity.defaultValue());
     }
 
     public KeyboardState(
             KeyboardLayout layout,
             int initialOpacity) {
-        this(layout, layout, initialOpacity);
+        this(layout, layout, layout, initialOpacity);
     }
 
     public KeyboardState(
             KeyboardLayout alphabetLayout,
             KeyboardLayout symbolLayout,
             int initialOpacity) {
-        if (alphabetLayout == null || symbolLayout == null) {
+        this(
+                alphabetLayout,
+                symbolLayout,
+                alphabetLayout,
+                initialOpacity);
+    }
+
+    public KeyboardState(
+            KeyboardLayout alphabetLayout,
+            KeyboardLayout symbolLayout,
+            KeyboardLayout editorLayout,
+            int initialOpacity) {
+        if (alphabetLayout == null
+                || symbolLayout == null
+                || editorLayout == null) {
             throw new IllegalArgumentException("Layouts cannot be null");
         }
         this.alphabetLayout = alphabetLayout;
         this.symbolLayout = symbolLayout;
+        this.editorLayout = editorLayout;
         this.layout = alphabetLayout;
         opacity = BackgroundOpacity.normalize(initialOpacity);
     }
@@ -50,31 +73,71 @@ public final class KeyboardState {
         return layout;
     }
 
+    public Mode getMode() {
+        return mode;
+    }
+
     public boolean isSymbols() {
-        return symbols;
+        return mode == Mode.SYMBOLS;
+    }
+
+    public boolean isEditing() {
+        return mode == Mode.EDIT;
     }
 
     public boolean toggleSymbols() {
-        symbols = !symbols;
-        layout = symbols ? symbolLayout : alphabetLayout;
-
-        selectModeKey();
-
-        if (symbols) {
-            shiftMode = ShiftMode.OFF;
-        }
+        setMode(
+                mode == Mode.SYMBOLS
+                        ? Mode.ALPHABET
+                        : Mode.SYMBOLS,
+                KeyboardKey.Type.MODE);
         return true;
     }
 
-    private void selectModeKey() {
-        int row = layout.getRowCount() - 1;
-        KeyboardRow utilityRow = layout.getRow(row);
-        for (int col = 0; col < utilityRow.size(); col++) {
-            if (utilityRow.getKey(col).getType()
-                    == KeyboardKey.Type.MODE) {
-                selectedRow = row;
-                selectedCol = col;
-                return;
+    public boolean toggleEditing() {
+        setMode(
+                mode == Mode.EDIT
+                        ? Mode.ALPHABET
+                        : Mode.EDIT,
+                KeyboardKey.Type.EDIT);
+        return true;
+    }
+
+    private void setMode(
+            Mode next,
+            KeyboardKey.Type preferredSelection) {
+        mode = next;
+        switch (mode) {
+            case SYMBOLS:
+                layout = symbolLayout;
+                break;
+            case EDIT:
+                layout = editorLayout;
+                break;
+            case ALPHABET:
+            default:
+                layout = alphabetLayout;
+                break;
+        }
+
+        if (mode != Mode.ALPHABET) {
+            shiftMode = ShiftMode.OFF;
+        }
+
+        selectKeyType(preferredSelection);
+    }
+
+    private void selectKeyType(KeyboardKey.Type type) {
+        for (int row = layout.getRowCount() - 1;
+                row >= 0;
+                row--) {
+            KeyboardRow keyboardRow = layout.getRow(row);
+            for (int col = 0; col < keyboardRow.size(); col++) {
+                if (keyboardRow.getKey(col).getType() == type) {
+                    selectedRow = row;
+                    selectedCol = col;
+                    return;
+                }
             }
         }
 
@@ -176,7 +239,7 @@ public final class KeyboardState {
     }
 
     public void advanceShiftMode() {
-        if (symbols) {
+        if (mode != Mode.ALPHABET) {
             return;
         }
         switch (shiftMode) {

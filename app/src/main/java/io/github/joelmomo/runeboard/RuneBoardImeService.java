@@ -13,6 +13,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.WordNavigator;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
@@ -334,6 +335,65 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     @Override
+    public void onEditorCommand(EditorCommand command) {
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null || command == null) {
+            return;
+        }
+
+        clearSuggestions();
+        boolean textChanged = false;
+        switch (command) {
+            case SELECT_ALL:
+                connection.performContextMenuAction(android.R.id.selectAll);
+                break;
+            case CUT:
+                textChanged = connection.performContextMenuAction(android.R.id.cut);
+                break;
+            case COPY:
+                connection.performContextMenuAction(android.R.id.copy);
+                break;
+            case PASTE:
+                textChanged = connection.performContextMenuAction(android.R.id.paste);
+                break;
+            case UNDO:
+                textChanged = connection.performContextMenuAction(android.R.id.undo);
+                break;
+            case REDO:
+                textChanged = connection.performContextMenuAction(android.R.id.redo);
+                break;
+            case HOME:
+                sendEditorKey(connection, KeyEvent.KEYCODE_MOVE_HOME);
+                break;
+            case END:
+                sendEditorKey(connection, KeyEvent.KEYCODE_MOVE_END);
+                break;
+            case CURSOR_LEFT:
+                onMoveCursor(-1);
+                break;
+            case CURSOR_RIGHT:
+                onMoveCursor(1);
+                break;
+            case WORD_LEFT:
+                onMoveWord(-1);
+                break;
+            case WORD_RIGHT:
+                onMoveWord(1);
+                break;
+            case DELETE_FORWARD:
+                connection.deleteSurroundingText(0, 1);
+                textChanged = true;
+                break;
+            default:
+                break;
+        }
+
+        if (textChanged) {
+            getMainExecutor().execute(this::requestSuggestions);
+        }
+    }
+
+    @Override
     public void onSuggestionSelected(String suggestion) {
         applySuggestion(suggestion);
     }
@@ -509,6 +569,24 @@ public final class RuneBoardImeService extends InputMethodService
         } finally {
             connection.endBatchEdit();
         }
+    }
+
+    private void sendEditorKey(
+            InputConnection connection,
+            int keyCode) {
+        long now = SystemClock.uptimeMillis();
+        connection.sendKeyEvent(new KeyEvent(
+                now,
+                now,
+                KeyEvent.ACTION_DOWN,
+                keyCode,
+                0));
+        connection.sendKeyEvent(new KeyEvent(
+                now,
+                now,
+                KeyEvent.ACTION_UP,
+                keyCode,
+                0));
     }
 
     private WordContext currentWordContext(InputConnection connection) {
