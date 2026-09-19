@@ -78,6 +78,10 @@ public final class ControllerMapperTest {
     public void repeatabilityFollowsMappedAction() {
         assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_DPAD_LEFT));
         assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_B));
+        assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_L1));
+        assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_R1));
+        assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_L2));
+        assertTrue(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_R2));
         assertFalse(mapper.isRepeatable(KeyEvent.KEYCODE_BUTTON_X));
 
         mapper.getBindings().assign(

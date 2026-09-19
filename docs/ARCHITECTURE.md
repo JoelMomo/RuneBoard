@@ -1,4 +1,4 @@
-# RuneBoard architecture - 0.15.0 prototype
+# RuneBoard architecture - 0.16.0 prototype
 
 ## Principle
 
@@ -91,7 +91,11 @@ Maps Android `KeyEvent` codes to `ControllerAction`. D-pad navigation remains fi
 
 Owns the remappable A/B/X/Y, L1/R1, L2/R2, Start/Select and L3/R3 assignments.
 
-Assigning an occupied button swaps the two actions, guaranteeing unique and reachable bindings. Repeatability follows the resolved action, so a remapped Backspace button still repeats.
+Assigning an occupied button swaps the two actions, guaranteeing unique and reachable bindings. Repeatability follows the resolved action, so remapped Backspace, cursor and word-navigation controls still repeat.
+
+### keyboard/KeyRepeatPolicy
+
+Centralizes which controller actions and touch keys are safe to repeat. Navigation, deletion and selection movement may repeat; one-shot actions such as Enter, Shift, Space, language switching and suggestion acceptance never do. Touch repeat uses a delayed start and a faster steady cadence.
 
 ### RuneKeyboardView
 

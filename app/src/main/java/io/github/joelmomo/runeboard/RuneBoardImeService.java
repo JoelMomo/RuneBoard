@@ -183,8 +183,11 @@ public final class RuneBoardImeService extends InputMethodService
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyboardView != null
-                && event.getRepeatCount() == 0
-                && keyboardView.handleKeyCode(keyCode)) {
+                && keyboardView.shouldCaptureKeyCode(keyCode)) {
+            if (event.getRepeatCount() == 0
+                    || keyboardView.isRepeatableKeyCode(keyCode)) {
+                keyboardView.handleKeyCode(keyCode);
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);

@@ -2,6 +2,8 @@ package io.github.joelmomo.runeboard.controller;
 
 import android.view.KeyEvent;
 
+import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
+
 public final class ControllerMapper {
 
     private final ControllerBindings bindings;
@@ -30,12 +32,8 @@ public final class ControllerMapper {
     }
 
     public boolean isRepeatable(int keyCode) {
-        ControllerAction action = fromKeyCode(keyCode);
-        return action == ControllerAction.MOVE_LEFT
-                || action == ControllerAction.MOVE_RIGHT
-                || action == ControllerAction.MOVE_UP
-                || action == ControllerAction.MOVE_DOWN
-                || action == ControllerAction.BACKSPACE;
+        return KeyRepeatPolicy.isControllerActionRepeatable(
+                fromKeyCode(keyCode));
     }
 
     public ControllerBindings getBindings() {

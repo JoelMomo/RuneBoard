@@ -1,6 +1,6 @@
 # Editing mode
 
-RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word. RuneBoard 0.15.0 makes the shared Enter key follow the active Android editor action.
+RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word. RuneBoard 0.15.0 makes the shared Enter key follow the active Android editor action. RuneBoard 0.16.0 adds hold-to-repeat for deletion and navigation.
 
 ## Entering and leaving
 
@@ -36,6 +36,8 @@ The editing panel exposes:
 - Enter
 
 All keys use the same geometry-aware D-pad navigation and touch hit testing as the normal keyboard.
+
+Holding Backspace or a repeatable movement control now continues the action instead of requiring repeated taps. Physical D-pad, cursor and word-navigation controls use Android key repeats. Touch Backspace, cursor/word movement, selection movement and forward Delete begin repeating after a short delay and stop immediately on release, cancellation or when the finger leaves the key. Clipboard, undo/redo, Enter, Space and other one-shot actions do not repeat.
 
 ## Android integration
 
