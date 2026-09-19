@@ -75,7 +75,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.12-prototype**
+Current development version: **0.12.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 

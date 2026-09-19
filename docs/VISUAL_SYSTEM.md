@@ -64,7 +64,7 @@ Future themes should be expressible through theme/profile data:
 - font choices;
 - key/background opacity.
 
-Persistent user customization is implemented in 0.0.12 through `CustomThemeConfig`, while the renderer still consumes a normal `KeyboardTheme`.
+Persistent user customization is implemented in 0.12.0 through `CustomThemeConfig`, while the renderer still consumes a normal `KeyboardTheme`.
 
 
 ### Persistence
@@ -92,4 +92,4 @@ The minimized bar also resolves the active Confirm and Minimize buttons dynamica
 
 ### Custom theme
 
-0.0.12 adds persistent presets for accent, key fill, two-color background, key radius and key spacing. Any Custom control selects the `custom` profile immediately and requests an IME appearance refresh. Geometry is clamped to safe bounds in `CustomThemeConfig`.
+0.12.0 adds persistent presets for accent, key fill, two-color background, key radius and key spacing. Any Custom control selects the `custom` profile immediately and requests an IME appearance refresh. Geometry is clamped to safe bounds in `CustomThemeConfig`.
