@@ -46,6 +46,9 @@ public final class SuggestionPolicyTest {
         assertFalse(SuggestionPolicy.supportsInputType(
                 InputType.TYPE_CLASS_TEXT
                         | InputType.TYPE_TEXT_VARIATION_URI));
+        assertFalse(SuggestionPolicy.supportsInputType(
+                InputType.TYPE_CLASS_TEXT
+                        | InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS));
     }
 
     @Test

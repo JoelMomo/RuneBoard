@@ -29,6 +29,23 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void autoShiftUppercasesOneCharacterWithoutBecomingCapsLock() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        assertEquals(
+                KeyboardEngine.Update.VISUAL,
+                engine.setAutoShifted(true));
+        engine.handle(ControllerAction.PRESS_SELECTED);
+        engine.handle(ControllerAction.PRESS_SELECTED);
+
+        assertEquals(List.of("Q", "q"), output.text);
+        assertFalse(engine.getState().isShifted());
+        assertFalse(engine.getState().isCapsLocked());
+    }
+
+    @Test
     public void capsLockPersistsUntilShiftCyclesOff() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =

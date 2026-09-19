@@ -15,6 +15,7 @@ import android.view.inputmethod.InputConnection;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.editor.EditorActionResolver;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
+import io.github.joelmomo.runeboard.editor.EditorInputPolicy;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.SelectionController;
 import io.github.joelmomo.runeboard.keyboard.WordNavigator;
@@ -134,7 +135,7 @@ public final class RuneBoardImeService extends InputMethodService
         if (isInputViewShown()) {
             refreshed.requestFocus();
         }
-        getMainExecutor().execute(this::requestSuggestions);
+        scheduleContextRefresh();
     }
 
     @Override
@@ -148,17 +149,23 @@ public final class RuneBoardImeService extends InputMethodService
             boolean restarting) {
         super.onStartInputView(info, restarting);
         if (keyboardView != null) {
+            if (!restarting) {
+                keyboardView.resetShiftMode();
+            }
             keyboardView.setEditorAction(resolveEditorAction(info));
         }
         selectionController.reset();
         ensureSuggestionSource(preferences.getKeyboardProfile());
-        getMainExecutor().execute(this::requestSuggestions);
+        scheduleContextRefresh();
     }
 
     @Override
     public void onFinishInputView(boolean finishingInput) {
         selectionController.reset();
         clearSuggestions();
+        if (keyboardView != null) {
+            keyboardView.resetShiftMode();
+        }
         super.onFinishInputView(finishingInput);
     }
 
@@ -177,7 +184,7 @@ public final class RuneBoardImeService extends InputMethodService
                 newSelEnd,
                 candidatesStart,
                 candidatesEnd);
-        getMainExecutor().execute(this::requestSuggestions);
+        scheduleContextRefresh();
     }
 
     @Override
@@ -208,7 +215,7 @@ public final class RuneBoardImeService extends InputMethodService
         InputConnection connection = getCurrentInputConnection();
         if (connection != null) {
             connection.commitText(text, 1);
-            getMainExecutor().execute(this::requestSuggestions);
+            scheduleContextRefresh();
         }
     }
 
@@ -218,7 +225,7 @@ public final class RuneBoardImeService extends InputMethodService
         InputConnection connection = getCurrentInputConnection();
         if (connection != null) {
             connection.deleteSurroundingText(1, 0);
-            getMainExecutor().execute(this::requestSuggestions);
+            scheduleContextRefresh();
         }
     }
 
@@ -246,6 +253,7 @@ public final class RuneBoardImeService extends InputMethodService
         }
 
         clearSuggestions();
+        scheduleContextRefresh();
     }
 
     @Override
@@ -279,6 +287,7 @@ public final class RuneBoardImeService extends InputMethodService
         }
 
         connection.commitText("\n", 1);
+        scheduleContextRefresh();
     }
 
     @Override
@@ -301,6 +310,7 @@ public final class RuneBoardImeService extends InputMethodService
                             extracted.selectionStart
                                     + (direction < 0 ? -1 : 1)));
             connection.setSelection(next, next);
+            scheduleCapitalizationRefresh();
             return;
         }
 
@@ -320,6 +330,7 @@ public final class RuneBoardImeService extends InputMethodService
                 KeyEvent.ACTION_UP,
                 keyCode,
                 0));
+        scheduleCapitalizationRefresh();
     }
 
     @Override
@@ -350,6 +361,7 @@ public final class RuneBoardImeService extends InputMethodService
                 direction);
         int next = extracted.startOffset + localNext;
         connection.setSelection(next, next);
+        scheduleCapitalizationRefresh();
     }
 
     @Override
@@ -447,7 +459,9 @@ public final class RuneBoardImeService extends InputMethodService
         }
 
         if (textChanged) {
-            getMainExecutor().execute(this::requestSuggestions);
+            scheduleContextRefresh();
+        } else {
+            scheduleCapitalizationRefresh();
         }
     }
 
@@ -590,7 +604,7 @@ public final class RuneBoardImeService extends InputMethodService
             return;
         }
 
-                if (!hasCollapsedSelection(connection)) {
+        if (!hasCollapsedSelection(connection)) {
             clearSuggestions();
             return;
         }
@@ -605,7 +619,7 @@ public final class RuneBoardImeService extends InputMethodService
 
         replaceCurrentWord(connection, context, suggestion, false);
         clearSuggestions();
-        getMainExecutor().execute(this::requestSuggestions);
+        scheduleContextRefresh();
     }
 
     private void replaceCurrentWord(
@@ -702,6 +716,39 @@ public final class RuneBoardImeService extends InputMethodService
                 && extracted.selectionStart >= 0
                 && extracted.selectionEnd >= 0
                 && extracted.selectionStart == extracted.selectionEnd;
+    }
+
+    private void scheduleContextRefresh() {
+        getMainExecutor().execute(() -> {
+            refreshAutoCapitalization();
+            requestSuggestions();
+        });
+    }
+
+    private void scheduleCapitalizationRefresh() {
+        getMainExecutor().execute(this::refreshAutoCapitalization);
+    }
+
+    private void refreshAutoCapitalization() {
+        RuneKeyboardView view = keyboardView;
+        if (view == null) {
+            return;
+        }
+
+        EditorInfo info = getCurrentInputEditorInfo();
+        int requestedModes = info == null
+                ? 0
+                : EditorInputPolicy.capitalizationModes(info.inputType);
+        if (requestedModes == 0) {
+            view.setAutoCapitalization(false);
+            return;
+        }
+
+        InputConnection connection = getCurrentInputConnection();
+        boolean enabled = connection != null
+                && (connection.getCursorCapsMode(requestedModes)
+                        & requestedModes) != 0;
+        view.setAutoCapitalization(enabled);
     }
 
     private EditorActionSpec resolveEditorAction(EditorInfo info) {

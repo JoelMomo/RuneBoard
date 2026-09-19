@@ -104,6 +104,18 @@ public final class KeyboardEngine {
         return state;
     }
 
+    public Update setAutoShifted(boolean shifted) {
+        return state.setAutoShifted(shifted)
+                ? Update.VISUAL
+                : Update.NONE;
+    }
+
+    public Update resetShiftMode() {
+        return state.resetShiftMode()
+                ? Update.VISUAL
+                : Update.NONE;
+    }
+
     public Update select(int row, int col) {
         if (state.getSelectedRow() == row && state.getSelectedCol() == col) {
             return Update.NONE;

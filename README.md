@@ -36,6 +36,7 @@ Prototype 0 contains:
 - hold-to-repeat for D-pad navigation, Backspace, cursor movement and word movement, with touch autorepeat on repeatable editing keys;
 - controller-first EDIT mode with Select All, Cut, Copy, Paste, Undo, Redo, Home, End, cursor/word navigation and character/word selection extension;
 - context-aware Enter key behavior and labels for Go, Search, Send, Next, Done, Previous and custom Android editor actions;
+- field-aware capitalization: sentence starts for prose, word starts for names/addresses, explicit Android cap flags when present, and no automatic caps for email/URL/password/non-text editors;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
 - quick language cycling from L3 or the keyboard header;
 - ABC/SYM mode switching without closing the IME;
@@ -46,7 +47,7 @@ Prototype 0 contains:
 - conservative autocorrect on Space for strong typo recommendations;
 - Suggestions and Autocorrect toggles, both enabled by default;
 - persistent physical-button remapping with automatic conflict swapping;
-- one-shot Shift plus persistent Caps Lock;
+- context-aware auto-capitalization plus manual one-shot Shift and persistent Caps Lock;
 - action keys show the currently mapped physical button;
 - four keyboard opacity levels;
 - persistent background opacity across IME recreation;
@@ -69,6 +70,7 @@ The product code is split into independent layers:
 - `controller/`: controller actions and Android key-code mapping;
 - `theme/`: visual profiles, persistent custom-theme data and supported background-opacity levels;
 - `language/`: typing-language profiles and layout metadata;
+- `editor/`: editor-action resolution and input-field policy;
 - `suggestion/`: word extraction, Android spell-check adapter and correction policy;
 - `settings/`: persistent user preferences;
 - `RuneKeyboardView`: rendering, touch hit testing and motion-event adapter;
@@ -79,7 +81,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.16.0-prototype**
+Current development version: **0.17.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 

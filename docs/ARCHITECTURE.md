@@ -1,4 +1,4 @@
-# RuneBoard architecture - 0.16.0 prototype
+# RuneBoard architecture - 0.17.0 prototype
 
 ## Principle
 
@@ -41,12 +41,16 @@ Maintains the anchor/caret pair for controller-first extended selection. Charact
 
 Converts Android `EditorInfo` action metadata into a small `EditorActionSpec`. Standard Go/Search/Send/Next/Done/Previous actions, custom labels/action IDs and `IME_FLAG_NO_ENTER_ACTION` are resolved in one place so rendering and execution stay consistent.
 
+### editor/EditorInputPolicy
+
+Classifies Android input fields for contextual typing behavior. It centralizes which fields may request spelling suggestions and which capitalization modes RuneBoard should ask the active `InputConnection` to evaluate. Normal/message text defaults to sentence capitalization, names/addresses to word capitalization, explicit Android capitalization flags are honored, and email/URI/password/non-text fields disable automatic capitalization.
+
 ### keyboard/KeyboardState
 
 Owns mutable keyboard state:
 
 - selected row/column;
-- shift mode (off / one-shot / Caps Lock);
+- shift mode (off / automatic / one-shot / Caps Lock);
 - opacity;
 - minimized state;
 - current mode: `ALPHABET`, `SYMBOLS` or `EDIT`.
@@ -68,7 +72,7 @@ It receives abstract `ControllerAction` values or touch selection changes and pr
 - abstract `EditorCommand` dispatch;
 - minimize/restore.
 
-This layer has no Android View dependency and is unit tested.
+This layer has no Android View dependency and is unit tested. Automatic Shift is represented separately from manual one-shot Shift and Caps Lock, so editor context never overrides a deliberate manual state.
 
 ### controller/ControllerAction
 
@@ -123,6 +127,7 @@ It owns the active `InputConnection` and converts engine output into:
 - character/word selection extension through `SelectionController` and `InputConnection.setSelection`;
 - Android context-menu editing actions such as Select All, Cut, Copy, Paste, Undo and Redo;
 - Home/End key events and forward deletion;
+- `InputConnection.getCursorCapsMode(...)` queries using `EditorInputPolicy`, refreshed after typing, deletion, cursor movement and editor selection updates;
 - context-aware Enter/editor-action dispatch using the same resolved action shown on the key.
 
 ### RuneBoardControlService
@@ -168,7 +173,8 @@ Current JVM tests cover:
 - weighted vertical navigation;
 - opacity cycling;
 - minimized movement policy;
-- one-shot shift;
+- manual one-shot/Caps shift and editor-driven automatic Shift priority;
+- input-field capitalization policy for prose, names/addresses, explicit `CAP_*`, sensitive/address-like and non-text fields;
 - text/editing output callbacks;
 - editor-layout command mapping and EDIT mode entry/exit;
 - minimize/restore capture policy;
