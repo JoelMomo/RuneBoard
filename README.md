@@ -15,7 +15,7 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - Y: Shift -> Caps Lock -> off
 - L1 / R1: move text cursor left / right
 - L2 / R2: previous / next word
-- Start: enter
+- Start: enter / active editor action
 - Select: minimize
 - L3: next language
 - R3: accept primary suggestion
@@ -34,6 +34,7 @@ Prototype 0 contains:
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
 - controller-first EDIT mode with Select All, Cut, Copy, Paste, Undo, Redo, Home, End, cursor/word navigation and character/word selection extension;
+- context-aware Enter key behavior and labels for Go, Search, Send, Next, Done, Previous and custom Android editor actions;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
 - quick language cycling from L3 or the keyboard header;
 - ABC/SYM mode switching without closing the IME;
@@ -77,7 +78,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.14.0-prototype**
+Current development version: **0.15.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 

@@ -13,6 +13,8 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.editor.EditorActionResolver;
+import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.SelectionController;
 import io.github.joelmomo.runeboard.keyboard.WordNavigator;
@@ -117,6 +119,7 @@ public final class RuneBoardImeService extends InputMethodService
                 initialOpacity,
                 new ControllerMapper(preferences.getControllerBindings()));
         view.setListener(this);
+        view.setEditorAction(resolveEditorAction(getCurrentInputEditorInfo()));
         view.setFocusable(true);
         view.setFocusableInTouchMode(true);
         view.requestFocus();
@@ -144,6 +147,9 @@ public final class RuneBoardImeService extends InputMethodService
             EditorInfo info,
             boolean restarting) {
         super.onStartInputView(info, restarting);
+        if (keyboardView != null) {
+            keyboardView.setEditorAction(resolveEditorAction(info));
+        }
         selectionController.reset();
         ensureSuggestionSource(preferences.getKeyboardProfile());
         getMainExecutor().execute(this::requestSuggestions);
@@ -244,21 +250,32 @@ public final class RuneBoardImeService extends InputMethodService
         selectionController.reset();
         clearSuggestions();
 
-        EditorInfo info = getCurrentInputEditorInfo();
-        int action = info == null
-                ? EditorInfo.IME_ACTION_NONE
-                : info.imeOptions & EditorInfo.IME_MASK_ACTION;
-
-        if (action != EditorInfo.IME_ACTION_NONE
-                && action != EditorInfo.IME_ACTION_UNSPECIFIED
-                && sendDefaultEditorAction(false)) {
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null) {
             return;
         }
 
-        InputConnection connection = getCurrentInputConnection();
-        if (connection != null) {
-            connection.commitText("\n", 1);
+        EditorActionSpec action =
+                resolveEditorAction(getCurrentInputEditorInfo());
+        if (action.performsEditorAction()) {
+            boolean handled =
+                    connection.performEditorAction(action.actionId());
+            if (debugLogging) {
+                Log.d(
+                        TAG,
+                        "performEditorAction kind="
+                                + action.kind()
+                                + " actionId="
+                                + action.actionId()
+                                + " handled="
+                                + handled);
+            }
+            if (handled) {
+                return;
+            }
         }
+
+        connection.commitText("\n", 1);
     }
 
     @Override
@@ -682,6 +699,16 @@ public final class RuneBoardImeService extends InputMethodService
                 && extracted.selectionStart >= 0
                 && extracted.selectionEnd >= 0
                 && extracted.selectionStart == extracted.selectionEnd;
+    }
+
+    private EditorActionSpec resolveEditorAction(EditorInfo info) {
+        if (info == null) {
+            return EditorActionSpec.enter();
+        }
+        return EditorActionResolver.resolve(
+                info.imeOptions,
+                info.actionId,
+                info.actionLabel);
     }
 
     private boolean supportsSuggestions(EditorInfo info) {

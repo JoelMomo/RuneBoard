@@ -1,4 +1,4 @@
-# RuneBoard architecture - 0.14.0 prototype
+# RuneBoard architecture - 0.15.0 prototype
 
 ## Principle
 
@@ -36,6 +36,10 @@ Platform-independent editing commands for selection, clipboard actions, undo/red
 ### keyboard/SelectionController
 
 Maintains the anchor/caret pair for controller-first extended selection. Character selection advances by Unicode code point, word selection reuses `WordNavigator`, and an existing editor selection is extended from the edge matching the requested direction.
+
+### editor/EditorActionResolver
+
+Converts Android `EditorInfo` action metadata into a small `EditorActionSpec`. Standard Go/Search/Send/Next/Done/Previous actions, custom labels/action IDs and `IME_FLAG_NO_ENTER_ACTION` are resolved in one place so rendering and execution stay consistent.
 
 ### keyboard/KeyboardState
 
@@ -114,7 +118,8 @@ It owns the active `InputConnection` and converts engine output into:
 - previous/next word cursor movement through `WordNavigator`;
 - character/word selection extension through `SelectionController` and `InputConnection.setSelection`;
 - Android context-menu editing actions such as Select All, Cut, Copy, Paste, Undo and Redo;
-- Home/End key events and forward deletion.
+- Home/End key events and forward deletion;
+- context-aware Enter/editor-action dispatch using the same resolved action shown on the key.
 
 ### RuneBoardControlService
 
@@ -166,6 +171,7 @@ Current JVM tests cover:
 - controller mapping and occupied-button swapping;
 - repeatability after remapping;
 - word-boundary navigation;
+- Android editor-action resolution, including standard actions, custom labels and `IME_FLAG_NO_ENTER_ACTION`;
 - BUTTON_A vs DPAD_CENTER behavior.
 
 ### Emulator
