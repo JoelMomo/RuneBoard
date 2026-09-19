@@ -52,7 +52,7 @@ Mappings are stored through RunePreferences as binding_* values.
 
 The IME builds its ControllerMapper from persisted ControllerBindings. Changing or resetting a mapping requests an IME input-view refresh so the new mapping becomes active without restarting RuneBoard.
 
-Repeat behavior follows the action rather than the original physical key. For example, if Backspace is moved from B to X, holding X becomes the repeatable delete control.
+Repeat behavior follows the action rather than the original physical key. Backspace, D-pad movement, cursor left/right and previous/next word repeat while held. If one of those actions is remapped, the new physical button inherits the repeat behavior. One-shot actions such as Space, Shift, Enter, language switching, suggestion acceptance and minimize never repeat.
 
 ## Word navigation
 

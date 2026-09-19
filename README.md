@@ -33,6 +33,7 @@ Prototype 0 contains:
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
 - L1/R1 cursor movement and L2/R2 word navigation through the active `InputConnection`;
+- hold-to-repeat for D-pad navigation, Backspace, cursor movement and word movement, with touch autorepeat on repeatable editing keys;
 - controller-first EDIT mode with Select All, Cut, Copy, Paste, Undo, Redo, Home, End, cursor/word navigation and character/word selection extension;
 - context-aware Enter key behavior and labels for Go, Search, Send, Next, Done, Previous and custom Android editor actions;
 - persistent typing profiles for English QWERTY, Spanish QWERTY, French AZERTY and Russian JCUKEN;
@@ -78,7 +79,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.15.0-prototype**
+Current development version: **0.16.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 

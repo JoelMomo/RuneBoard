@@ -28,6 +28,7 @@ import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
+import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
@@ -86,6 +87,11 @@ public final class RuneKeyboardView extends View {
     private LinearGradient backgroundGradient;
     private long lastAxisMoveAt;
     private boolean suggestionsRecommended;
+    private final Runnable touchRepeatRunnable;
+    private final RectF touchRepeatBounds = new RectF();
+    private int touchRepeatRow = -1;
+    private int touchRepeatCol = -1;
+    private boolean touchRepeatActive;
 
     public RuneKeyboardView(Context context) {
         this(
@@ -219,6 +225,7 @@ public final class RuneKeyboardView extends View {
                 initialOpacity,
                 profile.locale);
 
+        touchRepeatRunnable = this::repeatTouchKey;
         setFocusable(true);
         setFocusableInTouchMode(true);
     }
@@ -841,10 +848,29 @@ public final class RuneKeyboardView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getActionMasked() != MotionEvent.ACTION_DOWN) {
+        int action = event.getActionMasked();
+
+        if (action == MotionEvent.ACTION_UP
+                || action == MotionEvent.ACTION_CANCEL) {
+            cancelTouchRepeat();
             return true;
         }
 
+        if (action == MotionEvent.ACTION_MOVE) {
+            if (touchRepeatActive
+                    && !touchRepeatBounds.contains(
+                            event.getX(),
+                            event.getY())) {
+                cancelTouchRepeat();
+            }
+            return true;
+        }
+
+        if (action != MotionEvent.ACTION_DOWN) {
+            return true;
+        }
+
+        cancelTouchRepeat();
         requestFocus();
         performClick();
 
@@ -871,13 +897,63 @@ public final class RuneKeyboardView extends View {
             if (target.bounds.contains(event.getX(), event.getY())) {
                 KeyboardEngine.Update selectionUpdate =
                         engine.select(target.row, target.col);
-                KeyboardEngine.Update pressUpdate = engine.pressSelected();
+                KeyboardKey selectedKey =
+                        engine.getState().getSelectedKey();
+                KeyboardEngine.Update pressUpdate =
+                        engine.pressSelected();
                 applyUpdate(merge(selectionUpdate, pressUpdate));
+                if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
+                    startTouchRepeat(target);
+                }
                 return true;
             }
         }
 
         return true;
+    }
+
+    private void startTouchRepeat(HitTarget target) {
+        touchRepeatActive = true;
+        touchRepeatRow = target.row;
+        touchRepeatCol = target.col;
+        touchRepeatBounds.set(target.bounds);
+        postDelayed(
+                touchRepeatRunnable,
+                KeyRepeatPolicy.TOUCH_INITIAL_DELAY_MS);
+    }
+
+    private void repeatTouchKey() {
+        if (!touchRepeatActive) {
+            return;
+        }
+
+        KeyboardEngine.Update selectionUpdate =
+                engine.select(touchRepeatRow, touchRepeatCol);
+        KeyboardKey selectedKey = engine.getState().getSelectedKey();
+        if (!KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
+            cancelTouchRepeat();
+            return;
+        }
+
+        KeyboardEngine.Update pressUpdate = engine.pressSelected();
+        applyUpdate(merge(selectionUpdate, pressUpdate));
+        postDelayed(
+                touchRepeatRunnable,
+                KeyRepeatPolicy.TOUCH_INTERVAL_MS);
+    }
+
+    private void cancelTouchRepeat() {
+        touchRepeatActive = false;
+        touchRepeatRow = -1;
+        touchRepeatCol = -1;
+        touchRepeatBounds.setEmpty();
+        removeCallbacks(touchRepeatRunnable);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cancelTouchRepeat();
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -888,7 +964,11 @@ public final class RuneKeyboardView extends View {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getRepeatCount() == 0 && handleKeyCode(keyCode)) {
+        if (shouldCaptureKeyCode(keyCode)) {
+            if (event.getRepeatCount() == 0
+                    || isRepeatableKeyCode(keyCode)) {
+                handleKeyCode(keyCode);
+            }
             return true;
         }
         return super.onKeyDown(keyCode, event);
