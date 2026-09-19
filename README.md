@@ -21,14 +21,14 @@ The project is currently in **Prototype 0**. The Thor-specific architecture has 
 - R3: accept primary suggestion
 - Touch: direct key input
 
-The DS-style controls are validated on AYN Thor hardware. Twelve editing actions can be remapped; D-pad navigation remains fixed. Analog-stick navigation remains experimental.
+The DS-style controls are validated on AYN Thor hardware. Twelve editing actions can be remapped; D-pad navigation remains fixed. Left-stick keyboard navigation is also validated on the Thor while the IME view is active.
 
 ## Current implementation
 
 Prototype 0 contains:
 
 - a real Android `InputMethodService`;
-- a touch QWERTY keyboard with an always-visible number row;
+- a touch QWERTY keyboard with a compact command row, an always-visible number row directly above the letters and a thumb-oriented bottom action row;
 - a narrowly scoped accessibility service for physical controller buttons;
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
@@ -41,7 +41,7 @@ Prototype 0 contains:
 - quick language cycling from L3 or the keyboard header;
 - ABC/SYM mode switching without closing the IME;
 - direct comma/period keys plus language-specific accent and punctuation pages;
-- navigation-bar inset handling so the utility row stays tappable;
+- lower-display geometry that fills Android's available IME bounds without double-applying the navigation-bar inset;
 - system spell-check suggestions with up to three header candidates;
 - touch or remappable R3 acceptance of the primary suggestion;
 - conservative autocorrect on Space for strong typo recommendations;
@@ -81,7 +81,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.17.0-prototype**
+Current development version: **0.17.1-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -113,10 +113,7 @@ Validated on the physical device:
 - opacity-state switching;
 - controller/touch EDIT panel with clipboard and document-navigation actions.
 
-Measured lower-display keyboard sizes during the prototype:
-
-- full: approximately `1240x595` px;
-- compact: approximately `1240x134` px.
+On the test Thor, Android reports lower-display app bounds of approximately `1240x1025` px in landscape. The 0.17.1 full keyboard now fills the IME-provided height instead of using the earlier approximately `1240x595` px cap. Compact mode remains approximately `1240x134` px.
 
 The lower panel is `1080x1240` native and `1240x1080` in landscape.
 

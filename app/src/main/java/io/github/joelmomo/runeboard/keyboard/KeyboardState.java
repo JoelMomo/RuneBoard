@@ -22,8 +22,8 @@ public final class KeyboardState {
     private final KeyboardLayout editorLayout;
     private KeyboardLayout layout;
     private Mode mode = Mode.ALPHABET;
-    private int selectedRow = 1;
-    private int selectedCol = 0;
+    private int selectedRow;
+    private int selectedCol;
     private ShiftMode shiftMode = ShiftMode.OFF;
     private boolean autoShiftRequested;
     private boolean minimized;
@@ -69,6 +69,25 @@ public final class KeyboardState {
         this.editorLayout = editorLayout;
         this.layout = alphabetLayout;
         opacity = BackgroundOpacity.normalize(initialOpacity);
+        selectInitialTypingKey();
+    }
+
+    private void selectInitialTypingKey() {
+        for (int row = 1; row < layout.getRowCount(); row++) {
+            KeyboardRow keyboardRow = layout.getRow(row);
+            for (int col = 0; col < keyboardRow.size(); col++) {
+                KeyboardKey key = keyboardRow.getKey(col);
+                if (key.getType() == KeyboardKey.Type.TEXT
+                        && !Character.isDigit(key.getText().codePointAt(0))) {
+                    selectedRow = row;
+                    selectedCol = col;
+                    return;
+                }
+            }
+        }
+
+        selectedRow = 0;
+        selectedCol = 0;
     }
 
     public KeyboardLayout getLayout() {

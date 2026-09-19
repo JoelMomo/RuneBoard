@@ -102,6 +102,7 @@ public final class RuneBoardImeService extends InputMethodService
 
     @Override
     public View onCreateInputView() {
+        setExtractViewShown(false);
         keyboardView = createKeyboardView();
         return keyboardView;
     }
@@ -144,10 +145,17 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     @Override
+    public void onWindowShown() {
+        super.onWindowShown();
+        setExtractViewShown(false);
+    }
+
+    @Override
     public void onStartInputView(
             EditorInfo info,
             boolean restarting) {
         super.onStartInputView(info, restarting);
+        setExtractViewShown(false);
         if (keyboardView != null) {
             if (!restarting) {
                 keyboardView.resetShiftMode();

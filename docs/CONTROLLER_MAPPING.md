@@ -95,6 +95,8 @@ With RuneBoard active on mCurTokenDisplayId=4, the hardware produced:
 
 Minimized behavior was also verified: X did not restore the keyboard, while A restored it.
 
+The left analog stick was also validated on the physical Thor under Android 13. With the IME active on display 4, the controller's `ABS_X` and `ABS_Y` axes reach `RuneKeyboardView` as generic motion and move the keyboard selection horizontally and vertically. This path is separate from the accessibility service, which continues to filter controller key events only.
+
 A live remap was then tested on the physical device:
 
 - Confirm changed from A to X

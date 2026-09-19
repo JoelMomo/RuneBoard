@@ -35,22 +35,22 @@ Validated:
 
 L1/R1 use `InputConnection.setSelection()` because synthetic DPAD cursor events were not reliable on the Thor.
 
-Analog-stick navigation is not yet validated. Android 13 accessibility can filter controller key events but does not provide an equivalent global joystick-axis stream.
+Left-stick navigation is now validated on the physical Thor. While the RuneBoard IME view is active on display 4, Android delivers the Xbox Wireless Controller's `ABS_X` / `ABS_Y` axes through the IME generic-motion path. Horizontal and vertical axis events moved the keyboard selection and A committed the expected keys. The accessibility service remains key-filter-only; it is not used as the analog-axis source.
 
 ## Gate C — transparency
 
 **FUNCTIONAL, visual tuning still required.**
 
-RuneBoard cycles through opacity values 255, 205, 145 and 85 while remaining active. The view now clears its transparent buffer before every redraw.
+RuneBoard currently cycles through opacity values 255, 180, 90 and 0 (approximately 100%, 71%, 35% and 0%). The view clears its transparent buffer before every redraw. Functional cycling and persistence were revalidated on the physical Thor with RuneBoard 0.17.0.
 
 ADB screenshots do not reliably preserve the visible differences between all semi-transparent levels, so final appearance must be tuned visually on the physical lower panel during the design phase.
 
 ## Gate D — minimize / restore
 
 **PASS.**
-The full prototype measured approximately `1240 × 595` px on the lower display.
+The original full prototype measured approximately `1240 × 595` px on the lower display. In 0.17.1, that artificial height cap was removed: RuneBoard now fills the height Android provides to the IME instead of subtracting the navigation-bar inset a second time. Android reports lower-display app bounds of approximately `1240 × 1025` px in landscape on the test Thor.
 
-Minimized, AYN accepted the requested resize and RuneBoard measured approximately `1240 × 134` px.
+Minimized, AYN accepts the requested resize and RuneBoard measures approximately `1240 × 134` px.
 
 The IME remains selected and can be restored with the controller.
 
