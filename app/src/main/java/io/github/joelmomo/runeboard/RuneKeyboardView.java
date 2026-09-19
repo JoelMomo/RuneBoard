@@ -297,15 +297,11 @@ public final class RuneKeyboardView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
-        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        int availableHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-        int desiredHeight;
-        if (engine.getState().isMinimized()) {
-            desiredHeight = dp(58);
-        } else {
-            desiredHeight = Math.round(
-                    Math.min(screenHeight * 0.58f, width * 0.56f));
-        }
+        int desiredHeight = engine.getState().isMinimized()
+                ? dp(58)
+                : availableHeight;
 
         setMeasuredDimension(
                 resolveSize(width, widthMeasureSpec),
@@ -350,10 +346,9 @@ public final class RuneKeyboardView extends View {
                 outer + headerHeight);
         float contentTop = outer + headerHeight + gap;
         float rowGaps = gap * (layout.getRowCount() - 1);
-        float bottomInset = navigationBarBottomInset();
         float availableHeight = Math.max(
                 1f,
-                height - contentTop - outer - bottomInset - rowGaps);
+                height - contentTop - outer - rowGaps);
         float heightUnit =
                 availableHeight / layout.getTotalHeightWeight();
 
@@ -381,6 +376,7 @@ public final class RuneKeyboardView extends View {
 
             top += rowHeight + gap;
         }
+
     }
 
     @Override
@@ -391,14 +387,6 @@ public final class RuneKeyboardView extends View {
             invalidate();
         }
         return applied;
-    }
-
-    private int navigationBarBottomInset() {
-        WindowInsets insets = getRootWindowInsets();
-        if (insets == null) {
-            return 0;
-        }
-        return insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
     }
 
     @Override

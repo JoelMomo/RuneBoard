@@ -142,50 +142,59 @@ public final class KeyboardLayouts {
             float middleInset,
             float bottomInset) {
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(row(textKeys("1234567890"), 0.35f, 0.35f, 0.78f));
+        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.58f));
+        rows.add(row(textKeys("1234567890"), 0.35f, 0.35f, 0.68f));
         rows.add(row(textKeys(top), topInset, topInset, 1f));
         rows.add(row(textKeys(middle), middleInset, middleInset, 1f));
         rows.add(row(textKeys(bottom), bottomInset, bottomInset, 1f));
-        rows.add(row(alphabetActionKeys(), 0f, 0f, 1.08f));
+        rows.add(row(alphabetActionKeys(), 0f, 0f, 0.72f));
         return new KeyboardLayout(rows);
     }
 
     private static KeyboardLayout symbolLayout(String extras) {
         List<KeyboardRow> rows = new ArrayList<>();
-        rows.add(row(literalKeys("1234567890"), 0.35f, 0.35f, 0.78f));
+        rows.add(row(quickEditKeys(), 0.2f, 0.2f, 0.58f));
+        rows.add(row(literalKeys("1234567890"), 0.35f, 0.35f, 0.68f));
         rows.add(row(literalKeys(COMMON_SYMBOLS_TOP), 0f, 0f, 1f));
         rows.add(row(literalKeys(extras), 0f, 0f, 1f));
         rows.add(row(literalKeys(COMMON_SYMBOLS_BOTTOM), 0f, 0f, 1f));
-        rows.add(row(symbolActionKeys(), 0f, 0f, 1.08f));
+        rows.add(row(symbolActionKeys(), 0f, 0f, 0.72f));
         return new KeyboardLayout(rows);
     }
 
     private static List<KeyboardKey> alphabetActionKeys() {
         List<KeyboardKey> actions = new ArrayList<>();
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SHIFT, 0.95f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 0.9f));
-        actions.add(KeyboardKey.text(",", 0.7f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 2.5f));
-        actions.add(KeyboardKey.text(".", 0.7f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.05f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.05f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.OPACITY, 0.85f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MINIMIZE, 0.85f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.EDIT, 0.85f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SHIFT, 1.05f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 0.95f));
+        actions.add(KeyboardKey.text(",", 0.8f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 1.9f));
+        actions.add(KeyboardKey.text(".", 0.8f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.2f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.2f));
         return actions;
+    }
+
+    private static List<KeyboardKey> quickEditKeys() {
+        return List.of(
+                command(EditorCommand.CURSOR_LEFT, "\u2190", 0.9f),
+                command(EditorCommand.CURSOR_RIGHT, "\u2192", 0.9f),
+                command(EditorCommand.COPY, "COPY", 1.15f),
+                command(EditorCommand.PASTE, "PASTE", 1.25f),
+                command(EditorCommand.UNDO, "UNDO", 1f),
+                command(EditorCommand.REDO, "REDO", 1f),
+                KeyboardKey.action(KeyboardKey.Type.OPACITY, 1f),
+                KeyboardKey.action(KeyboardKey.Type.MINIMIZE, 1f),
+                KeyboardKey.action(KeyboardKey.Type.EDIT, 1f));
     }
 
     private static List<KeyboardKey> symbolActionKeys() {
         List<KeyboardKey> actions = new ArrayList<>();
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1.0f));
-        actions.add(KeyboardKey.text(",", 0.75f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 2.7f));
-        actions.add(KeyboardKey.text(".", 0.75f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.15f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.15f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.OPACITY, 0.9f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.MINIMIZE, 0.9f));
-        actions.add(KeyboardKey.action(KeyboardKey.Type.EDIT, 0.9f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1f));
+        actions.add(KeyboardKey.text(",", 0.85f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 2f));
+        actions.add(KeyboardKey.text(".", 0.85f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.25f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.25f));
         return actions;
     }
 

@@ -76,7 +76,7 @@ public final class KeyboardEngineTest {
                 255,
                 Locale.US);
 
-        engine.getState().select(4, 1);
+        engine.getState().select(5, 1);
         assertEquals(KeyboardEngine.Update.GEOMETRY, engine.pressSelected());
         assertTrue(engine.getState().isSymbols());
         assertEquals(KeyboardKey.Type.MODE,
@@ -108,7 +108,7 @@ public final class KeyboardEngineTest {
                 255,
                 Locale.US);
 
-        engine.getState().select(4, 9);
+        engine.getState().select(0, 8);
         assertEquals(
                 KeyboardEngine.Update.GEOMETRY,
                 engine.pressSelected());
@@ -221,7 +221,7 @@ public final class KeyboardEngineTest {
                         output,
                         90);
 
-        engine.getState().select(4, 7);
+        engine.getState().select(0, 6);
         assertEquals(90, engine.getState().getOpacity());
 
         assertEquals(
