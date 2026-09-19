@@ -26,7 +26,7 @@ RuneBoard itself declares no INTERNET permission. Words are passed to the spell-
 For the current word before the cursor:
 
 - words shorter than two characters are ignored;
-- password, visible-password, web-password, email, URI and TYPE_TEXT_FLAG_NO_SUGGESTIONS editors are ignored;
+- password, visible-password, web-password, email, web-email, URI and TYPE_TEXT_FLAG_NO_SUGGESTIONS editors are ignored;
 - up to three unique candidates are displayed in the existing header;
 - the first candidate shows the mapped Accept suggestion controller button;
 - candidates can be selected by touch;
@@ -62,7 +62,7 @@ Case is preserved for normal title-case and all-uppercase input.
 
 RuneBoard only requests or applies spelling replacements when Android reports a collapsed text selection. If the editor has selected text, or if the cursor/selection state cannot be confirmed, RuneBoard does not replace a word. Space remains a normal space in that case.
 
-Suggestion policy also rejects password, visible-password, web-password, email, URI, NO_SUGGESTIONS and non-text editors. These cases are covered by unit tests.
+Suggestion policy also rejects password, visible-password, web-password, email, web-email, URI, NO_SUGGESTIONS and non-text editors. These cases are covered by unit tests.
 
 ## Settings
 

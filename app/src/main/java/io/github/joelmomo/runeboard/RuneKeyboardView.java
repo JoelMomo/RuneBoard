@@ -266,6 +266,22 @@ public final class RuneKeyboardView extends View {
         invalidate();
     }
 
+    public void setAutoCapitalization(boolean enabled) {
+        applyUpdate(engine.setAutoShifted(enabled));
+        if (debugLogging) {
+            Log.d(
+                    TAG,
+                    "autoCapitalization="
+                            + enabled
+                            + " shiftMode="
+                            + engine.getState().getShiftMode());
+        }
+    }
+
+    public void resetShiftMode() {
+        applyUpdate(engine.resetShiftMode());
+    }
+
     public void setListener(Listener listener) {
         this.listener = listener;
     }

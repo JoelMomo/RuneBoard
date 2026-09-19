@@ -176,6 +176,62 @@ public final class KeyboardStateTest {
     }
 
     @Test
+    public void autoShiftIsDistinctFromManualShift() {
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
+
+        assertTrue(state.setAutoShifted(true));
+        assertEquals(
+                KeyboardState.ShiftMode.AUTO,
+                state.getShiftMode());
+        assertTrue(state.isShifted());
+        assertFalse(state.isCapsLocked());
+
+        state.advanceShiftMode();
+        assertEquals(
+                KeyboardState.ShiftMode.OFF,
+                state.getShiftMode());
+        assertFalse(state.isShifted());
+    }
+
+    @Test
+    public void autoShiftRestoresAfterTemporarySymbolMode() {
+        KeyboardState state = new KeyboardState(
+                KeyboardLayouts.englishQwerty(),
+                KeyboardLayouts.englishSymbols(),
+                255);
+
+        state.setAutoShifted(true);
+        state.toggleSymbols();
+        assertFalse(state.isShifted());
+
+        state.toggleSymbols();
+        assertEquals(
+                KeyboardState.ShiftMode.AUTO,
+                state.getShiftMode());
+    }
+
+    @Test
+    public void manualCapsTakesPriorityOverAutoUpdates() {
+        KeyboardState state =
+                new KeyboardState(KeyboardLayouts.qwerty());
+
+        state.advanceShiftMode();
+        state.advanceShiftMode();
+        assertTrue(state.isCapsLocked());
+
+        assertFalse(state.setAutoShifted(false));
+        assertTrue(state.isCapsLocked());
+        assertFalse(state.setAutoShifted(true));
+        assertTrue(state.isCapsLocked());
+
+        state.advanceShiftMode();
+        assertEquals(
+                KeyboardState.ShiftMode.AUTO,
+                state.getShiftMode());
+    }
+
+    @Test
     public void movementStopsWhileMinimized() {
         KeyboardState state =
                 new KeyboardState(KeyboardLayouts.qwerty());

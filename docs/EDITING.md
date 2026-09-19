@@ -1,6 +1,6 @@
 # Editing mode
 
-RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word. RuneBoard 0.15.0 makes the shared Enter key follow the active Android editor action. RuneBoard 0.16.0 adds hold-to-repeat for deletion and navigation.
+RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word. RuneBoard 0.15.0 makes the shared Enter key follow the active Android editor action. RuneBoard 0.16.0 adds hold-to-repeat for deletion and navigation. RuneBoard 0.17.0 adds field-aware automatic capitalization.
 
 ## Entering and leaving
 
@@ -57,6 +57,22 @@ RuneBoardImeService converts them into the active Android InputConnection:
 
 Commands that can modify text request a fresh suggestion pass afterwards.
 
+## Context-aware capitalization
+
+RuneBoard asks the active `InputConnection` for cursor capitalization state instead of guessing from committed text itself.
+
+`EditorInputPolicy` selects the requested capitalization mode from Android editor metadata:
+
+- ordinary prose, short-message, long-message and web-edit fields default to sentence capitalization;
+- person-name, postal-address and phonetic-name fields default to word capitalization;
+- explicit `TYPE_TEXT_FLAG_CAP_CHARACTERS`, `CAP_WORDS` and `CAP_SENTENCES` flags are honored;
+- email, web-email, URI, password and non-text fields disable automatic capitalization;
+- `TYPE_TEXT_FLAG_NO_SUGGESTIONS` fields do not get implicit capitalization unless the editor also supplies an explicit `CAP_*` flag.
+
+Automatic Shift is a separate state from manual one-shot Shift and Caps Lock. Manual Shift/Caps therefore has priority over editor refreshes. Pressing Shift while automatic capitalization is active explicitly turns that automatic Shift off for the current position. Entering SYM or EDIT hides Shift; returning to ABC restores an automatic Shift request when the editor still requires it.
+
+The capitalization query is refreshed after text commits, deletion, Space/autocorrect, literal newline insertion, cursor/word movement and Android selection changes.
+
 ## Clipboard privacy
 
 RuneBoard does not maintain a private clipboard history.
@@ -75,7 +91,7 @@ KeyboardState now has three explicit modes:
 - SYMBOLS
 - EDIT
 
-Shift is only active in ALPHABET mode. Switching to SYM or EDIT clears one-shot/Caps state.
+Shift is only active in ALPHABET mode. Switching to SYM or EDIT clears the visible Shift state; manual one-shot/Caps state is not carried into those modes. A pending automatic capitalization request can be restored when returning to ABC.
 
 ABC/SYM/EDIT switches return KeyboardEngine.Update.GEOMETRY: the IME window size is unchanged, only key hit targets are rebuilt.
 

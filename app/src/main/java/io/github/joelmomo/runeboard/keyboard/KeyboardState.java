@@ -6,6 +6,7 @@ public final class KeyboardState {
 
     public enum ShiftMode {
         OFF,
+        AUTO,
         ONCE,
         CAPS_LOCK
     }
@@ -24,6 +25,7 @@ public final class KeyboardState {
     private int selectedRow = 1;
     private int selectedCol = 0;
     private ShiftMode shiftMode = ShiftMode.OFF;
+    private boolean autoShiftRequested;
     private boolean minimized;
     private int opacity;
 
@@ -122,6 +124,8 @@ public final class KeyboardState {
 
         if (mode != Mode.ALPHABET) {
             shiftMode = ShiftMode.OFF;
+        } else if (autoShiftRequested) {
+            shiftMode = ShiftMode.AUTO;
         }
 
         selectKeyType(preferredSelection);
@@ -246,22 +250,62 @@ public final class KeyboardState {
             case OFF:
                 shiftMode = ShiftMode.ONCE;
                 break;
+            case AUTO:
+                autoShiftRequested = false;
+                shiftMode = ShiftMode.OFF;
+                break;
             case ONCE:
                 shiftMode = ShiftMode.CAPS_LOCK;
                 break;
             case CAPS_LOCK:
+                shiftMode = autoShiftRequested
+                        ? ShiftMode.AUTO
+                        : ShiftMode.OFF;
+                break;
             default:
                 shiftMode = ShiftMode.OFF;
                 break;
         }
     }
 
-    public boolean consumeOneShotShift() {
-        if (shiftMode != ShiftMode.ONCE) {
+    public boolean setAutoShifted(boolean shifted) {
+        autoShiftRequested = shifted;
+        if (mode != Mode.ALPHABET
+                || shiftMode == ShiftMode.ONCE
+                || shiftMode == ShiftMode.CAPS_LOCK) {
+            return false;
+        }
+
+        ShiftMode next = shifted ? ShiftMode.AUTO : ShiftMode.OFF;
+        if (next == shiftMode) {
+            return false;
+        }
+        shiftMode = next;
+        return true;
+    }
+
+    public boolean resetShiftMode() {
+        autoShiftRequested = false;
+        if (shiftMode == ShiftMode.OFF) {
             return false;
         }
         shiftMode = ShiftMode.OFF;
         return true;
+    }
+
+    public boolean consumeOneShotShift() {
+        if (shiftMode == ShiftMode.ONCE) {
+            shiftMode = autoShiftRequested
+                    ? ShiftMode.AUTO
+                    : ShiftMode.OFF;
+            return true;
+        }
+        if (shiftMode == ShiftMode.AUTO) {
+            autoShiftRequested = false;
+            shiftMode = ShiftMode.OFF;
+            return true;
+        }
+        return false;
     }
 
     public boolean isMinimized() {
