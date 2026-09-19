@@ -1,6 +1,6 @@
 # Custom appearance
 
-RuneBoard 0.0.12 adds a persistent Custom theme on top of the existing theme model.
+RuneBoard 0.12.0 adds a persistent Custom theme on top of the existing theme model.
 
 ## Theme profiles
 
