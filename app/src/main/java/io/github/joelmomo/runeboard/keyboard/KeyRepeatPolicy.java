@@ -6,6 +6,8 @@ public final class KeyRepeatPolicy {
 
     public static final long TOUCH_INITIAL_DELAY_MS = 380L;
     public static final long TOUCH_INTERVAL_MS = 55L;
+    public static final long DPAD_INITIAL_DELAY_MS = 380L;
+    public static final long DPAD_INTERVAL_MS = 85L;
 
     private KeyRepeatPolicy() {
     }

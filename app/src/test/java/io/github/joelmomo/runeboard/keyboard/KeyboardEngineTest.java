@@ -76,7 +76,7 @@ public final class KeyboardEngineTest {
                 255,
                 Locale.US);
 
-        engine.getState().select(5, 1);
+        engine.getState().select(5, 0);
         assertEquals(KeyboardEngine.Update.GEOMETRY, engine.pressSelected());
         assertTrue(engine.getState().isSymbols());
         assertEquals(KeyboardKey.Type.MODE,
@@ -126,6 +126,19 @@ public final class KeyboardEngineTest {
         engine.getState().select(5, 0);
         engine.pressSelected();
         assertFalse(engine.getState().isEditing());
+    }
+
+    @Test
+    public void onScreenEnterInsertsNewlineWithoutEditorAction() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        engine.getState().select(5, 4);
+        engine.pressSelected();
+
+        assertEquals(List.of("\n"), output.text);
+        assertEquals(0, output.enters);
     }
 
     @Test

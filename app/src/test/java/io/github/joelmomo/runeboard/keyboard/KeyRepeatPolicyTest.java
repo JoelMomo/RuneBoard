@@ -69,4 +69,11 @@ public final class KeyRepeatPolicyTest {
                 > KeyRepeatPolicy.TOUCH_INTERVAL_MS);
         assertTrue(KeyRepeatPolicy.TOUCH_INTERVAL_MS > 0L);
     }
+
+    @Test
+    public void dpadRepeatWaitsBeforeContinuousNavigation() {
+        assertTrue(KeyRepeatPolicy.DPAD_INITIAL_DELAY_MS
+                > KeyRepeatPolicy.DPAD_INTERVAL_MS);
+        assertTrue(KeyRepeatPolicy.DPAD_INTERVAL_MS > 0L);
+    }
 }

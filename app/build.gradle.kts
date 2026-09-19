@@ -10,8 +10,8 @@ android {
         applicationId = "io.github.joelmomo.runeboard"
         minSdk = 33
         targetSdk = 36
-        versionCode = 18
-        versionName = "0.17.1-prototype"
+        versionCode = 19
+        versionName = "0.17.2-prototype"
     }
 
     compileOptions {

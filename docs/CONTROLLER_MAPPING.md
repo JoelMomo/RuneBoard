@@ -68,7 +68,7 @@ The remappable Enter action (Start by default) follows the active Android field.
 
 Fields with no editor action insert a newline. `IME_FLAG_NO_ENTER_ACTION` explicitly forces newline behavior, so a multiline editor cannot accidentally submit just because an action code is also present.
 
-The on-screen Enter key and the physical Enter binding use the same resolved action.
+The on-screen ↵ key intentionally always inserts a newline. The remappable physical Enter binding (Start by default) remains context-aware and performs the active Android editor action when one is supplied.
 
 ## Minimized mode
 
@@ -95,7 +95,9 @@ With RuneBoard active on mCurTokenDisplayId=4, the hardware produced:
 
 Minimized behavior was also verified: X did not restore the keyboard, while A restored it.
 
-The left analog stick was also validated on the physical Thor under Android 13. With the IME active on display 4, the controller's `ABS_X` and `ABS_Y` axes reach `RuneKeyboardView` as generic motion and move the keyboard selection horizontally and vertically. This path is separate from the accessibility service, which continues to filter controller key events only.
+The left analog stick was also validated on the physical Thor under Android 13. With the IME active on display 4, the controller's `ABS_X` and `ABS_Y` axes reach `RuneKeyboardView` as generic motion and move the keyboard selection horizontally and vertically.
+
+Thor/Android additionally synthesizes a matching `KEYCODE_DPAD_*` event roughly 1 ms after analog deflection. RuneBoard now suppresses only that immediate compatibility event, preventing a single stick gesture from advancing twice while leaving the physical D-pad path intact. The stick uses hysteresis and must return to center before another step; holding it does not autorepeat. Physical D-pad hold remains separate: one initial move, then delayed repeat until release.
 
 A live remap was then tested on the physical device:
 

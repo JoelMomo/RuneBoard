@@ -16,12 +16,14 @@ public final class KeyboardLayoutTest {
         assertEquals(10, layout.getRow(1).size());
         assertEquals(10, layout.getRow(2).size());
         assertEquals(9, layout.getRow(3).size());
-        assertEquals(7, layout.getRow(4).size());
-        assertEquals(7, layout.getRow(5).size());
+        assertEquals(9, layout.getRow(4).size());
+        assertEquals(5, layout.getRow(5).size());
 
         assertTrue(layout.getRow(3).getLeftInsetWeight() > 0f);
-        assertTrue(layout.getRow(4).getLeftInsetWeight()
-                > layout.getRow(3).getLeftInsetWeight());
+        assertEquals(KeyboardKey.Type.SHIFT,
+                layout.getKey(4, 0).getType());
+        assertEquals(KeyboardKey.Type.BACKSPACE,
+                layout.getKey(4, 8).getType());
     }
 
     @Test
@@ -49,12 +51,26 @@ public final class KeyboardLayoutTest {
     }
 
     @Test
-    public void numberRowIsShorterThanLetterRows() {
+    public void commandAndNumberRowsUseErgonomicHeights() {
         KeyboardLayout layout = KeyboardLayouts.qwerty();
 
-        assertTrue(layout.getRow(1).getHeightWeight()
+        assertTrue(layout.getRow(0).getHeightWeight()
                 < layout.getRow(2).getHeightWeight());
+        assertEquals(layout.getRow(2).getHeightWeight(),
+                layout.getRow(1).getHeightWeight(), 0f);
         assertTrue(layout.getRow(5).getHeightWeight()
                 < layout.getRow(2).getHeightWeight());
+    }
+
+    @Test
+    public void thumbRowPrioritizesSpaceAndNewline() {
+        KeyboardLayout layout = KeyboardLayouts.qwerty();
+
+        assertEquals(KeyboardKey.Type.MODE,
+                layout.getKey(5, 0).getType());
+        assertEquals(KeyboardKey.Type.SPACE,
+                layout.getKey(5, 2).getType());
+        assertEquals(KeyboardKey.Type.ENTER,
+                layout.getKey(5, 4).getType());
     }
 }
