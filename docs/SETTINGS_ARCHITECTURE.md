@@ -14,6 +14,11 @@ Current persisted values:
 - `binding_*` controller assignments
 - `suggestions_enabled`
 - `autocorrect_enabled`
+- `custom_accent`
+- `custom_key_fill`
+- `custom_background_top` / `custom_background_bottom`
+- `custom_key_radius`
+- `custom_key_gap`
 
 The keyboard engine does not read Android preferences directly.
 
@@ -44,6 +49,7 @@ Built-in profile IDs:
 - `default`
 - `oled`
 - `transparent`
+- `custom`
 
 Each profile owns:
 
@@ -57,7 +63,7 @@ Each profile owns:
 
 An unknown theme ID falls back to `default`.
 
-The UI selector is intentionally separate from this storage/model layer.
+The UI selector is intentionally separate from this storage/model layer. The `custom` profile is reconstructed from `CustomThemeConfig`, so the renderer receives a normal `KeyboardTheme` just like the built-in profiles.
 
 ## Privacy and backup
 
@@ -76,18 +82,20 @@ Current controls:
 - Android keyboard enable shortcut;
 - active IME picker;
 - Physical Controls accessibility shortcut;
-- visual theme cards for Default, OLED Black and Transparent;
+- visual theme cards for Default, OLED Black, Transparent and Custom;
 - background opacity chips for 100%, 71%, 35% and 0%;
+- persistent Custom palette presets for accent, keys and gradient background;
+- Custom key-shape and spacing presets plus reset;
 - built-in test text field.
 
-Theme and opacity changes persist immediately. If the RuneBoard IME service is alive, the activity also requests an input-view appearance refresh so the next visible keyboard uses the new profile without restarting the app.
+Theme, Custom appearance and opacity changes persist immediately. If the RuneBoard IME service is alive, the activity also requests an input-view appearance refresh so the next visible keyboard uses the new profile without restarting the app.
 
 The settings UI was validated on the dedicated 1240x1080 emulator.
 
 
 ## Physical controller mappings
 
-RunePreferences persists the ten remappable editing actions as `binding_*` integer key codes.
+RunePreferences persists the twelve remappable editing actions as `binding_*` integer key codes.
 
 Changing a mapping loads the current ControllerBindings, swaps conflicts if necessary, persists the complete unique mapping, and refreshes the active IME view.
 

@@ -25,6 +25,7 @@ import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
+import io.github.joelmomo.runeboard.theme.CustomThemeConfig;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
 
@@ -43,7 +44,21 @@ public final class MainActivity extends Activity {
 
     private final Map<String, LinearLayout> themeCards =
             new LinkedHashMap<>();
+    private final Map<String, View> themeSwatches =
+            new LinkedHashMap<>();
     private final Map<Integer, TextView> opacityChips =
+            new LinkedHashMap<>();
+    private final Map<Integer, TextView> customAccentChips =
+            new LinkedHashMap<>();
+    private final Map<Integer, TextView> customKeyChips =
+            new LinkedHashMap<>();
+    private final Map<Integer, TextView> customBackgroundChips =
+            new LinkedHashMap<>();
+    private final Map<Integer, Integer> customBackgroundBottoms =
+            new LinkedHashMap<>();
+    private final Map<Integer, TextView> customRadiusChips =
+            new LinkedHashMap<>();
+    private final Map<Integer, TextView> customGapChips =
             new LinkedHashMap<>();
     private final Map<String, LinearLayout> profileCards =
             new LinkedHashMap<>();
@@ -112,6 +127,7 @@ public final class MainActivity extends Activity {
                 R.string.section_appearance_subtitle);
         addThemeCards(root);
         addOpacityControl(root);
+        addCustomThemeControls(root);
 
         addSectionHeader(
                 root,
@@ -537,28 +553,38 @@ public final class MainActivity extends Activity {
     }
 
     private void addThemeCards(LinearLayout root) {
-        LinearLayout row = horizontalRow();
-
+        LinearLayout firstRow = horizontalRow();
         addThemeCard(
-                row,
+                firstRow,
                 RuneThemes.defaultTheme(),
                 R.string.theme_default_title,
                 R.string.theme_default_subtitle,
                 true);
         addThemeCard(
-                row,
+                firstRow,
                 RuneThemes.oledTheme(),
                 R.string.theme_oled_title,
                 R.string.theme_oled_subtitle,
                 false);
+        root.addView(firstRow, matchWidth());
+
+        LinearLayout secondRow = horizontalRow();
+        LinearLayout.LayoutParams secondRowParams = matchWidth();
+        secondRowParams.topMargin = dp(9);
         addThemeCard(
-                row,
+                secondRow,
                 RuneThemes.transparentTheme(),
                 R.string.theme_transparent_title,
                 R.string.theme_transparent_subtitle,
+                true);
+        addThemeCard(
+                secondRow,
+                RuneThemes.customTheme(
+                        preferences.getCustomThemeConfig()),
+                R.string.theme_custom_title,
+                R.string.theme_custom_subtitle,
                 false);
-
-        root.addView(row, matchWidth());
+        root.addView(secondRow, secondRowParams);
     }
 
     private void addThemeCard(
@@ -611,6 +637,7 @@ public final class MainActivity extends Activity {
         card.addView(subtitle, subtitleParams);
 
         themeCards.put(theme.id, card);
+        themeSwatches.put(theme.id, swatch);
         addWeighted(row, card, first);
     }
 
@@ -656,6 +683,385 @@ public final class MainActivity extends Activity {
 
         opacityChips.put(opacity, chip);
         addWeighted(row, chip, first);
+    }
+
+    private void addCustomThemeControls(LinearLayout root) {
+        TextView title = text(
+                getString(R.string.custom_theme_title),
+                14f,
+                COLOR_TEXT,
+                true);
+        LinearLayout.LayoutParams titleParams = matchWidth();
+        titleParams.topMargin = dp(18);
+        root.addView(title, titleParams);
+
+        TextView subtitle = text(
+                getString(R.string.custom_theme_subtitle),
+                11f,
+                COLOR_MUTED,
+                false);
+        LinearLayout.LayoutParams subtitleParams = matchWidth();
+        subtitleParams.topMargin = dp(3);
+        subtitleParams.bottomMargin = dp(10);
+        root.addView(subtitle, subtitleParams);
+
+        addCustomLabel(root, R.string.custom_accent);
+        LinearLayout accentRow = horizontalRow();
+        addCustomColorChip(
+                accentRow,
+                customAccentChips,
+                0xFFA78BFA,
+                "Purple",
+                true,
+                () -> applyCustomAccent(0xFFA78BFA));
+        addCustomColorChip(
+                accentRow,
+                customAccentChips,
+                0xFF22D3EE,
+                "Cyan",
+                false,
+                () -> applyCustomAccent(0xFF22D3EE));
+        addCustomColorChip(
+                accentRow,
+                customAccentChips,
+                0xFF34D399,
+                "Green",
+                false,
+                () -> applyCustomAccent(0xFF34D399));
+        addCustomColorChip(
+                accentRow,
+                customAccentChips,
+                0xFFFBBF24,
+                "Amber",
+                false,
+                () -> applyCustomAccent(0xFFFBBF24));
+        addCustomColorChip(
+                accentRow,
+                customAccentChips,
+                0xFFF472B6,
+                "Pink",
+                false,
+                () -> applyCustomAccent(0xFFF472B6));
+        root.addView(accentRow, matchWidth());
+
+        addCustomLabel(root, R.string.custom_keys);
+        LinearLayout keyRow = horizontalRow();
+        addCustomColorChip(
+                keyRow,
+                customKeyChips,
+                0xFF2B2B38,
+                "Graphite",
+                true,
+                () -> applyCustomKeyFill(0xFF2B2B38));
+        addCustomColorChip(
+                keyRow,
+                customKeyChips,
+                0xFF17171D,
+                "Black",
+                false,
+                () -> applyCustomKeyFill(0xFF17171D));
+        addCustomColorChip(
+                keyRow,
+                customKeyChips,
+                0xFF1E293B,
+                "Navy",
+                false,
+                () -> applyCustomKeyFill(0xFF1E293B));
+        addCustomColorChip(
+                keyRow,
+                customKeyChips,
+                0xFF3B314D,
+                "Violet",
+                false,
+                () -> applyCustomKeyFill(0xFF3B314D));
+        root.addView(keyRow, matchWidth());
+
+        addCustomLabel(root, R.string.custom_background);
+        LinearLayout backgroundRow = horizontalRow();
+        addCustomBackgroundChip(
+                backgroundRow,
+                0xFF0D0E14,
+                0xFF181321,
+                "Rune",
+                true);
+        addCustomBackgroundChip(
+                backgroundRow,
+                0xFF000000,
+                0xFF000000,
+                "Black",
+                false);
+        addCustomBackgroundChip(
+                backgroundRow,
+                0xFF06131F,
+                0xFF0D2638,
+                "Navy",
+                false);
+        addCustomBackgroundChip(
+                backgroundRow,
+                0xFF130C20,
+                0xFF25143A,
+                "Violet",
+                false);
+        root.addView(backgroundRow, matchWidth());
+
+        addCustomLabel(root, R.string.custom_radius);
+        LinearLayout radiusRow = horizontalRow();
+        addCustomMetricChip(
+                radiusRow,
+                customRadiusChips,
+                4,
+                "Square",
+                true,
+                () -> applyCustomRadius(4f));
+        addCustomMetricChip(
+                radiusRow,
+                customRadiusChips,
+                12,
+                "Round",
+                false,
+                () -> applyCustomRadius(12f));
+        addCustomMetricChip(
+                radiusRow,
+                customRadiusChips,
+                20,
+                "Soft",
+                false,
+                () -> applyCustomRadius(20f));
+        root.addView(radiusRow, matchWidth());
+
+        addCustomLabel(root, R.string.custom_gap);
+        LinearLayout gapRow = horizontalRow();
+        addCustomMetricChip(
+                gapRow,
+                customGapChips,
+                3,
+                "Tight",
+                true,
+                () -> applyCustomGap(3f));
+        addCustomMetricChip(
+                gapRow,
+                customGapChips,
+                6,
+                "Normal",
+                false,
+                () -> applyCustomGap(6f));
+        addCustomMetricChip(
+                gapRow,
+                customGapChips,
+                9,
+                "Wide",
+                false,
+                () -> applyCustomGap(9f));
+        root.addView(gapRow, matchWidth());
+
+        TextView reset = text(
+                getString(R.string.custom_reset),
+                12f,
+                COLOR_ACCENT,
+                true);
+        reset.setGravity(Gravity.CENTER);
+        reset.setPadding(dp(12), dp(10), dp(12), dp(10));
+        reset.setClickable(true);
+        reset.setFocusable(true);
+        reset.setBackground(
+                rounded(COLOR_SURFACE, 0xFF49386A, 1, 10f));
+        reset.setOnClickListener(v -> {
+            preferences.resetCustomTheme();
+            activateCustomTheme();
+        });
+        LinearLayout.LayoutParams resetParams = matchWidth();
+        resetParams.topMargin = dp(10);
+        root.addView(reset, resetParams);
+    }
+
+    private void addCustomLabel(LinearLayout root, int textRes) {
+        TextView label = text(
+                getString(textRes),
+                11f,
+                COLOR_MUTED,
+                true);
+        LinearLayout.LayoutParams params = matchWidth();
+        params.topMargin = dp(12);
+        params.bottomMargin = dp(6);
+        root.addView(label, params);
+    }
+
+    private void addCustomColorChip(
+            LinearLayout row,
+            Map<Integer, TextView> target,
+            int color,
+            String label,
+            boolean first,
+            Runnable action) {
+        TextView chip = text(
+                label,
+                11f,
+                contrastText(color),
+                true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(dp(6), dp(10), dp(6), dp(10));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        chip.setBackground(rounded(color, color, 1, 9f));
+        chip.setOnClickListener(v -> action.run());
+        target.put(color, chip);
+        addWeighted(row, chip, first);
+    }
+
+    private void addCustomBackgroundChip(
+            LinearLayout row,
+            int top,
+            int bottom,
+            String label,
+            boolean first) {
+        TextView chip = text(
+                label,
+                11f,
+                contrastText(top),
+                true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(dp(6), dp(10), dp(6), dp(10));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[] { top, bottom });
+        drawable.setCornerRadius(dp(9));
+        chip.setBackground(drawable);
+        chip.setOnClickListener(
+                v -> applyCustomBackground(top, bottom));
+        customBackgroundChips.put(top, chip);
+        customBackgroundBottoms.put(top, bottom);
+        addWeighted(row, chip, first);
+    }
+
+    private void addCustomMetricChip(
+            LinearLayout row,
+            Map<Integer, TextView> target,
+            int value,
+            String label,
+            boolean first,
+            Runnable action) {
+        TextView chip = text(label, 11f, COLOR_TEXT, true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setPadding(dp(7), dp(10), dp(7), dp(10));
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        chip.setOnClickListener(v -> action.run());
+        target.put(value, chip);
+        addWeighted(row, chip, first);
+    }
+
+    private void applyCustomAccent(int color) {
+        preferences.setCustomAccent(color);
+        activateCustomTheme();
+    }
+
+    private void applyCustomKeyFill(int color) {
+        preferences.setCustomKeyFill(color);
+        activateCustomTheme();
+    }
+
+    private void applyCustomBackground(int top, int bottom) {
+        preferences.setCustomBackground(top, bottom);
+        activateCustomTheme();
+    }
+
+    private void applyCustomRadius(float radiusDp) {
+        preferences.setCustomRadius(radiusDp);
+        activateCustomTheme();
+    }
+
+    private void applyCustomGap(float gapDp) {
+        preferences.setCustomGap(gapDp);
+        activateCustomTheme();
+    }
+
+    private void activateCustomTheme() {
+        preferences.setThemeId(RuneThemes.ID_CUSTOM);
+        refreshAppearanceControls();
+        RuneBoardImeService.requestAppearanceRefresh();
+    }
+
+    private int contrastText(int color) {
+        int red = (color >>> 16) & 0xFF;
+        int green = (color >>> 8) & 0xFF;
+        int blue = color & 0xFF;
+        int brightness =
+                (red * 299 + green * 587 + blue * 114) / 1000;
+        return brightness >= 170 ? COLOR_WINDOW : COLOR_TEXT;
+    }
+
+    private void refreshCustomThemeControls() {
+        CustomThemeConfig config = preferences.getCustomThemeConfig();
+        styleCustomColorMap(customAccentChips, config.accent);
+        styleCustomColorMap(customKeyChips, config.keyFill);
+        styleCustomColorMap(
+                customBackgroundChips,
+                config.backgroundTop);
+        styleCustomMetricMap(
+                customRadiusChips,
+                Math.round(config.keyRadiusDp),
+                config.accent);
+        styleCustomMetricMap(
+                customGapChips,
+                Math.round(config.keyGapDp),
+                config.accent);
+    }
+
+    private void styleCustomColorMap(
+            Map<Integer, TextView> values,
+            int selectedColor) {
+        for (Map.Entry<Integer, TextView> entry : values.entrySet()) {
+            int fill = entry.getKey();
+            boolean selected = fill == selectedColor;
+            TextView chip = entry.getValue();
+            chip.setTextColor(contrastText(fill));
+            chip.setBackground(
+                    rounded(
+                            fill,
+                            selected ? 0xFFFFFFFF : fill,
+                            selected ? 2 : 1,
+                            9f));
+        }
+    }
+
+    private void styleCustomBackgroundMap(int selectedTop) {
+        for (Map.Entry<Integer, TextView> entry
+                : customBackgroundChips.entrySet()) {
+            int top = entry.getKey();
+            int bottom = customBackgroundBottoms.getOrDefault(
+                    top,
+                    top);
+            boolean selected = top == selectedTop;
+            GradientDrawable drawable = new GradientDrawable(
+                    GradientDrawable.Orientation.LEFT_RIGHT,
+                    new int[] { top, bottom });
+            drawable.setCornerRadius(dp(9));
+            if (selected) {
+                drawable.setStroke(dp(2), 0xFFFFFFFF);
+            }
+            entry.getValue().setBackground(drawable);
+            entry.getValue().setTextColor(contrastText(top));
+        }
+    }
+
+    private void styleCustomMetricMap(
+            Map<Integer, TextView> values,
+            int selectedValue,
+            int accent) {
+        for (Map.Entry<Integer, TextView> entry : values.entrySet()) {
+            boolean selected = entry.getKey() == selectedValue;
+            TextView chip = entry.getValue();
+            chip.setTextColor(
+                    selected ? COLOR_WINDOW : COLOR_TEXT);
+            chip.setBackground(
+                    rounded(
+                            selected ? accent : COLOR_SURFACE_ALT,
+                            selected ? accent : COLOR_BORDER,
+                            1,
+                            9f));
+        }
     }
 
     private void addControllerBindings(LinearLayout root) {
@@ -892,8 +1298,13 @@ public final class MainActivity extends Activity {
 
     private void refreshAppearanceControls() {
         String selectedTheme = preferences.getThemeId();
-        for (Map.Entry<String, LinearLayout> entry : themeCards.entrySet()) {
-            KeyboardTheme theme = RuneThemes.byId(entry.getKey());
+        for (Map.Entry<String, LinearLayout> entry
+                : themeCards.entrySet()) {
+            KeyboardTheme theme =
+                    RuneThemes.ID_CUSTOM.equals(entry.getKey())
+                            ? RuneThemes.customTheme(
+                                    preferences.getCustomThemeConfig())
+                            : RuneThemes.byId(entry.getKey());
             boolean selected = entry.getKey().equals(selectedTheme);
             entry.getValue().setBackground(
                     rounded(
@@ -901,21 +1312,43 @@ public final class MainActivity extends Activity {
                             selected ? theme.accent : COLOR_BORDER,
                             selected ? 2 : 1,
                             12f));
+
+            View swatch = themeSwatches.get(entry.getKey());
+            if (swatch != null) {
+                GradientDrawable preview = new GradientDrawable(
+                        GradientDrawable.Orientation.LEFT_RIGHT,
+                        new int[] {
+                                theme.backgroundTop,
+                                theme.backgroundBottom,
+                                theme.selectedFill
+                        });
+                preview.setCornerRadius(dp(8));
+                swatch.setBackground(preview);
+            }
         }
 
         KeyboardTheme activeTheme = preferences.getTheme();
-        int activeOpacity = preferences.getBackgroundOpacity(activeTheme);
-        for (Map.Entry<Integer, TextView> entry : opacityChips.entrySet()) {
+        int activeOpacity =
+                preferences.getBackgroundOpacity(activeTheme);
+        for (Map.Entry<Integer, TextView> entry
+                : opacityChips.entrySet()) {
             boolean selected = entry.getKey() == activeOpacity;
             TextView chip = entry.getValue();
-            chip.setTextColor(selected ? 0xFF0D0E14 : COLOR_TEXT);
+            chip.setTextColor(
+                    selected ? 0xFF0D0E14 : COLOR_TEXT);
             chip.setBackground(
                     rounded(
-                            selected ? activeTheme.accent : COLOR_SURFACE_ALT,
-                            selected ? activeTheme.accent : COLOR_BORDER,
+                            selected
+                                    ? activeTheme.accent
+                                    : COLOR_SURFACE_ALT,
+                            selected
+                                    ? activeTheme.accent
+                                    : COLOR_BORDER,
                             1,
                             10f));
         }
+
+        refreshCustomThemeControls();
     }
 
     private LinearLayout horizontalRow() {

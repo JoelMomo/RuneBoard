@@ -8,6 +8,7 @@ import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
+import io.github.joelmomo.runeboard.theme.CustomThemeConfig;
 import io.github.joelmomo.runeboard.theme.KeyboardTheme;
 import io.github.joelmomo.runeboard.theme.RuneThemes;
 
@@ -21,12 +22,22 @@ public final class RunePreferences {
     private static final String KEY_BACKGROUND_OPACITY = "background_opacity";
     private static final String KEY_SUGGESTIONS_ENABLED = "suggestions_enabled";
     private static final String KEY_AUTOCORRECT_ENABLED = "autocorrect_enabled";
+    private static final String KEY_CUSTOM_ACCENT = "custom_accent";
+    private static final String KEY_CUSTOM_KEY_FILL = "custom_key_fill";
+    private static final String KEY_CUSTOM_BACKGROUND_TOP =
+            "custom_background_top";
+    private static final String KEY_CUSTOM_BACKGROUND_BOTTOM =
+            "custom_background_bottom";
+    private static final String KEY_CUSTOM_RADIUS = "custom_key_radius";
+    private static final String KEY_CUSTOM_GAP = "custom_key_gap";
     private static final String KEY_BINDING_PREFIX = "binding_";
 
     private final SharedPreferences preferences;
 
     public RunePreferences(Context context) {
-        preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        preferences = context.getSharedPreferences(
+                PREFS_NAME,
+                Context.MODE_PRIVATE);
     }
 
     public KeyboardProfile getKeyboardProfile() {
@@ -56,17 +67,112 @@ public final class RunePreferences {
     }
 
     public KeyboardTheme getTheme() {
-        return RuneThemes.byId(
-                preferences.getString(KEY_THEME_ID, RuneThemes.ID_DEFAULT));
+        String id = getThemeId();
+        if (RuneThemes.ID_CUSTOM.equals(id)) {
+            return RuneThemes.customTheme(getCustomThemeConfig());
+        }
+        return RuneThemes.byId(id);
     }
 
     public String getThemeId() {
-        return getTheme().id;
+        return RuneThemes.normalizeId(
+                preferences.getString(
+                        KEY_THEME_ID,
+                        RuneThemes.ID_DEFAULT));
     }
 
     public void setThemeId(String id) {
         preferences.edit()
-                .putString(KEY_THEME_ID, RuneThemes.byId(id).id)
+                .putString(
+                        KEY_THEME_ID,
+                        RuneThemes.normalizeId(id))
+                .apply();
+    }
+
+    public CustomThemeConfig getCustomThemeConfig() {
+        CustomThemeConfig defaults = CustomThemeConfig.defaults();
+        return new CustomThemeConfig(
+                preferences.getInt(
+                        KEY_CUSTOM_ACCENT,
+                        defaults.accent),
+                preferences.getInt(
+                        KEY_CUSTOM_KEY_FILL,
+                        defaults.keyFill),
+                preferences.getInt(
+                        KEY_CUSTOM_BACKGROUND_TOP,
+                        defaults.backgroundTop),
+                preferences.getInt(
+                        KEY_CUSTOM_BACKGROUND_BOTTOM,
+                        defaults.backgroundBottom),
+                preferences.getFloat(
+                        KEY_CUSTOM_RADIUS,
+                        defaults.keyRadiusDp),
+                preferences.getFloat(
+                        KEY_CUSTOM_GAP,
+                        defaults.keyGapDp));
+    }
+
+    public void setCustomAccent(int color) {
+        preferences.edit()
+                .putInt(KEY_CUSTOM_ACCENT, color)
+                .apply();
+    }
+
+    public void setCustomKeyFill(int color) {
+        preferences.edit()
+                .putInt(KEY_CUSTOM_KEY_FILL, color)
+                .apply();
+    }
+
+    public void setCustomBackground(int top, int bottom) {
+        preferences.edit()
+                .putInt(KEY_CUSTOM_BACKGROUND_TOP, top)
+                .putInt(KEY_CUSTOM_BACKGROUND_BOTTOM, bottom)
+                .apply();
+    }
+
+    public void setCustomRadius(float radiusDp) {
+        CustomThemeConfig current = getCustomThemeConfig();
+        CustomThemeConfig normalized =
+                new CustomThemeConfig(
+                        current.accent,
+                        current.keyFill,
+                        current.backgroundTop,
+                        current.backgroundBottom,
+                        radiusDp,
+                        current.keyGapDp);
+        preferences.edit()
+                .putFloat(
+                        KEY_CUSTOM_RADIUS,
+                        normalized.keyRadiusDp)
+                .apply();
+    }
+
+    public void setCustomGap(float gapDp) {
+        CustomThemeConfig current = getCustomThemeConfig();
+        CustomThemeConfig normalized =
+                new CustomThemeConfig(
+                        current.accent,
+                        current.keyFill,
+                        current.backgroundTop,
+                        current.backgroundBottom,
+                        current.keyRadiusDp,
+                        gapDp);
+        preferences.edit()
+                .putFloat(
+                        KEY_CUSTOM_GAP,
+                        normalized.keyGapDp)
+                .apply();
+    }
+
+    public void resetCustomTheme() {
+        preferences.edit()
+                .remove(KEY_CUSTOM_ACCENT)
+                .remove(KEY_CUSTOM_KEY_FILL)
+                .remove(KEY_CUSTOM_BACKGROUND_TOP)
+                .remove(KEY_CUSTOM_BACKGROUND_BOTTOM)
+                .remove(KEY_CUSTOM_RADIUS)
+                .remove(KEY_CUSTOM_GAP)
                 .apply();
     }
 
@@ -89,23 +195,37 @@ public final class RunePreferences {
     }
 
     public void resetBackgroundOpacity() {
-        preferences.edit().remove(KEY_BACKGROUND_OPACITY).apply();
+        preferences.edit()
+                .remove(KEY_BACKGROUND_OPACITY)
+                .apply();
     }
 
     public boolean areSuggestionsEnabled() {
-        return preferences.getBoolean(KEY_SUGGESTIONS_ENABLED, true);
+        return preferences.getBoolean(
+                KEY_SUGGESTIONS_ENABLED,
+                true);
     }
 
     public void setSuggestionsEnabled(boolean enabled) {
-        preferences.edit().putBoolean(KEY_SUGGESTIONS_ENABLED, enabled).apply();
+        preferences.edit()
+                .putBoolean(
+                        KEY_SUGGESTIONS_ENABLED,
+                        enabled)
+                .apply();
     }
 
     public boolean isAutocorrectEnabled() {
-        return preferences.getBoolean(KEY_AUTOCORRECT_ENABLED, true);
+        return preferences.getBoolean(
+                KEY_AUTOCORRECT_ENABLED,
+                true);
     }
 
     public void setAutocorrectEnabled(boolean enabled) {
-        preferences.edit().putBoolean(KEY_AUTOCORRECT_ENABLED, enabled).apply();
+        preferences.edit()
+                .putBoolean(
+                        KEY_AUTOCORRECT_ENABLED,
+                        enabled)
+                .apply();
     }
 
     public ControllerBindings getControllerBindings() {

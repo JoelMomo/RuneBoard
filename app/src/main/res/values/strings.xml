@@ -34,6 +34,16 @@
     <string name="theme_oled_subtitle">Pure black</string>
     <string name="theme_transparent_title">Transparent</string>
     <string name="theme_transparent_subtitle">See the app below</string>
+    <string name="theme_custom_title">Custom</string>
+    <string name="theme_custom_subtitle">Your colors and geometry</string>
+    <string name="custom_theme_title">Custom style</string>
+    <string name="custom_theme_subtitle">Choose a palette and key shape. Any change activates Custom.</string>
+    <string name="custom_accent">ACCENT</string>
+    <string name="custom_keys">KEYS</string>
+    <string name="custom_background">BACKGROUND</string>
+    <string name="custom_radius">KEY SHAPE</string>
+    <string name="custom_gap">SPACING</string>
+    <string name="custom_reset">RESET CUSTOM STYLE</string>
     <string name="background_title">Background</string>
     <string name="background_subtitle" formatted="false">Keys remain readable even at 0%</string>
 

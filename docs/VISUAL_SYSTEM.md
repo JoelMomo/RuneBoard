@@ -64,7 +64,7 @@ Future themes should be expressible through theme/profile data:
 - font choices;
 - key/background opacity.
 
-Persistent user customization is the next layer on top of this theme model.
+Persistent user customization is implemented in 0.0.12 through `CustomThemeConfig`, while the renderer still consumes a normal `KeyboardTheme`.
 
 
 ### Persistence
@@ -77,9 +77,10 @@ Built-in theme profiles currently defined in code:
 
 - RuneBoard Default;
 - OLED Black;
-- Transparent.
+- Transparent;
+- Custom.
 
-A visual theme picker will sit on top of this model rather than adding theme logic to the renderer.
+The visual theme picker now sits on top of this model. Custom palette and geometry choices are persisted separately and compiled into a `KeyboardTheme` before the view is created.
 
 
 ### Physical-control hints
@@ -87,3 +88,8 @@ A visual theme picker will sit on top of this model rather than adding theme log
 Utility keys display the physical button currently mapped to their action. These hints are generated from ControllerBindings, so remapping is reflected directly on the keyboard.
 
 The minimized bar also resolves the active Confirm and Minimize buttons dynamically instead of assuming A / Select.
+
+
+### Custom theme
+
+0.0.12 adds persistent presets for accent, key fill, two-color background, key radius and key spacing. Any Custom control selects the `custom` profile immediately and requests an IME appearance refresh. Geometry is clamped to safe bounds in `CustomThemeConfig`.
