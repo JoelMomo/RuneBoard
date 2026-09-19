@@ -60,6 +60,12 @@
     <string name="key_space">SPACE</string>
     <string name="key_backspace">BACK</string>
     <string name="key_enter">ENTER</string>
+    <string name="key_go">GO</string>
+    <string name="key_search">SEARCH</string>
+    <string name="key_send">SEND</string>
+    <string name="key_next">NEXT</string>
+    <string name="key_done">DONE</string>
+    <string name="key_previous">PREV</string>
     <string name="key_opacity">BG %1$d%%</string>
     <string name="key_minimize">MIN</string>
     <string name="header_title">RUNEBOARD</string>    <string name="header_controller">D-PAD</string>

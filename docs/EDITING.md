@@ -1,6 +1,6 @@
 # Editing mode
 
-RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word.
+RuneBoard 0.13.0 introduced a controller-first editing panel without consuming another physical controller binding. RuneBoard 0.14.0 extends that panel with controller-first text selection by character or word. RuneBoard 0.15.0 makes the shared Enter key follow the active Android editor action.
 
 ## Entering and leaving
 
@@ -50,6 +50,8 @@ RuneBoardImeService converts them into the active Android InputConnection:
 - Character selection advances by Unicode code point so surrogate pairs are not split.
 - Word selection uses the same boundaries as `WordNavigator`.
 - Forward Delete uses deleteSurroundingText(0, 1).
+- Enter resolves the active `EditorInfo`: Go, Search, Send, Next, Done, Previous and custom action labels call `performEditorAction`; ordinary/no-action fields insert a newline.
+- `IME_FLAG_NO_ENTER_ACTION` always keeps literal newline behavior even when an action code is present.
 
 Commands that can modify text request a fresh suggestion pass afterwards.
 
@@ -104,5 +106,11 @@ Android emulator validation completed against a real EditText using controller i
 - Select Word Right from Home produced range `0 -> 6`; cutting it changed `alpha beta` to `beta`;
 - all four selection commands were reached through D-pad navigation and A on the six-row EDIT layout;
 - exiting EDIT returned to the alphabet layout and controller navigation resumed from the EDIT key position.
+
+RuneBoard 0.15 editor-action validation on the same emulator also confirmed:
+
+- Start/Enter in RuneBoard's multiline test field inserted a literal newline (`alpha` -> `alpha\n`);
+- Android Settings search exposed `imeOptions=0x10000003`, which RuneBoard resolved as `SEARCH` / action ID 3;
+- pressing the remappable physical Enter action dispatched `performEditorAction(3)` and Android returned `handled=true`.
 
 Undo/Redo grouping remains editor-defined: RuneBoard delegates to Android `performContextMenuAction` and does not implement its own undo history.

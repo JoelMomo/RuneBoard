@@ -22,6 +22,7 @@ import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
@@ -80,6 +81,7 @@ public final class RuneKeyboardView extends View {
     private final ControllerMapper controllerMapper;
     private final KeyboardProfile profile;
 
+    private EditorActionSpec editorAction = EditorActionSpec.enter();
     private Listener listener;
     private LinearGradient backgroundGradient;
     private long lastAxisMoveAt;
@@ -240,6 +242,21 @@ public final class RuneKeyboardView extends View {
 
     public void clearSuggestions() {
         setSuggestions(null, false);
+    }
+
+    public void setEditorAction(EditorActionSpec action) {
+        editorAction = action == null
+                ? EditorActionSpec.enter()
+                : action;
+        if (debugLogging) {
+            Log.d(
+                    TAG,
+                    "editorAction="
+                            + editorAction.kind()
+                            + " actionId="
+                            + editorAction.actionId());
+        }
+        invalidate();
     }
 
     public void setListener(Listener listener) {
@@ -627,8 +644,14 @@ public final class RuneKeyboardView extends View {
 
         float baseline =
                 rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
+        String label = displayLabel(key);
+        if (key.getType() != KeyboardKey.Type.TEXT) {
+            label = fitText(
+                    label,
+                    Math.max(1f, rect.width() - dp(10)));
+        }
         canvas.drawText(
-                displayLabel(key),
+                label,
                 rect.centerX(),
                 baseline,
                 paint);
@@ -717,7 +740,7 @@ public final class RuneKeyboardView extends View {
             case BACKSPACE:
                 return getContext().getString(R.string.key_backspace);
             case ENTER:
-                return getContext().getString(R.string.key_enter);
+                return displayEnterLabel();
             case OPACITY:
                 return getContext().getString(
                         R.string.key_opacity,
@@ -726,6 +749,29 @@ public final class RuneKeyboardView extends View {
                 return getContext().getString(R.string.key_minimize);
             default:
                 return "";
+        }
+    }
+
+    private String displayEnterLabel() {
+        switch (editorAction.kind()) {
+            case GO:
+                return getContext().getString(R.string.key_go);
+            case SEARCH:
+                return getContext().getString(R.string.key_search);
+            case SEND:
+                return getContext().getString(R.string.key_send);
+            case NEXT:
+                return getContext().getString(R.string.key_next);
+            case DONE:
+                return getContext().getString(R.string.key_done);
+            case PREVIOUS:
+                return getContext().getString(R.string.key_previous);
+            case CUSTOM:
+                return editorAction.customLabel()
+                        .toUpperCase(profile.locale);
+            case ENTER:
+            default:
+                return getContext().getString(R.string.key_enter);
         }
     }
 

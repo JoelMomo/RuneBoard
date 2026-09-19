@@ -62,6 +62,14 @@ They move the selection directly to the previous or next word boundary instead o
 
 Word characters currently include letters, digits, underscore and apostrophe.
 
+## Enter and editor actions
+
+The remappable Enter action (Start by default) follows the active Android field. RuneBoard displays and performs Go, Search, Send, Next, Done or Previous when the editor requests one; custom Android action labels/action IDs are supported as well.
+
+Fields with no editor action insert a newline. `IME_FLAG_NO_ENTER_ACTION` explicitly forces newline behavior, so a multiline editor cannot accidentally submit just because an action code is also present.
+
+The on-screen Enter key and the physical Enter binding use the same resolved action.
+
 ## Minimized mode
 
 While RuneBoard is minimized, navigation and editing actions are allowed to pass through to the application/game below.
