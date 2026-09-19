@@ -1,4 +1,4 @@
-# RuneBoard architecture - 0.13.0 prototype
+# RuneBoard architecture - 0.14.0 prototype
 
 ## Principle
 
@@ -32,6 +32,10 @@ RuneBoard exposes language-specific alphabet layouts, secondary symbol layouts a
 ### keyboard/EditorCommand
 
 Platform-independent editing commands for selection, clipboard actions, undo/redo, document navigation and forward deletion. The keyboard engine emits these without depending on Android APIs.
+
+### keyboard/SelectionController
+
+Maintains the anchor/caret pair for controller-first extended selection. Character selection advances by Unicode code point, word selection reuses `WordNavigator`, and an existing editor selection is extended from the edge matching the requested direction.
 
 ### keyboard/KeyboardState
 
@@ -107,7 +111,8 @@ It owns the active `InputConnection` and converts engine output into:
 - deletion;
 - editor actions;
 - cursor selection changes;
-- previous/next word selection through `WordNavigator`;
+- previous/next word cursor movement through `WordNavigator`;
+- character/word selection extension through `SelectionController` and `InputConnection.setSelection`;
 - Android context-menu editing actions such as Select All, Cut, Copy, Paste, Undo and Redo;
 - Home/End key events and forward deletion.
 

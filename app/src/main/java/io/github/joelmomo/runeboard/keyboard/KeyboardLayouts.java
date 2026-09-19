@@ -100,6 +100,12 @@ public final class KeyboardLayouts {
                 command(EditorCommand.WORD_RIGHT, "WORD RIGHT", 2f)),
                 0.25f, 0.25f, 1f));
         rows.add(row(List.of(
+                command(EditorCommand.SELECT_LEFT, "SEL LEFT", 2f),
+                command(EditorCommand.SELECT_RIGHT, "SEL RIGHT", 2f),
+                command(EditorCommand.SELECT_WORD_LEFT, "SEL WORD L", 2f),
+                command(EditorCommand.SELECT_WORD_RIGHT, "SEL WORD R", 2f)),
+                0.25f, 0.25f, 1f));
+        rows.add(row(List.of(
                 KeyboardKey.action(
                         KeyboardKey.Type.BACKSPACE,
                         1.7f),

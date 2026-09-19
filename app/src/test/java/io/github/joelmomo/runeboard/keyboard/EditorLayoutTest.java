@@ -27,7 +27,21 @@ public final class EditorLayoutTest {
         assertEquals(EditorCommand.END,
                 layout.getKey(1, 3).getCommand());
         assertEquals(EditorCommand.DELETE_FORWARD,
+                layout.getKey(4, 1).getCommand());
+    }
+
+    @Test
+    public void editorLayoutExposesPartialSelectionCommands() {
+        KeyboardLayout layout = KeyboardLayouts.editorLayout();
+
+        assertEquals(EditorCommand.SELECT_LEFT,
+                layout.getKey(3, 0).getCommand());
+        assertEquals(EditorCommand.SELECT_RIGHT,
                 layout.getKey(3, 1).getCommand());
+        assertEquals(EditorCommand.SELECT_WORD_LEFT,
+                layout.getKey(3, 2).getCommand());
+        assertEquals(EditorCommand.SELECT_WORD_RIGHT,
+                layout.getKey(3, 3).getCommand());
     }
 
     @Test
@@ -36,6 +50,6 @@ public final class EditorLayoutTest {
 
         assertEquals(
                 KeyboardKey.Type.EDIT,
-                layout.getKey(4, 0).getType());
+                layout.getKey(5, 0).getType());
     }
 }
