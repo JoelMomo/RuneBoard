@@ -47,8 +47,8 @@ Prototype 0 contains:
 - action keys show the currently mapped physical button;
 - four keyboard opacity levels;
 - persistent background opacity across IME recreation;
-- built-in theme profiles: Default, OLED Black and Transparent;
-- custom settings UI with live theme and background controls;
+- theme profiles: Default, OLED Black, Transparent and persistent Custom;
+- custom settings UI with live theme/background controls, palette presets and key geometry;
 - compact/minimized mode;
 - a setup/test activity;
 - unit tests for state, controller mappings and minimized capture policy;
@@ -63,7 +63,7 @@ The product code is split into independent layers:
 
 - `keyboard/`: layout, key model, state and keyboard engine;
 - `controller/`: controller actions and Android key-code mapping;
-- `theme/`: visual profiles and supported background-opacity levels;
+- `theme/`: visual profiles, persistent custom-theme data and supported background-opacity levels;
 - `language/`: typing-language profiles and layout metadata;
 - `suggestion/`: word extraction, Android spell-check adapter and correction policy;
 - `settings/`: persistent user preferences;
@@ -75,7 +75,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.0.11-prototype**
+Current development version: **0.0.12-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -122,6 +122,7 @@ See:
 - `docs/LANGUAGES.md`
 - `docs/SUGGESTIONS.md`
 - `docs/SYMBOLS.md`
+- `docs/CUSTOMIZATION.md`
 
 ## Emulator limitation
 
