@@ -56,7 +56,7 @@ Prototype 1 starts from the validated Prototype 0 foundation:
 - custom settings UI with live theme/background controls, palette presets and key geometry;
 - compact/minimized mode;
 - standard Android clipboard actions without maintaining a private clipboard history;
-- a setup/test activity;
+- a setup/settings activity with live Android integration status and a built-in keyboard test field;
 - unit tests for state, controller mappings and minimized capture policy;
 - GitHub Actions running unit tests, lint and APK assembly;
 - a dedicated Android emulator for non-Thor regression testing.
@@ -82,7 +82,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.18.0-prototype**
+Current development version: **0.19.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
