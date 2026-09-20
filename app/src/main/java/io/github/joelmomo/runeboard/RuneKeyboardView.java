@@ -438,6 +438,8 @@ public final class RuneKeyboardView extends View {
         KeyboardState state = engine.getState();
         float outer = dp(theme.outerMarginDp);
         float headerHeight = dp(theme.headerHeightDp);
+        drawHeaderSurface(canvas, outer, headerHeight);
+
         float badge = dp(23);
         float badgeTop = outer + (headerHeight - badge) / 2f;
         float badgeRadius = dp(7);
@@ -519,9 +521,33 @@ public final class RuneKeyboardView extends View {
 
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(theme.accent);
-        paint.setAlpha(70);
+        paint.setAlpha(32);
         float lineY = outer + headerHeight + dp(2);
         canvas.drawRect(outer, lineY, getWidth() - outer, lineY + dp(1), paint);
+        paint.setAlpha(255);
+    }
+
+    private void drawHeaderSurface(
+            Canvas canvas,
+            float outer,
+            float headerHeight) {
+        RectF surface = new RectF(
+                outer,
+                outer,
+                getWidth() - outer,
+                outer + headerHeight);
+        float radius = dp(Math.min(theme.keyRadiusDp, 12f));
+
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(theme.utilityKeyFill);
+        paint.setAlpha(Math.min(theme.utilityKeyAlpha, 168));
+        canvas.drawRoundRect(surface, radius, radius, paint);
+
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dp(1));
+        paint.setColor(theme.accent);
+        paint.setAlpha(38);
+        canvas.drawRoundRect(surface, radius, radius, paint);
         paint.setAlpha(255);
     }
 
@@ -593,14 +619,20 @@ public final class RuneKeyboardView extends View {
             int row,
             boolean selected) {
         KeyboardState state = engine.getState();
-        boolean utility = key.getType() != KeyboardKey.Type.TEXT;
+        boolean primaryTyping =
+                key.getType() == KeyboardKey.Type.TEXT
+                        || key.getType() == KeyboardKey.Type.SPACE;
+        boolean commandRow = row == 0 && !state.isEditing();
         boolean activeShift =
                 key.getType() == KeyboardKey.Type.SHIFT && state.isShifted();
         boolean activeCaps =
                 key.getType() == KeyboardKey.Type.SHIFT && state.isCapsLocked();
 
-        int fill = utility ? theme.utilityKeyFill : theme.keyFill;
-        int alpha = utility ? theme.utilityKeyAlpha : theme.keyAlpha;
+        int fill = primaryTyping ? theme.keyFill : theme.utilityKeyFill;
+        int alpha = primaryTyping ? theme.keyAlpha : theme.utilityKeyAlpha;
+        if (commandRow && !selected) {
+            alpha = Math.min(alpha, 176);
+        }
 
         if (activeShift && !selected) {
             fill = theme.selectedFill;
@@ -608,6 +640,19 @@ public final class RuneKeyboardView extends View {
         }
 
         if (selected) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(3));
+            paint.setColor(theme.selectedStroke);
+            paint.setAlpha(64);
+            canvas.drawRoundRect(
+                    rect.left - dp(2),
+                    rect.top - dp(2),
+                    rect.right + dp(2),
+                    rect.bottom + dp(2),
+                    dp(theme.keyRadiusDp + 2f),
+                    dp(theme.keyRadiusDp + 2f),
+                    paint);
+
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(theme.selectedFill);
             paint.setAlpha(245);
@@ -638,29 +683,41 @@ public final class RuneKeyboardView extends View {
                     dp(theme.keyRadiusDp),
                     dp(theme.keyRadiusDp),
                     paint);
+
+            if (primaryTyping) {
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(dp(1));
+                paint.setColor(theme.textSecondary);
+                paint.setAlpha(key.getType() == KeyboardKey.Type.SPACE ? 52 : 34);
+                canvas.drawRoundRect(
+                        rect,
+                        dp(theme.keyRadiusDp),
+                        dp(theme.keyRadiusDp),
+                        paint);
+            }
         }
 
         paint.setStyle(Paint.Style.FILL);
-        paint.setAlpha(255);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTypeface(
-                key.getType() == KeyboardKey.Type.TEXT
+                primaryTyping
                         ? Typeface.DEFAULT_BOLD
                         : Typeface.DEFAULT);
         paint.setColor(
-                activeShift && !selected
-                        ? theme.textPrimary
+                commandRow && !selected
+                        ? theme.textSecondary
                         : theme.textPrimary);
+        paint.setAlpha(commandRow && !selected ? 230 : 255);
 
         float textSize;
         if (key.getType() == KeyboardKey.Type.BACKSPACE) {
             textSize = dp(27);
         } else if (key.getType() == KeyboardKey.Type.ENTER) {
             textSize = dp(22);
+        } else if (key.getType() == KeyboardKey.Type.SPACE) {
+            textSize = dp(12);
         } else if (key.getType() != KeyboardKey.Type.TEXT) {
             textSize = dp(11);
-        } else if (row == 0) {
-            textSize = dp(15);
         } else {
             textSize = dp(19);
         }
@@ -679,14 +736,16 @@ public final class RuneKeyboardView extends View {
                 rect.centerX(),
                 baseline,
                 paint);
+        paint.setAlpha(255);
 
-        drawControllerHint(canvas, rect, key, selected);
+        drawControllerHint(canvas, rect, key, row, selected);
     }
 
     private void drawControllerHint(
             Canvas canvas,
             RectF rect,
             KeyboardKey key,
+            int row,
             boolean selected) {
         BindableAction action = bindableActionFor(key);
         if (action == null) {
@@ -701,7 +760,11 @@ public final class RuneKeyboardView extends View {
         paint.setTextAlign(Paint.Align.RIGHT);
         paint.setTextSize(dp(7));
         paint.setColor(selected ? theme.selectedStroke : theme.accent);
-        paint.setAlpha(220);
+        boolean commandRow = row == 0 && !engine.getState().isEditing();
+        paint.setAlpha(
+                selected
+                        ? 255
+                        : commandRow ? 115 : 160);
         canvas.drawText(
                 hint,
                 rect.right - dp(7),
