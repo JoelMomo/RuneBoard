@@ -4,22 +4,23 @@
     <string name="control_service_name">RuneBoard Physical Controls</string>
     <string name="control_service_description">Lets RuneBoard use the AYN Thor physical buttons while the keyboard is visible.</string>
 
-    <string name="settings_subtitle">Dual-screen keyboard built for AYN Thor</string>
-    <string name="prototype_badge">PROTOTYPE</string>
+    <string name="settings_subtitle">Keyboard settings for AYN Thor</string>
 
     <string name="section_setup">SETUP</string>
-    <string name="section_setup_subtitle">Android integration and physical controls</string>
+    <string name="section_setup_subtitle">Complete these steps to use RuneBoard</string>
     <string name="enable_keyboard_title">Enable keyboard</string>
-    <string name="enable_keyboard_subtitle">Open Android input settings</string>
+    <string name="enable_keyboard_subtitle">Allow RuneBoard in Android keyboards</string>
     <string name="choose_keyboard_title">Select RuneBoard</string>
-    <string name="choose_keyboard_subtitle">Choose the active input method</string>
+    <string name="choose_keyboard_subtitle">Make RuneBoard the active keyboard</string>
     <string name="physical_controls_title">Physical controls</string>
-    <string name="physical_controls_subtitle">Enable D-pad and controller buttons</string>
+    <string name="physical_controls_subtitle">Allow D-pad and controller buttons</string>
+    <string name="setup_ready">READY</string>
+    <string name="setup_required">SET UP</string>
 
-    <string name="section_language">LANGUAGE &amp; LAYOUT</string>
-    <string name="section_language_subtitle">Choose the typing language and key arrangement</string>
-    <string name="section_typing_assistance">TYPING ASSISTANCE</string>
-    <string name="section_typing_assistance_subtitle">Uses Android system spelling; RuneBoard itself has no Internet permission</string>
+    <string name="section_language">TYPING</string>
+    <string name="section_language_subtitle">Language and keyboard layout</string>
+    <string name="section_typing_assistance">ASSISTANCE</string>
+    <string name="section_typing_assistance_subtitle">Suggestions and autocorrect</string>
     <string name="suggestions_title">Suggestions</string>
     <string name="suggestions_subtitle">Show up to three spelling candidates</string>
     <string name="autocorrect_title">Autocorrect</string>
@@ -47,8 +48,8 @@
     <string name="background_title">Background</string>
     <string name="background_subtitle" formatted="false">Keys remain readable even at 0%</string>
 
-    <string name="section_test">TEST</string>
-    <string name="section_test_subtitle">Open RuneBoard here without leaving settings</string>
+    <string name="section_test">TEST KEYBOARD</string>
+    <string name="section_test_subtitle">Tap the field to check your current setup</string>
     <string name="test_hint">Tap here and type with RuneBoard</string>
     <string name="more_apps_support">More apps &amp; support</string>
 
@@ -72,8 +73,8 @@
     <string name="header_background">BG %1$d%%</string>
     <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
 
-    <string name="section_controls">PHYSICAL MAPPING</string>
-    <string name="section_controls_subtitle">Tap an action, then press the controller button to assign</string>
+    <string name="section_controls">CONTROLS</string>
+    <string name="section_controls_subtitle">Remap physical buttons; D-pad navigation stays fixed</string>
     <string name="binding_confirm">Confirm</string>
     <string name="binding_backspace">Backspace</string>
     <string name="binding_space">Space</string>
