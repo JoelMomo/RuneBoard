@@ -33,8 +33,8 @@ Background opacity is independent from key opacity.
 Current prototype levels:
 
 - 100%;
-- 71%;
-- 35%;
+- 67%;
+- 33%;
 - 0%.
 
 At 0% the keyboard surface is transparent while keys, labels and controller selection remain visible.

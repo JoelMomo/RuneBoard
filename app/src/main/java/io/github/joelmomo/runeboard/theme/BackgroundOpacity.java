@@ -2,7 +2,7 @@ package io.github.joelmomo.runeboard.theme;
 
 public final class BackgroundOpacity {
 
-    private static final int[] LEVELS = {255, 180, 90, 0};
+    private static final int[] LEVELS = {255, 170, 85, 0};
 
     private BackgroundOpacity() {
     }

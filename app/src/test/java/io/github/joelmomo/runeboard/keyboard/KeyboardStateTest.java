@@ -57,9 +57,9 @@ public final class KeyboardStateTest {
 
         assertEquals(255, state.getOpacity());
         state.cycleOpacity();
-        assertEquals(180, state.getOpacity());
+        assertEquals(170, state.getOpacity());
         state.cycleOpacity();
-        assertEquals(90, state.getOpacity());
+        assertEquals(85, state.getOpacity());
         state.cycleOpacity();
         assertEquals(0, state.getOpacity());
         state.cycleOpacity();
@@ -71,9 +71,9 @@ public final class KeyboardStateTest {
         KeyboardState state =
                 new KeyboardState(
                         KeyboardLayouts.qwerty(),
-                        170);
+                        180);
 
-        assertEquals(180, state.getOpacity());
+        assertEquals(170, state.getOpacity());
     }
 
     @Test

@@ -663,8 +663,8 @@ public final class MainActivity extends Activity {
 
         LinearLayout row = horizontalRow();
         addOpacityChip(row, 255, "100%", true);
-        addOpacityChip(row, 180, "71%", false);
-        addOpacityChip(row, 90, "35%", false);
+        addOpacityChip(row, 170, "67%", false);
+        addOpacityChip(row, 85, "33%", false);
         addOpacityChip(row, 0, "0%", false);
         root.addView(row, matchWidth());
     }

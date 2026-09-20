@@ -82,7 +82,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.17.2-prototype**
+Current development version: **0.17.3-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -112,7 +112,7 @@ Validated on the physical device:
 - live physical-button remapping, including conflict swapping and reset;
 - Shift/Caps state cycling and compact-mode Start pass-through;
 - compact minimize/restore with controller pass-through;
-- opacity-state switching;
+- tuned background-opacity switching at 100%, 67%, 33% and 0%;
 - controller/touch EDIT panel with clipboard and document-navigation actions.
 
 On the test Thor, Android reports lower-display app bounds of approximately `1240x1025` px in landscape. The 0.17.1 full keyboard now fills the IME-provided height instead of using the earlier approximately `1240x595` px cap. Compact mode remains approximately `1240x134` px.

@@ -33,9 +33,9 @@ Record any Thor key codes that do not match the provisional Android gamepad mapp
 
 ## Gate C — transparency
 
-Tap the **Alpha** key repeatedly.
+Tap the **BG** key repeatedly.
 
-Expected states are approximately 100%, 80%, 57%, and 33% keyboard opacity.
+Expected states are 100%, 67%, 33%, and 0% keyboard-background opacity.
 
 **Pass:** content from the application behind the IME is visibly readable at reduced opacity, while RuneBoard remains usable.
 
