@@ -1,6 +1,8 @@
 package io.github.joelmomo.runeboard;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -11,6 +13,8 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
+import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.window.OnBackInvokedCallback;
@@ -70,6 +74,9 @@ public final class MainActivity extends Activity {
     private TextView bindingStatus;
     private TextView suggestionsChip;
     private TextView autocorrectChip;
+    private TextView setupKeyboardChip;
+    private TextView setupSelectedChip;
+    private TextView setupControlsChip;
     private OnBackInvokedCallback backCallback;
 
     @Override
@@ -149,6 +156,7 @@ public final class MainActivity extends Activity {
                         ScrollView.LayoutParams.WRAP_CONTENT));
         setContentView(scroll);
 
+        refreshSetupControls();
         refreshLanguageControls();
         refreshAppearanceControls();
         refreshBindingControls();
@@ -158,6 +166,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (preferences != null) {
+            refreshSetupControls();
             refreshLanguageControls();
             refreshAppearanceControls();
             refreshBindingControls();
@@ -244,17 +253,6 @@ public final class MainActivity extends Activity {
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         1f));
 
-        TextView prototype = text(
-                getString(R.string.prototype_badge),
-                11f,
-                COLOR_ACCENT,
-                true);
-        prototype.setGravity(Gravity.CENTER);
-        prototype.setPadding(dp(11), dp(7), dp(11), dp(7));
-        prototype.setBackground(
-                rounded(0xFF1D1829, 0xFF49386A, 1, 99f));
-        header.addView(prototype);
-
         root.addView(header, matchWidth());
 
         View divider = new View(this);
@@ -295,65 +293,83 @@ public final class MainActivity extends Activity {
     }
 
     private void addSetupCards(LinearLayout root) {
-        LinearLayout row = horizontalRow();
+        setupKeyboardChip = setupStatusChip();
+        setupSelectedChip = setupStatusChip();
+        setupControlsChip = setupStatusChip();
 
-        addWeighted(
-                row,
-                actionCard(
-                        R.string.enable_keyboard_title,
-                        R.string.enable_keyboard_subtitle,
-                        v -> startActivity(
-                                new Intent(
-                                        Settings.ACTION_INPUT_METHOD_SETTINGS))),
-                true);
+        addSetupCard(
+                root,
+                1,
+                R.string.enable_keyboard_title,
+                R.string.enable_keyboard_subtitle,
+                setupKeyboardChip,
+                v -> startActivity(
+                        new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)));
 
-        addWeighted(
-                row,
-                actionCard(
-                        R.string.choose_keyboard_title,
-                        R.string.choose_keyboard_subtitle,
-                        v -> {
-                            InputMethodManager imm =
-                                    getSystemService(InputMethodManager.class);
-                            if (imm != null) {
-                                imm.showInputMethodPicker();
-                            }
-                        }),
-                false);
+        addSetupCard(
+                root,
+                2,
+                R.string.choose_keyboard_title,
+                R.string.choose_keyboard_subtitle,
+                setupSelectedChip,
+                v -> {
+                    InputMethodManager imm =
+                            getSystemService(InputMethodManager.class);
+                    if (imm != null) {
+                        imm.showInputMethodPicker();
+                    }
+                });
 
-        addWeighted(
-                row,
-                actionCard(
-                        R.string.physical_controls_title,
-                        R.string.physical_controls_subtitle,
-                        v -> startActivity(
-                                new Intent(
-                                        Settings.ACTION_ACCESSIBILITY_SETTINGS))),
-                false);
-
-        root.addView(row, matchWidth());
+        addSetupCard(
+                root,
+                3,
+                R.string.physical_controls_title,
+                R.string.physical_controls_subtitle,
+                setupControlsChip,
+                v -> startActivity(
+                        new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
     }
 
-    private LinearLayout actionCard(
+    private void addSetupCard(
+            LinearLayout root,
+            int step,
             int titleRes,
             int subtitleRes,
+            TextView status,
             View.OnClickListener listener) {
         LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(15), dp(14), dp(15), dp(14));
+        card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(14), dp(13), dp(13), dp(13));
         card.setBackground(
                 rounded(COLOR_SURFACE, COLOR_BORDER, 1, 12f));
         card.setClickable(true);
         card.setFocusable(true);
         card.setOnClickListener(listener);
+        card.setMinimumHeight(dp(78));
+
+        TextView stepView = text(
+                String.valueOf(step),
+                12f,
+                COLOR_ACCENT,
+                true);
+        stepView.setGravity(Gravity.CENTER);
+        stepView.setBackground(
+                rounded(COLOR_SURFACE_ALT, 0xFF49386A, 1, 99f));
+        card.addView(
+                stepView,
+                new LinearLayout.LayoutParams(dp(34), dp(34)));
+
+        LinearLayout words = new LinearLayout(this);
+        words.setOrientation(LinearLayout.VERTICAL);
+        words.setPadding(dp(12), 0, dp(12), 0);
 
         TextView title = text(
                 getString(titleRes),
                 14f,
                 COLOR_TEXT,
                 true);
-        card.addView(title);
+        words.addView(title);
 
         TextView subtitle = text(
                 getString(subtitleRes),
@@ -361,11 +377,105 @@ public final class MainActivity extends Activity {
                 COLOR_MUTED,
                 false);
         LinearLayout.LayoutParams subtitleParams = wrap();
-        subtitleParams.topMargin = dp(5);
-        card.addView(subtitle, subtitleParams);
+        subtitleParams.topMargin = dp(4);
+        words.addView(subtitle, subtitleParams);
 
-        card.setMinimumHeight(dp(92));
-        return card;
+        card.addView(
+                words,
+                new LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f));
+        card.addView(status);
+
+        LinearLayout.LayoutParams params = matchWidth();
+        params.bottomMargin = dp(8);
+        root.addView(card, params);
+    }
+
+    private TextView setupStatusChip() {
+        TextView chip = text("", 10f, COLOR_ACCENT, true);
+        chip.setGravity(Gravity.CENTER);
+        chip.setMinWidth(dp(68));
+        chip.setPadding(dp(9), dp(7), dp(9), dp(7));
+        return chip;
+    }
+
+    private void refreshSetupControls() {
+        styleSetupStatus(setupKeyboardChip, isRuneBoardEnabled());
+        styleSetupStatus(setupSelectedChip, isRuneBoardSelected());
+        styleSetupStatus(setupControlsChip, arePhysicalControlsEnabled());
+    }
+
+    private void styleSetupStatus(TextView chip, boolean ready) {
+        if (chip == null) {
+            return;
+        }
+        chip.setText(ready ? R.string.setup_ready : R.string.setup_required);
+        chip.setTextColor(ready ? COLOR_WINDOW : COLOR_ACCENT);
+        chip.setBackground(
+                rounded(
+                        ready ? COLOR_ACCENT : COLOR_SURFACE_ALT,
+                        ready ? COLOR_ACCENT : COLOR_BORDER,
+                        1,
+                        99f));
+    }
+
+    private boolean isRuneBoardEnabled() {
+        InputMethodManager imm =
+                getSystemService(InputMethodManager.class);
+        if (imm == null) {
+            return false;
+        }
+
+        ComponentName target =
+                new ComponentName(this, RuneBoardImeService.class);
+        for (InputMethodInfo info : imm.getEnabledInputMethodList()) {
+            if (target.equals(info.getComponent())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isRuneBoardSelected() {
+        String current = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD);
+        if (current == null) {
+            return false;
+        }
+
+        ComponentName target =
+                new ComponentName(this, RuneBoardImeService.class);
+        return current.equals(target.flattenToShortString())
+                || current.equals(target.flattenToString());
+    }
+
+    private boolean arePhysicalControlsEnabled() {
+        AccessibilityManager manager =
+                getSystemService(AccessibilityManager.class);
+        if (manager == null) {
+            return false;
+        }
+
+        ComponentName target =
+                new ComponentName(this, RuneBoardControlService.class);
+        for (AccessibilityServiceInfo info
+                : manager.getEnabledAccessibilityServiceList(
+                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK)) {
+            if (info.getResolveInfo() == null
+                    || info.getResolveInfo().serviceInfo == null) {
+                continue;
+            }
+            ComponentName enabled = new ComponentName(
+                    info.getResolveInfo().serviceInfo.packageName,
+                    info.getResolveInfo().serviceInfo.name);
+            if (target.equals(enabled)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addLanguageCards(LinearLayout root) {
