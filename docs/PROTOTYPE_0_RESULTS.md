@@ -43,13 +43,15 @@ Physical testing found that Thor/Android also emits a matching synthetic `KEYCOD
 
 The accessibility service remains key-filter-only; it is not used as the analog-axis source.
 
-## Gate C — transparency
+## Gate C - transparency
 
-**FUNCTIONAL, visual tuning still required.**
+**PASS.**
 
-RuneBoard currently cycles through opacity values 255, 180, 90 and 0 (approximately 100%, 71%, 35% and 0%). The view clears its transparent buffer before every redraw. Functional cycling and persistence were revalidated on the physical Thor with RuneBoard 0.17.0.
+RuneBoard 0.17.3 cycles the keyboard-background opacity through 255, 170, 85 and 0 (100%, 67%, 33% and 0%). The view clears its transparent buffer before every redraw, while key fills, labels and controller selection keep their independent opacity.
 
-ADB screenshots do not reliably preserve the visible differences between all semi-transparent levels, so final appearance must be tuned visually on the physical lower panel during the design phase.
+This was validated on the physical AYN Thor lower display (display 4, 1240 x 1080 logical). Display-targeted captures at a fixed background pixel measured RGB 0/0/0, 48/62/19, 95/124/37 and 143/186/56 across the four states, showing approximately even one-third steps in visibility of the application below. Fixed key pixels remained unchanged at 12/12/17 and 21/21/27 across every state.
+
+The physical cycle was also verified as 255 -> 170 -> 85 -> 0 -> 255, with the final return to opaque reproducing the original key and background values. Gate C is therefore closed.
 
 ## Gate D — minimize / restore
 

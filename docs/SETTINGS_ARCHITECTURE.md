@@ -27,8 +27,8 @@ The keyboard engine does not read Android preferences directly.
 Supported background values are defined in `theme/BackgroundOpacity`:
 
 - 255 (100%)
-- 180 (71%)
-- 90 (35%)
+- 170 (67%)
+- 85 (33%)
 - 0 (0%)
 
 Arbitrary stored values are normalized to the nearest supported level.
@@ -40,7 +40,7 @@ When the user activates the `BG` key:
 3. `RuneBoardImeService` stores the value through `RunePreferences`.
 4. A newly created IME reads the saved value before constructing `RuneKeyboardView`.
 
-This path has been validated on the dedicated Android emulator by changing BG to 35%, killing the RuneBoard process, recreating it, and confirming the next BG step starts from the persisted value.
+This path has been validated on the dedicated Android emulator by changing BG to 33%, killing the RuneBoard process, recreating it, and confirming the next BG step starts from the persisted value.
 
 ## Themes
 
@@ -83,7 +83,7 @@ Current controls:
 - active IME picker;
 - Physical Controls accessibility shortcut;
 - visual theme cards for Default, OLED Black, Transparent and Custom;
-- background opacity chips for 100%, 71%, 35% and 0%;
+- background opacity chips for 100%, 67%, 33% and 0%;
 - persistent Custom palette presets for accent, keys and gradient background;
 - Custom key-shape and spacing presets plus reset;
 - built-in test text field.

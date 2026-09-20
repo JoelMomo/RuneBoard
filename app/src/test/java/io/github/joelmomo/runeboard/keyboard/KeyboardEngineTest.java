@@ -232,10 +232,10 @@ public final class KeyboardEngineTest {
                 new KeyboardEngine(
                         KeyboardLayouts.qwerty(),
                         output,
-                        90);
+                        85);
 
         engine.getState().select(0, 6);
-        assertEquals(90, engine.getState().getOpacity());
+        assertEquals(85, engine.getState().getOpacity());
 
         assertEquals(
                 KeyboardEngine.Update.VISUAL,
