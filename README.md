@@ -4,7 +4,7 @@
 
 RuneBoard is an experimental dual-screen Android keyboard designed primarily for the **AYN Thor**.
 
-The project is currently in **Prototype 0**. The Thor-specific architecture has been validated on physical hardware and is now being refactored into a modular product foundation.
+The project is currently in **Prototype 1**. Prototype 0 closed all Thor hardware gates; the current phase focuses on product-level visual hierarchy, setup/settings UX and regression-safe polish on top of that validated architecture.
 
 ## Prototype controls
 
@@ -25,7 +25,7 @@ The DS-style controls are validated on AYN Thor hardware. Twelve editing actions
 
 ## Current implementation
 
-Prototype 0 contains:
+Prototype 1 starts from the validated Prototype 0 foundation:
 
 - a real Android `InputMethodService`;
 - a touch QWERTY keyboard with a compact command row, an always-visible number row directly above the letters and a thumb-oriented bottom action row;
@@ -139,11 +139,15 @@ Stock Android still places the IME on display 0 even when the focused editor is 
 
 Thor-specific display placement remains a real-hardware test.
 
-## Scope
+## Prototype 1 scope
 
-Prototype 0 intentionally does not include swipe typing, cloud prediction, accounts or telemetry. RuneBoard now integrates Android system spelling for suggestions and conservative autocorrection. Japanese is intentionally deferred until RuneBoard has a real kana/kanji composition layer.
+Prototype 1 is the product-polish phase: keyboard visual hierarchy, setup/settings UX, theme consistency and regression-safe daily-use testing. It intentionally does not reopen the validated IME/controller architecture unless a regression requires it.
 
-RuneBoard is Thor-first. General Android support can be evaluated later.
+Swipe typing, cloud prediction, accounts, telemetry, Japanese composition and broad general-Android support remain out of scope for this phase.
+
+See `docs/PROTOTYPE_1_PLAN.md` for the current product baseline and acceptance rules.
+
+RuneBoard remains Thor-first. General Android support can be evaluated later.
 
 ## Status
 
@@ -151,11 +155,11 @@ RuneBoard is Thor-first. General Android support can be evaluated later.
 
 **Core Thor architecture: validated.**
 
-**RuneBoard Default visual system: implemented in emulator.**
+**Prototype 0 hardware gates: complete.**
 
-**Physical controller remapping, Shift/Caps and compact capture policy: validated on the real Thor.**
+**Physical controller remapping, Shift/Caps, transparency and compact capture policy: validated on the real Thor.**
 
-**Final visual tuning on the physical Thor panel: pending.**
+**Prototype 1 product/visual polish: in progress.**
 
 Experimental - not ready for daily use.
 
