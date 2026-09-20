@@ -17,6 +17,19 @@ Prototype 1 treats the visual layer as product UI rather than hardware validatio
 
 These rules are the acceptance baseline for the first Prototype 1 implementation passes. Detailed phase scope and regression constraints live in `docs/PROTOTYPE_1_PLAN.md`.
 
+## P1-A implementation
+
+The first Prototype 1 rendering pass keeps the validated geometry intact and changes only visual hierarchy:
+
+- the header is drawn on its own restrained utility surface;
+- the command row uses quieter fill, labels and controller hints when unselected;
+- letters, numbers and Space form the primary typing surface;
+- primary typing keys receive a subtle edge definition;
+- the selected key receives an additional outer halo while retaining the existing selected fill and stroke;
+- controller hints remain visible but secondary to key labels.
+
+Emulator validation for this pass used Android 15 at the Thor reference canvas of `1240x1080` and 320 dpi. The final successful evidence is GitHub Actions run `35523489604`; the captured input-method state confirmed RuneBoard itself was the active and visible IME.
+
 ## RuneBoard Default
 
 The first product theme is designed around the AYN Thor lower display in landscape.
