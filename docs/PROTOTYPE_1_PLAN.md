@@ -8,16 +8,21 @@ Make RuneBoard visually coherent, easier to understand and suitable for sustaine
 
 ## Current checkpoint
 
-P1-A is complete in `0.18.0-prototype` (`versionCode 21`).
+P1-A and P1-B are complete in `0.19.0-prototype` (`versionCode 22`).
 
-- product change is confined to the `RuneKeyboardView` rendering path;
-- row/key geometry and touch targets are unchanged;
+P1-B closes the setup/settings UX pass:
+
+- the main header no longer carries the prototype status pill;
+- Setup is presented as three ordered steps with live `READY` / `SET UP` state for keyboard enablement, active IME selection and physical controls;
+- setup state refreshes after returning from Android settings;
+- section wording is shorter and task-oriented while the built-in test field remains available;
+- Custom style controls stay collapsed unless the Custom theme is selected;
 - `KeyboardEngine`, `ControllerMapper`, joystick, D-pad and IME/window semantics are unchanged;
-- Android 15 emulator QA passed at `1240x1080` / 320 dpi in run `35523489604`;
-- the QA dump confirmed `io.github.joelmomo.runeboard/.RuneBoardImeService` as both the default and current IME, with the input window visible;
-- the temporary emulator workflow used to capture the evidence is not part of the product checkpoint.
+- Android 15 emulator QA passed at `1240x1080` / 320 dpi in run `35540090834`;
+- the emulator verified all three Setup states reaching `READY`, plus Custom controls hidden by default and visible when Custom is selected;
+- the Thor was not used because this slice does not alter Thor-specific display placement or physical-input semantics.
 
-The next product block is P1-B. It is not started by this checkpoint.
+The next product block is P1-C - theme consistency. It is not started by this checkpoint.
 
 ## Inherited invariants
 
