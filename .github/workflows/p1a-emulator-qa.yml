@@ -63,35 +63,11 @@ jobs:
             adb shell am force-stop io.github.joelmomo.runeboard
             adb shell am start -W -n io.github.joelmomo.runeboard/.MainActivity
             sleep 2
-            for i in 1 2 3 4 5 6 7 8; do
-              adb shell input swipe 620 920 620 180 220
-            done
+            for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 620 920 620 180 220; done
             sleep 1
             adb shell uiautomator dump /sdcard/window.xml
             adb pull /sdcard/window.xml qa-artifacts/window.xml
-            python3 - <<'PY'
-            import re
-            import subprocess
-            import xml.etree.ElementTree as ET
-
-            root = ET.parse("qa-artifacts/window.xml").getroot()
-            target = None
-            for node in root.iter("node"):
-                if node.attrib.get("text") == "Tap here and type with RuneBoard":
-                    target = node
-                    break
-            if target is None:
-                print("Visible texts:")
-                print([node.attrib.get("text") for node in root.iter("node") if node.attrib.get("text")])
-                raise SystemExit("RuneBoard test field was not found")
-            match = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", target.attrib["bounds"])
-            if not match:
-                raise SystemExit(f"Unexpected bounds: {target.attrib.get('bounds')}")
-            x1, y1, x2, y2 = map(int, match.groups())
-            x, y = (x1 + x2) // 2, (y1 + y2) // 2
-            print(f"Tapping test field at {x},{y}")
-            subprocess.run(["adb", "shell", "input", "tap", str(x), str(y)], check=True)
-            PY
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; root=ET.parse("qa-artifacts/window.xml").getroot(); target=next((n for n in root.iter("node") if n.attrib.get("class")=="android.widget.EditText"),None); assert target is not None,"RuneBoard EditText not found"; m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",target.attrib["bounds"]); assert m,"Unexpected EditText bounds"; x1,y1,x2,y2=map(int,m.groups()); x,y=(x1+x2)//2,(y1+y2)//2; print(f"Tapping EditText at {x},{y}"); subprocess.run(["adb","shell","input","tap",str(x),str(y)],check=True)'
             sleep 3
             adb shell dumpsys input_method > qa-artifacts/input-method.txt
             adb shell settings get secure default_input_method > qa-artifacts/default-ime.txt
