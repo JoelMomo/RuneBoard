@@ -1,5 +1,22 @@
 # RuneBoard visual system
 
+## Prototype 1 product rules
+
+Prototype 1 treats the visual layer as product UI rather than hardware validation UI. The existing renderer and theme model remain the foundation; visual work should improve hierarchy without changing text-entry or controller semantics.
+
+- The typing rows are the primary visual surface.
+- The number row has the same visual weight and height as the letter rows.
+- The command row is intentionally quieter than typing keys.
+- The selected key is the strongest transient state on the keyboard.
+- Key labels take priority over controller hints; hints are secondary metadata.
+- The thumb row remains easy to reach and visually distinct without becoming oversized.
+- The 1240x1080 Thor lower display is the reference canvas.
+- Theme changes must preserve the same information hierarchy in Default, OLED Black, Transparent and Custom.
+- Geometry changes that can affect D-pad/joystick navigation require regression testing; purely visual changes should stay inside the theme/rendering layer.
+- Background transparency never reduces key/label opacity implicitly.
+
+These rules are the acceptance baseline for the first Prototype 1 implementation passes. Detailed phase scope and regression constraints live in `docs/PROTOTYPE_1_PLAN.md`.
+
 ## RuneBoard Default
 
 The first product theme is designed around the AYN Thor lower display in landscape.
