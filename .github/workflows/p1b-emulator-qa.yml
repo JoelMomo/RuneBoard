@@ -66,6 +66,16 @@ jobs:
             adb shell uiautomator dump /sdcard/setup-ready.xml
             adb pull /sdcard/setup-ready.xml qa-artifacts/setup-ready.xml
             python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/setup-ready.xml").getroot(); assert sum(n.attrib.get("text")=="READY" for n in r.iter("node"))>=2, "Expected keyboard enabled and selected READY states"'
+            adb shell settings put secure enabled_accessibility_services io.github.joelmomo.runeboard/.RuneBoardControlService
+            adb shell settings put secure accessibility_enabled 1
+            adb shell input keyevent 3
+            sleep 1
+            adb shell am start -W -n io.github.joelmomo.runeboard/.MainActivity
+            sleep 2
+            adb exec-out screencap -p > qa-artifacts/setup-all-ready.png
+            adb shell uiautomator dump /sdcard/setup-all-ready.xml
+            adb pull /sdcard/setup-all-ready.xml qa-artifacts/setup-all-ready.xml
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/setup-all-ready.xml").getroot(); assert sum(n.attrib.get("text")=="READY" for n in r.iter("node"))==3, "Expected all three setup states READY"'
             adb shell input swipe 620 900 620 280 280
             adb shell input swipe 620 900 620 280 280
             sleep 1
