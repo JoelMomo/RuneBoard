@@ -77,6 +77,7 @@ public final class MainActivity extends Activity {
     private TextView setupKeyboardChip;
     private TextView setupSelectedChip;
     private TextView setupControlsChip;
+    private LinearLayout customThemePanel;
     private OnBackInvokedCallback backCallback;
 
     @Override
@@ -796,6 +797,9 @@ public final class MainActivity extends Activity {
     }
 
     private void addCustomThemeControls(LinearLayout root) {
+        customThemePanel = new LinearLayout(this);
+        customThemePanel.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout panel = customThemePanel;
         TextView title = text(
                 getString(R.string.custom_theme_title),
                 14f,
@@ -803,7 +807,7 @@ public final class MainActivity extends Activity {
                 true);
         LinearLayout.LayoutParams titleParams = matchWidth();
         titleParams.topMargin = dp(18);
-        root.addView(title, titleParams);
+        panel.addView(title, titleParams);
 
         TextView subtitle = text(
                 getString(R.string.custom_theme_subtitle),
@@ -813,9 +817,9 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams subtitleParams = matchWidth();
         subtitleParams.topMargin = dp(3);
         subtitleParams.bottomMargin = dp(10);
-        root.addView(subtitle, subtitleParams);
+        panel.addView(subtitle, subtitleParams);
 
-        addCustomLabel(root, R.string.custom_accent);
+        addCustomLabel(panel, R.string.custom_accent);
         LinearLayout accentRow = horizontalRow();
         addCustomColorChip(
                 accentRow,
@@ -852,9 +856,9 @@ public final class MainActivity extends Activity {
                 "Pink",
                 false,
                 () -> applyCustomAccent(0xFFF472B6));
-        root.addView(accentRow, matchWidth());
+        panel.addView(accentRow, matchWidth());
 
-        addCustomLabel(root, R.string.custom_keys);
+        addCustomLabel(panel, R.string.custom_keys);
         LinearLayout keyRow = horizontalRow();
         addCustomColorChip(
                 keyRow,
@@ -884,9 +888,9 @@ public final class MainActivity extends Activity {
                 "Violet",
                 false,
                 () -> applyCustomKeyFill(0xFF3B314D));
-        root.addView(keyRow, matchWidth());
+        panel.addView(keyRow, matchWidth());
 
-        addCustomLabel(root, R.string.custom_background);
+        addCustomLabel(panel, R.string.custom_background);
         LinearLayout backgroundRow = horizontalRow();
         addCustomBackgroundChip(
                 backgroundRow,
@@ -912,9 +916,9 @@ public final class MainActivity extends Activity {
                 0xFF25143A,
                 "Violet",
                 false);
-        root.addView(backgroundRow, matchWidth());
+        panel.addView(backgroundRow, matchWidth());
 
-        addCustomLabel(root, R.string.custom_radius);
+        addCustomLabel(panel, R.string.custom_radius);
         LinearLayout radiusRow = horizontalRow();
         addCustomMetricChip(
                 radiusRow,
@@ -937,9 +941,9 @@ public final class MainActivity extends Activity {
                 "Soft",
                 false,
                 () -> applyCustomRadius(20f));
-        root.addView(radiusRow, matchWidth());
+        panel.addView(radiusRow, matchWidth());
 
-        addCustomLabel(root, R.string.custom_gap);
+        addCustomLabel(panel, R.string.custom_gap);
         LinearLayout gapRow = horizontalRow();
         addCustomMetricChip(
                 gapRow,
@@ -962,7 +966,7 @@ public final class MainActivity extends Activity {
                 "Wide",
                 false,
                 () -> applyCustomGap(9f));
-        root.addView(gapRow, matchWidth());
+        panel.addView(gapRow, matchWidth());
 
         TextView reset = text(
                 getString(R.string.custom_reset),
@@ -981,7 +985,9 @@ public final class MainActivity extends Activity {
         });
         LinearLayout.LayoutParams resetParams = matchWidth();
         resetParams.topMargin = dp(10);
-        root.addView(reset, resetParams);
+        panel.addView(reset, resetParams);
+
+        root.addView(panel, matchWidth());
     }
 
     private void addCustomLabel(LinearLayout root, int textRes) {
@@ -1435,6 +1441,13 @@ public final class MainActivity extends Activity {
                 preview.setCornerRadius(dp(8));
                 swatch.setBackground(preview);
             }
+        }
+
+        if (customThemePanel != null) {
+            customThemePanel.setVisibility(
+                    RuneThemes.ID_CUSTOM.equals(selectedTheme)
+                            ? View.VISIBLE
+                            : View.GONE);
         }
 
         KeyboardTheme activeTheme = preferences.getTheme();
