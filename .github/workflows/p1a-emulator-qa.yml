@@ -58,9 +58,9 @@ jobs:
             adb shell wm density 320
             adb shell settings put secure show_ime_with_hard_keyboard 1
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop io.github.joelmomo.runeboard
             adb shell ime enable io.github.joelmomo.runeboard/.RuneBoardImeService
             adb shell ime set io.github.joelmomo.runeboard/.RuneBoardImeService
-            adb shell am force-stop io.github.joelmomo.runeboard
             adb shell am start -W -n io.github.joelmomo.runeboard/.MainActivity
             sleep 2
             for i in 1 2 3 4 5 6 7 8; do adb shell input swipe 620 920 620 180 220; done
