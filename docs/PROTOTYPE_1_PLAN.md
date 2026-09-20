@@ -6,6 +6,19 @@ Prototype 1 starts from the hardware-validated `0.17.3-prototype` baseline. Prot
 
 Make RuneBoard visually coherent, easier to understand and suitable for sustained daily-use testing on the AYN Thor while preserving the behavior already validated in Prototype 0.
 
+## Current checkpoint
+
+P1-A is complete in `0.18.0-prototype` (`versionCode 21`).
+
+- product change is confined to the `RuneKeyboardView` rendering path;
+- row/key geometry and touch targets are unchanged;
+- `KeyboardEngine`, `ControllerMapper`, joystick, D-pad and IME/window semantics are unchanged;
+- Android 15 emulator QA passed at `1240x1080` / 320 dpi in run `35523489604`;
+- the QA dump confirmed `io.github.joelmomo.runeboard/.RuneBoardImeService` as both the default and current IME, with the input window visible;
+- the temporary emulator workflow used to capture the evidence is not part of the product checkpoint.
+
+The next product block is P1-B. It is not started by this checkpoint.
+
 ## Inherited invariants
 
 Prototype 1 treats the following as compatibility constraints:
