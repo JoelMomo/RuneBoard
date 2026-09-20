@@ -799,6 +799,7 @@ public final class MainActivity extends Activity {
     private void addCustomThemeControls(LinearLayout root) {
         customThemePanel = new LinearLayout(this);
         customThemePanel.setOrientation(LinearLayout.VERTICAL);
+        customThemePanel.setVisibility(View.GONE);
         LinearLayout panel = customThemePanel;
         TextView title = text(
                 getString(R.string.custom_theme_title),
