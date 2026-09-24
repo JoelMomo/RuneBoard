@@ -8,24 +8,21 @@ Make RuneBoard visually coherent, easier to understand and suitable for sustaine
 
 ## Current checkpoint
 
-P1-A, P1-B and P1-C are complete in `0.20.0-prototype` (`versionCode 23`).
+P1-A, P1-B and P1-C are complete. P1-D is at the final pre-physical candidate in `0.21.0-prototype` (`versionCode 24`).
 
-P1-C closes the theme-consistency pass:
+The non-physical regression gate is complete:
 
-- `KeyboardTheme` now carries a dedicated `selectedContent` token;
-- Default, OLED Black, Transparent and Custom use the same selected-state content contract;
-- selected content is derived from the selection fill using relative-luminance contrast;
-- unit tests require at least 4.5:1 contrast for built-in themes and all five Custom accent presets;
-- unselected physical-button hints use secondary text instead of accent-only coloring, with readable alpha while remaining visually secondary;
-- recommended suggestions reuse the same selected-state content model;
-- standard Android CI passed in run `35951279096`;
-- Android 15 emulator matrix QA passed in run `35951620626` at `1240x1080` / 320 dpi for 4 themes x 4 background-opacity levels;
-- visual review confirmed usable labels, selection and hints at 100%, 67%, 33% and 0% background opacity;
-- key and selected-key pixels remained effectively stable across opacity levels while the background changed;
-- no geometry, `KeyboardEngine`, `ControllerMapper`, joystick, D-pad or IME/window semantics changed;
-- the Thor was not required for this slice because no physical-placement or physical-input behavior changed.
+- product behavior remains frozen at `main@3fb31133201fdd620ca2a186b1f170ba33752a0d`;
+- post-merge Android CI for that exact product code passed in run `35952735242`;
+- the final Android 15 theme/opacity emulator matrix passed in run `35951620626` at `1240x1080` / 320 dpi;
+- the matrix covers Default, OLED Black, Transparent and Custom at 100%, 67%, 33% and 0% background opacity;
+- P1-D introduces no product-source change: only version/checkpoint documentation and README cleanup;
+- the two literal `\n` escapes in README are corrected;
+- no geometry, `KeyboardEngine`, `ControllerMapper`, joystick, D-pad or IME/window semantics change.
 
-The next product block is P1-D - final regression gate. It is not started by this checkpoint.
+P1-D status: **PRE-PHYSICAL PASS**.
+
+The only remaining Prototype 1 gate is the final Thor lower-panel smoke review. Prototype 1 is not marked CLOSED until that physical review passes.
 
 ## Inherited invariants
 
