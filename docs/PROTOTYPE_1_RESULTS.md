@@ -203,6 +203,7 @@ The temporary matrix script and workflow were removed before the final product c
 
 P1-C changes theme/rendering contrast only. It does not affect lower-display placement, physical navigation, controller capture or IME/window behavior, so no new Thor physical validation is required for this slice.
 
+
 ## P1-D - final regression gate
 
 Status: **PRE-PHYSICAL PASS**
