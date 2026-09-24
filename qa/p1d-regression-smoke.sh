@@ -80,7 +80,8 @@ capture_ime() {
   adb exec-out screencap -p > "$OUT/${label}.png"
 }
 
-launch_settings
+adb shell am start -W -n "$PACKAGE/.MainActivity" >/dev/null
+sleep 2
 adb shell uiautomator dump /sdcard/setup.xml >/dev/null
 adb pull /sdcard/setup.xml "$OUT/setup.xml" >/dev/null
 python3 - "$OUT/setup.xml" <<'PY'
