@@ -202,3 +202,51 @@ The temporary matrix script and workflow were removed before the final product c
 ### Physical-device scope
 
 P1-C changes theme/rendering contrast only. It does not affect lower-display placement, physical navigation, controller capture or IME/window behavior, so no new Thor physical validation is required for this slice.
+
+## P1-D - final regression gate
+
+Status: **PRE-PHYSICAL PASS**
+
+Candidate checkpoint:
+
+- `0.21.0-prototype`;
+- `versionCode 24`;
+- product behavior frozen at `main@3fb31133201fdd620ca2a186b1f170ba33752a0d`.
+
+Non-physical evidence:
+
+- post-merge Android CI run `35952735242`: PASS on the exact P1-C product code now carried into P1-D;
+- Android 15 emulator matrix run `35951620626`: PASS;
+- reference canvas: `1240x1080` / 320 dpi;
+- 16 visual cases: Default / OLED Black / Transparent / Custom x 100% / 67% / 33% / 0% background opacity;
+- selected-key hierarchy, controller hints and background-opacity independence remained readable and consistent;
+- no product source is changed by P1-D before the physical gate.
+
+P1-D candidate-only changes:
+
+- development version advanced to `0.21.0-prototype` / `versionCode 24`;
+- Prototype 1 checkpoint/status documentation updated;
+- two literal `\n` escapes in README corrected.
+
+Compatibility constraints preserved:
+
+- no row or key geometry change;
+- no `KeyboardEngine` change;
+- no `ControllerMapper` change;
+- no joystick or D-pad semantic change;
+- no IME/window semantic change;
+- no theme/rendering behavior change after the validated P1-C checkpoint.
+
+### Remaining physical gate
+
+A final AYN Thor lower-panel smoke review is still required before Prototype 1 is marked **CLOSED**.
+
+The Thor review must confirm the already-validated product on physical hardware without introducing changes:
+
+- RuneBoard appears on the lower display while the editor remains usable;
+- selected-key hierarchy and labels are immediately readable;
+- Default/OLED/Transparent/Custom remain visually usable;
+- background opacity remains usable at the supported levels;
+- D-pad, left-stick and primary action controls show no obvious regression.
+
+Until that review passes, P1-D remains **PRE-PHYSICAL PASS** rather than CLOSED.
