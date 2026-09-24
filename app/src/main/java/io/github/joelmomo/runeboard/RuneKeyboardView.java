@@ -569,11 +569,12 @@ public final class RuneKeyboardView extends View {
             String suggestion = suggestions.get(index);
             suggestionTargets.add(new SuggestionTarget(bounds, suggestion));
 
+            boolean recommended = index == 0 && suggestionsRecommended;
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(index == 0 && suggestionsRecommended
+            paint.setColor(recommended
                     ? theme.selectedFill
                     : theme.utilityKeyFill);
-            paint.setAlpha(index == 0 && suggestionsRecommended ? 115 : 210);
+            paint.setAlpha(recommended ? 245 : 210);
             canvas.drawRoundRect(bounds, dp(8), dp(8), paint);
             paint.setAlpha(255);
 
@@ -595,7 +596,9 @@ public final class RuneKeyboardView extends View {
             paint.setTypeface(index == 0 ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
             paint.setTextAlign(Paint.Align.CENTER);
             paint.setTextSize(dp(9));
-            paint.setColor(theme.textPrimary);
+            paint.setColor(recommended
+                    ? theme.selectedContent
+                    : theme.textPrimary);
             String fitted = fitText(label, Math.max(1f, width - dp(12)));
             float baseline = bounds.centerY()
                     - (paint.ascent() + paint.descent()) / 2f;
@@ -703,11 +706,14 @@ public final class RuneKeyboardView extends View {
                 primaryTyping
                         ? Typeface.DEFAULT_BOLD
                         : Typeface.DEFAULT);
+        boolean emphasized = selected || activeShift;
         paint.setColor(
-                commandRow && !selected
-                        ? theme.textSecondary
-                        : theme.textPrimary);
-        paint.setAlpha(commandRow && !selected ? 230 : 255);
+                emphasized
+                        ? theme.selectedContent
+                        : commandRow
+                                ? theme.textSecondary
+                                : theme.textPrimary);
+        paint.setAlpha(commandRow && !emphasized ? 230 : 255);
 
         float textSize;
         if (key.getType() == KeyboardKey.Type.BACKSPACE) {
@@ -759,12 +765,19 @@ public final class RuneKeyboardView extends View {
         paint.setTypeface(Typeface.DEFAULT_BOLD);
         paint.setTextAlign(Paint.Align.RIGHT);
         paint.setTextSize(dp(7));
-        paint.setColor(selected ? theme.selectedStroke : theme.accent);
+        boolean activeShift =
+                key.getType() == KeyboardKey.Type.SHIFT
+                        && engine.getState().isShifted();
+        boolean emphasized = selected || activeShift;
+        paint.setColor(
+                emphasized
+                        ? theme.selectedContent
+                        : theme.textSecondary);
         boolean commandRow = row == 0 && !engine.getState().isEditing();
         paint.setAlpha(
-                selected
+                emphasized
                         ? 255
-                        : commandRow ? 115 : 160);
+                        : commandRow ? 225 : 230);
         canvas.drawText(
                 hint,
                 rect.right - dp(7),
