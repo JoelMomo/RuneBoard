@@ -8,21 +8,24 @@ Make RuneBoard visually coherent, easier to understand and suitable for sustaine
 
 ## Current checkpoint
 
-P1-A and P1-B are complete in `0.19.0-prototype` (`versionCode 22`).
+P1-A, P1-B and P1-C are complete in `0.20.0-prototype` (`versionCode 23`).
 
-P1-B closes the setup/settings UX pass:
+P1-C closes the theme-consistency pass:
 
-- the main header no longer carries the prototype status pill;
-- Setup is presented as three ordered steps with live `READY` / `SET UP` state for keyboard enablement, active IME selection and physical controls;
-- setup state refreshes after returning from Android settings;
-- section wording is shorter and task-oriented while the built-in test field remains available;
-- Custom style controls stay collapsed unless the Custom theme is selected;
-- `KeyboardEngine`, `ControllerMapper`, joystick, D-pad and IME/window semantics are unchanged;
-- Android 15 emulator QA passed at `1240x1080` / 320 dpi in run `35540090834`;
-- the emulator verified all three Setup states reaching `READY`, plus Custom controls hidden by default and visible when Custom is selected;
-- the Thor was not used because this slice does not alter Thor-specific display placement or physical-input semantics.
+- `KeyboardTheme` now carries a dedicated `selectedContent` token;
+- Default, OLED Black, Transparent and Custom use the same selected-state content contract;
+- selected content is derived from the selection fill using relative-luminance contrast;
+- unit tests require at least 4.5:1 contrast for built-in themes and all five Custom accent presets;
+- unselected physical-button hints use secondary text instead of accent-only coloring, with readable alpha while remaining visually secondary;
+- recommended suggestions reuse the same selected-state content model;
+- standard Android CI passed in run `35951279096`;
+- Android 15 emulator matrix QA passed in run `35951620626` at `1240x1080` / 320 dpi for 4 themes x 4 background-opacity levels;
+- visual review confirmed usable labels, selection and hints at 100%, 67%, 33% and 0% background opacity;
+- key and selected-key pixels remained effectively stable across opacity levels while the background changed;
+- no geometry, `KeyboardEngine`, `ControllerMapper`, joystick, D-pad or IME/window semantics changed;
+- the Thor was not required for this slice because no physical-placement or physical-input behavior changed.
 
-The next product block is P1-C - theme consistency. It is not started by this checkpoint.
+The next product block is P1-D - final regression gate. It is not started by this checkpoint.
 
 ## Inherited invariants
 

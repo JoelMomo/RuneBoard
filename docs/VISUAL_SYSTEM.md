@@ -30,6 +30,20 @@ The first Prototype 1 rendering pass keeps the validated geometry intact and cha
 
 Emulator validation for this pass used Android 15 at the Thor reference canvas of `1240x1080` and 320 dpi. The final successful evidence is GitHub Actions run `35523489604`; the captured input-method state confirmed RuneBoard itself was the active and visible IME.
 
+## P1-C theme consistency
+
+Prototype 1 now treats selected-state content as a first-class theme token rather than assuming primary text or the selection outline will remain readable on every accent.
+
+- `KeyboardTheme.selectedContent` is derived from the selected fill using relative-luminance contrast.
+- Light selection fills use dark content; darker selection fills use light content.
+- Selected key labels, active Shift labels and selected controller hints share that token.
+- Recommended suggestion chips reuse the same selected-state content model.
+- Unselected controller hints use secondary text with a readable alpha, keeping them subordinate to labels without relying on accent contrast.
+- Default, OLED Black, Transparent and Custom therefore share the same hierarchy even when their palettes differ.
+- Background opacity remains independent: 100%, 67%, 33% and 0% change the background layer without changing the intended key/selection hierarchy.
+
+Android 15 matrix QA at `1240x1080` / 320 dpi covered all four themes at all four supported background-opacity levels in run `35951620626`.
+
 ## RuneBoard Default
 
 The first product theme is designed around the AYN Thor lower display in landscape.

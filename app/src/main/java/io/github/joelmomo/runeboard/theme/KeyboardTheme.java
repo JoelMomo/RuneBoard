@@ -10,6 +10,7 @@ public final class KeyboardTheme {
     public final int utilityKeyFill;
     public final int selectedFill;
     public final int selectedStroke;
+    public final int selectedContent;
     public final int textPrimary;
     public final int textSecondary;
     public final int accent;
@@ -29,6 +30,7 @@ public final class KeyboardTheme {
             int utilityKeyFill,
             int selectedFill,
             int selectedStroke,
+            int selectedContent,
             int textPrimary,
             int textSecondary,
             int accent,
@@ -47,6 +49,7 @@ public final class KeyboardTheme {
         this.utilityKeyFill = utilityKeyFill;
         this.selectedFill = selectedFill;
         this.selectedStroke = selectedStroke;
+        this.selectedContent = selectedContent;
         this.textPrimary = textPrimary;
         this.textSecondary = textSecondary;
         this.accent = accent;

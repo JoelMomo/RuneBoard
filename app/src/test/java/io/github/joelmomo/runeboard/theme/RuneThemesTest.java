@@ -2,6 +2,7 @@ package io.github.joelmomo.runeboard.theme;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -59,6 +60,37 @@ public final class RuneThemesTest {
     }
 
     @Test
+    public void selectedContentIsReadableAcrossBuiltInThemes() {
+        assertSelectedContentReadable(RuneThemes.defaultTheme());
+        assertSelectedContentReadable(RuneThemes.oledTheme());
+        assertSelectedContentReadable(RuneThemes.transparentTheme());
+    }
+
+    @Test
+    public void selectedContentAdaptsAcrossCustomAccentPresets() {
+        int[] accents = {
+                0xFFA78BFA,
+                0xFF22D3EE,
+                0xFF34D399,
+                0xFFFBBF24,
+                0xFFF472B6
+        };
+
+        for (int accent : accents) {
+            CustomThemeConfig defaults = CustomThemeConfig.defaults();
+            KeyboardTheme theme = RuneThemes.customTheme(
+                    new CustomThemeConfig(
+                            accent,
+                            defaults.keyFill,
+                            defaults.backgroundTop,
+                            defaults.backgroundBottom,
+                            defaults.keyRadiusDp,
+                            defaults.keyGapDp));
+            assertSelectedContentReadable(theme);
+        }
+    }
+
+    @Test
     public void customIdIsRecognized() {
         assertEquals(
                 RuneThemes.ID_CUSTOM,
@@ -66,5 +98,35 @@ public final class RuneThemesTest {
         assertEquals(
                 RuneThemes.ID_CUSTOM,
                 RuneThemes.byId(RuneThemes.ID_CUSTOM).id);
+    }
+
+    private static void assertSelectedContentReadable(
+            KeyboardTheme theme) {
+        assertTrue(
+                "Selected content contrast for " + theme.id,
+                contrastRatio(
+                        theme.selectedContent,
+                        theme.selectedFill) >= 4.5d);
+    }
+
+    private static double contrastRatio(int first, int second) {
+        double firstLuminance = relativeLuminance(first);
+        double secondLuminance = relativeLuminance(second);
+        double lighter = Math.max(firstLuminance, secondLuminance);
+        double darker = Math.min(firstLuminance, secondLuminance);
+        return (lighter + 0.05d) / (darker + 0.05d);
+    }
+
+    private static double relativeLuminance(int color) {
+        return 0.2126d * linearize((color >>> 16) & 0xFF)
+                + 0.7152d * linearize((color >>> 8) & 0xFF)
+                + 0.0722d * linearize(color & 0xFF);
+    }
+
+    private static double linearize(int component) {
+        double value = component / 255d;
+        return value <= 0.04045d
+                ? value / 12.92d
+                : Math.pow((value + 0.055d) / 1.055d, 2.4d);
     }
 }

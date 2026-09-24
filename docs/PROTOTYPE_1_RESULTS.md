@@ -123,3 +123,82 @@ The temporary emulator workflow used to capture P1-B evidence is removed before 
 ### Physical-device scope
 
 P1-B is an ordinary setup/settings UI change. It does not change Thor display placement, controller semantics or IME behavior, so no new Thor physical validation is required for this slice.
+
+## P1-C - theme consistency
+
+Status: **PASS**
+
+Version checkpoint:
+
+- `0.20.0-prototype`
+- `versionCode 23`
+
+Implemented:
+
+- added `selectedContent` to `KeyboardTheme`;
+- derive selected content from selection-fill luminance so light selections use dark content and dark selections use light content;
+- selected and active key labels use the same selected-content token;
+- selected physical-button hints use selected content;
+- unselected physical-button hints use secondary text with higher readable alpha;
+- recommended suggestions reuse the same selected-state content model;
+- theme customization remains data-driven through `KeyboardTheme` and `CustomThemeConfig`.
+
+Compatibility constraints preserved:
+
+- no row or key geometry change;
+- no `KeyboardEngine` change;
+- no `ControllerMapper` change;
+- no joystick or D-pad semantic change;
+- no IME/window semantic change;
+- background opacity remains independent from key opacity.
+
+### Unit and build validation
+
+Standard Android CI:
+
+- run: `35951279096`;
+- tests, lint and debug APK assembly: PASS.
+
+Theme tests require selected-content contrast of at least 4.5:1 for:
+
+- RuneBoard Default;
+- OLED Black;
+- Transparent;
+- Custom Purple;
+- Custom Cyan;
+- Custom Green;
+- Custom Amber;
+- Custom Pink.
+
+### Emulator matrix
+
+Reference environment:
+
+- Android 15 / API 35;
+- `1240x1080`;
+- 320 dpi.
+
+Successful matrix evidence:
+
+- run: `35951620626`;
+- artifact: `p1c-theme-opacity-matrix`;
+- 16 captures: Default / OLED / Transparent / Custom x 100% / 67% / 33% / 0%;
+- RuneBoard confirmed as the active and visible IME for every captured case.
+
+Visual review confirmed:
+
+- all four themes preserve the same hierarchy and interaction states;
+- selected keys remain the dominant transient state;
+- Default and Transparent correctly use dark content on the brighter violet selection;
+- OLED correctly uses light content on its darker violet selection;
+- Custom Amber uses dark selected content and remains clearly legible;
+- controller hints remain visible without competing with primary labels;
+- 0% background remains usable over underlying app content.
+
+Representative pixel checks across opacity levels showed regular-key and selected-key fills varying by at most about one RGB level while the sampled background changed substantially, confirming that the opacity control continues to affect the background rather than the key hierarchy.
+
+The temporary matrix script and workflow were removed before the final product checkpoint.
+
+### Physical-device scope
+
+P1-C changes theme/rendering contrast only. It does not affect lower-display placement, physical navigation, controller capture or IME/window behavior, so no new Thor physical validation is required for this slice.
