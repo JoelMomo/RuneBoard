@@ -20,6 +20,7 @@ public final class RuneThemes {
                 0xFF20202B,
                 0xFF8B5CF6,
                 0xFFE0D6FF,
+                contentFor(0xFF8B5CF6),
                 0xFFF8F8FC,
                 0xFF9FA0B4,
                 0xFFA78BFA,
@@ -41,6 +42,7 @@ public final class RuneThemes {
                 0xFF0E0E13,
                 0xFF7C3AED,
                 0xFFE9DDFF,
+                contentFor(0xFF7C3AED),
                 0xFFFFFFFF,
                 0xFF9A9AA8,
                 0xFF9F67FF,
@@ -62,6 +64,7 @@ public final class RuneThemes {
                 0xFF242430,
                 0xFF8B5CF6,
                 0xFFF0E9FF,
+                contentFor(0xFF8B5CF6),
                 0xFFFFFFFF,
                 0xFFB3B3C2,
                 0xFFB197FC,
@@ -85,6 +88,7 @@ public final class RuneThemes {
                 darken(value.keyFill, 0.72f),
                 value.accent,
                 lighten(value.accent, 0.35f),
+                contentFor(value.accent),
                 0xFFFFFFFF,
                 0xFFB3B3C2,
                 value.accent,
@@ -116,6 +120,28 @@ public final class RuneThemes {
             return id;
         }
         return ID_DEFAULT;
+    }
+
+    private static int contentFor(int background) {
+        double luminance = relativeLuminance(background);
+        double blackContrast = (luminance + 0.05d) / 0.05d;
+        double whiteContrast = 1.05d / (luminance + 0.05d);
+        return blackContrast >= whiteContrast
+                ? 0xFF000000
+                : 0xFFFFFFFF;
+    }
+
+    private static double relativeLuminance(int color) {
+        return 0.2126d * linearize(red(color))
+                + 0.7152d * linearize(green(color))
+                + 0.0722d * linearize(blue(color));
+    }
+
+    private static double linearize(int component) {
+        double value = component / 255d;
+        return value <= 0.04045d
+                ? value / 12.92d
+                : Math.pow((value + 0.055d) / 1.055d, 2.4d);
     }
 
     private static int darken(int color, float factor) {
