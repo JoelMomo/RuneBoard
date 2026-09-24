@@ -82,7 +82,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.19.0-prototype**
+Current development version: **0.20.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
