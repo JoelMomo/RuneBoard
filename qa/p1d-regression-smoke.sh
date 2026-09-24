@@ -10,6 +10,14 @@ mkdir -p "$OUT"
 adb shell wm size 1240x1080
 adb shell wm density 320
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+for i in $(seq 1 15); do
+  if adb shell ime list -a | grep -q "$IME"; then
+    break
+  fi
+  sleep 1
+done
+adb shell ime list -a > "$OUT/ime-list.txt"
+grep -q "$IME" "$OUT/ime-list.txt"
 adb shell settings put secure show_ime_with_hard_keyboard 1
 adb shell ime enable "$IME"
 adb shell ime set "$IME"
