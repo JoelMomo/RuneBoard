@@ -15,6 +15,10 @@ adb shell ime enable "$IME"
 adb shell ime set "$IME"
 adb shell settings put secure enabled_accessibility_services "$CONTROL"
 adb shell settings put secure accessibility_enabled 1
+adb shell input keyevent 3
+sleep 1
+adb shell settings get secure enabled_accessibility_services > "$OUT/accessibility-services.txt"
+grep -q "$CONTROL" "$OUT/accessibility-services.txt"
 
 launch_settings() {
   adb shell am force-stop "$PACKAGE"
