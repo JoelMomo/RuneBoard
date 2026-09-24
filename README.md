@@ -28,7 +28,8 @@ The DS-style controls are validated on AYN Thor hardware. Twelve editing actions
 Prototype 1 starts from the validated Prototype 0 foundation:
 
 - a real Android `InputMethodService`;
-- a touch QWERTY keyboard with a compact command row, an always-visible number row directly above the letters and a thumb-oriented bottom action row;\n- Prototype 1 keyboard chrome with a dedicated header surface, quieter command controls, stronger typing-key hierarchy and a more explicit selected-key halo;
+- a touch QWERTY keyboard with a compact command row, an always-visible number row directly above the letters and a thumb-oriented bottom action row;
+- Prototype 1 keyboard chrome with a dedicated header surface, quieter command controls, stronger typing-key hierarchy and a more explicit selected-key halo;
 - a narrowly scoped accessibility service for physical controller buttons;
 - a separate keyboard model, state engine and controller mapper;
 - geometry-aware D-pad navigation across rows with different key widths;
@@ -82,7 +83,7 @@ See `docs/ARCHITECTURE.md`.
 
 ## Build
 
-Current development version: **0.20.0-prototype**
+Current development version: **0.21.0-prototype**
 
 Current minimum Android version: **Android 13 / API 33**.
 
@@ -122,7 +123,8 @@ The lower panel is `1080x1240` native and `1240x1080` in landscape.
 See:
 
 - `docs/PROTOTYPE_0_TEST_PLAN.md`
-- `docs/PROTOTYPE_0_RESULTS.md`\n- `docs/PROTOTYPE_1_RESULTS.md`
+- `docs/PROTOTYPE_0_RESULTS.md`
+- `docs/PROTOTYPE_1_RESULTS.md`
 - `docs/EMULATOR_TESTING.md`
 - `docs/CONTROLLER_MAPPING.md`
 - `docs/LANGUAGES.md`
@@ -159,7 +161,7 @@ RuneBoard remains Thor-first. General Android support can be evaluated later.
 
 **Physical controller remapping, Shift/Caps, transparency and compact capture policy: validated on the real Thor.**
 
-**Prototype 1 product/visual polish: in progress.**
+**Prototype 1 final regression gate: pre-physical PASS; final Thor review pending.**
 
 Experimental - not ready for daily use.
 
