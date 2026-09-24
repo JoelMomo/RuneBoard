@@ -27,8 +27,8 @@ $(if [[ "$theme" == "custom" ]]; then echo '    <int name="custom_accent" value=
 EOF
 
   adb shell am force-stop "$PACKAGE"
-  adb shell run-as "$PACKAGE" mkdir -p shared_prefs
-  adb shell run-as "$PACKAGE" sh -c 'cat > shared_prefs/runeboard_preferences.xml' < "$OUT/prefs.xml"
+  adb shell "run-as $PACKAGE mkdir -p /data/user/0/$PACKAGE/shared_prefs"
+  adb shell "run-as $PACKAGE sh -c 'cat > /data/user/0/$PACKAGE/shared_prefs/runeboard_preferences.xml'" < "$OUT/prefs.xml"
   adb shell ime enable "$IME"
   adb shell ime set "$IME"
   adb shell am start -W -n "$PACKAGE/.MainActivity"
