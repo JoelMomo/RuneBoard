@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RuneBoard</string>
+    <string name="app_name" translatable="false">RuneBoard</string>
     <string name="ime_name">RuneBoard Keyboard</string>
     <string name="control_service_name">RuneBoard Physical Controls</string>
     <string name="control_service_description">Lets RuneBoard use the AYN Thor physical buttons while the keyboard is visible.</string>
@@ -19,6 +19,8 @@
 
     <string name="section_language">TYPING</string>
     <string name="section_language_subtitle">Language and keyboard layout</string>
+    <string name="profile_content_description">%1$s. %2$s</string>
+    <string name="profile_layout_summary">%1$s / %2$s</string>
     <string name="section_typing_assistance">ASSISTANCE</string>
     <string name="section_typing_assistance_subtitle">Suggestions and autocorrect</string>
     <string name="suggestions_title">Suggestions</string>
@@ -39,6 +41,8 @@
     <string name="section_appearance_subtitle">Theme, lettering and lower-screen visibility</string>
     <string name="appearance_preview_title">Current look</string>
     <string name="appearance_preview_summary">%1$s · %2$s · %3$s background</string>
+    <string name="appearance_value_with_chevron">%1$s  ›</string>
+    <string name="percent_value">%1$d%%</string>
     <string name="appearance_group_style">STYLE</string>
     <string name="appearance_group_lettering">LETTERING</string>
     <string name="appearance_group_advanced">ADVANCED</string>
@@ -49,7 +53,7 @@
     <string name="appearance_color_title">Key label color</string>
     <string name="appearance_color_subtitle">Theme color or a fixed override</string>
     <string name="appearance_custom_subtitle">Palette, key shape and spacing</string>
-    <string name="theme_default_title">RuneBoard</string>
+    <string name="theme_default_title" translatable="false">RuneBoard</string>
     <string name="theme_default_subtitle">Balanced dark</string>
     <string name="theme_oled_title">OLED Black</string>
     <string name="theme_oled_subtitle">Pure black</string>
@@ -72,11 +76,11 @@
     <string name="typography_font">TYPEFACE</string>
     <string name="typography_color">KEY LABEL COLOR</string>
     <string name="font_system">System</string>
-    <string name="font_inter">Inter</string>
-    <string name="font_atkinson">Atkinson</string>
-    <string name="font_jetbrains_mono">JetBrains Mono</string>
-    <string name="font_space_grotesk">Space Grotesk</string>
-    <string name="font_medieval_sharp">MedievalSharp</string>
+    <string name="font_inter" translatable="false">Inter</string>
+    <string name="font_atkinson" translatable="false">Atkinson</string>
+    <string name="font_jetbrains_mono" translatable="false">JetBrains Mono</string>
+    <string name="font_space_grotesk" translatable="false">Space Grotesk</string>
+    <string name="font_medieval_sharp" translatable="false">MedievalSharp</string>
     <string name="color_theme">Theme</string>
     <string name="color_white">White</string>
     <string name="color_lavender">Lavender</string>
@@ -107,7 +111,8 @@
     <string name="key_previous">PREV</string>
     <string name="key_opacity">BG %1$d%%</string>
     <string name="key_minimize">MIN</string>
-    <string name="header_title">RUNEBOARD</string>    <string name="header_controller">D-PAD</string>
+    <string name="header_title" translatable="false">RUNEBOARD</string>
+    <string name="header_controller" translatable="false">D-PAD</string>
     <string name="header_background">BG %1$d%%</string>
     <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
 

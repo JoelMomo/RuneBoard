@@ -302,7 +302,8 @@ public final class MainActivity extends Activity {
 
     LinearLayout body = new LinearLayout(this);
     body.setOrientation(LinearLayout.VERTICAL);
-    body.setPadding(0, dp(8), 0, 0);
+    body.setPadding(dp(12), dp(10), dp(10), dp(10));
+    body.setBackground(rounded(0xFF111018, 0xFF252230, 1, 12f));
     builder.build(body);
     body.setVisibility(expanded ? View.VISIBLE : View.GONE);
     styleSectionHeader(header, rail, arrow, expanded);
@@ -317,7 +318,11 @@ public final class MainActivity extends Activity {
     LinearLayout.LayoutParams headerParams = matchWidth();
     headerParams.topMargin = dp(14);
     root.addView(header, headerParams);
-    root.addView(body, matchWidth());
+
+    LinearLayout.LayoutParams bodyParams = matchWidth();
+    bodyParams.setMarginStart(dp(18));
+    bodyParams.setMarginEnd(dp(4));
+    root.addView(body, bodyParams);
   }
 
   private void styleSectionHeader(
@@ -512,7 +517,8 @@ public final class MainActivity extends Activity {
     card.setPadding(dp(14), dp(12), dp(14), dp(12));
     card.setClickable(true);
     card.setFocusable(true);
-    card.setContentDescription(profile.displayName + ". " + profile.layoutName);
+    card.setContentDescription(
+        getString(R.string.profile_content_description, profile.displayName, profile.layoutName));
     card.setOnClickListener(
         v -> {
           preferences.setKeyboardProfileId(profile.id);
@@ -524,7 +530,11 @@ public final class MainActivity extends Activity {
     card.addView(title);
 
     TextView subtitle =
-        text(profile.shortLabel + " / " + profile.layoutName, 11f, COLOR_MUTED, false);
+        text(
+            getString(R.string.profile_layout_summary, profile.shortLabel, profile.layoutName),
+            11f,
+            COLOR_MUTED,
+            false);
     LinearLayout.LayoutParams subtitleParams = wrap();
     subtitleParams.topMargin = dp(4);
     card.addView(subtitle, subtitleParams);
@@ -793,7 +803,7 @@ public final class MainActivity extends Activity {
     LinearLayout.LayoutParams params = matchWidth();
     params.topMargin = dp(15);
     params.bottomMargin = dp(6);
-    params.setMarginStart(dp(2));
+    params.setMarginStart(dp(8));
     root.addView(label, params);
   }
 
@@ -839,6 +849,8 @@ public final class MainActivity extends Activity {
     row.addView(value, new LinearLayout.LayoutParams(dp(220), dp(44)));
 
     LinearLayout.LayoutParams rowParams = matchWidth();
+    rowParams.setMarginStart(dp(6));
+    rowParams.setMarginEnd(dp(2));
     rowParams.bottomMargin = dp(8);
     root.addView(row, rowParams);
     return value;
@@ -857,10 +869,10 @@ public final class MainActivity extends Activity {
 
     appearancePreviewSummary.setText(
         getString(R.string.appearance_preview_summary, theme, font, opacity));
-    appearanceThemeValue.setText(theme + "  ›");
-    appearanceOpacityValue.setText(opacity + "  ›");
-    appearanceFontValue.setText(font + "  ›");
-    appearanceColorValue.setText(color + "  ›");
+    appearanceThemeValue.setText(getString(R.string.appearance_value_with_chevron, theme));
+    appearanceOpacityValue.setText(getString(R.string.appearance_value_with_chevron, opacity));
+    appearanceFontValue.setText(getString(R.string.appearance_value_with_chevron, font));
+    appearanceColorValue.setText(getString(R.string.appearance_value_with_chevron, color));
 
     GradientDrawable preview =
         new GradientDrawable(
@@ -907,15 +919,15 @@ public final class MainActivity extends Activity {
 
   private String appearanceOpacityName(int opacity) {
     if (opacity == 170) {
-      return "67%";
+      return getString(R.string.percent_value, 67);
     }
     if (opacity == 85) {
-      return "33%";
+      return getString(R.string.percent_value, 33);
     }
     if (opacity == 0) {
-      return "0%";
+      return getString(R.string.percent_value, 0);
     }
-    return "100%";
+    return getString(R.string.percent_value, 100);
   }
 
   private String appearanceColorName(KeyboardTheme theme) {
@@ -1112,7 +1124,7 @@ public final class MainActivity extends Activity {
     TextView title = text(getString(labelRes), 13.5f, COLOR_TEXT, true);
     title.setTypeface(KeyboardFonts.resolve(this, fontId), Typeface.BOLD);
     words.addView(title);
-    TextView preview = text("RuneBoard", 11.5f, COLOR_MUTED, false);
+    TextView preview = text(getString(R.string.app_name), 11.5f, COLOR_MUTED, false);
     preview.setTypeface(KeyboardFonts.resolve(this, fontId));
     LinearLayout.LayoutParams previewParams = matchWidth();
     previewParams.topMargin = dp(2);
