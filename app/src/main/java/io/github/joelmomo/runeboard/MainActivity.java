@@ -2,9 +2,12 @@ package io.github.joelmomo.runeboard;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +15,8 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -71,6 +76,12 @@ public final class MainActivity extends Activity {
   private Switch soundSwitch;
   private TextView defaultTextColorChip;
   private LinearLayout customThemePanel;
+  private View appearancePreviewSwatch;
+  private TextView appearancePreviewSummary;
+  private TextView appearanceThemeValue;
+  private TextView appearanceOpacityValue;
+  private TextView appearanceFontValue;
+  private TextView appearanceColorValue;
   private OnBackInvokedCallback backCallback;
 
   @Override
@@ -140,12 +151,7 @@ public final class MainActivity extends Activity {
         R.string.section_appearance,
         R.string.section_appearance_subtitle,
         false,
-        section -> {
-          addThemeCards(section);
-          addOpacityControl(section);
-          addTypographyControls(section);
-          addCustomThemeControls(section);
-        });
+        this::addAppearanceMenu);
 
     addCollapsibleSection(
         root,
@@ -262,24 +268,33 @@ public final class MainActivity extends Activity {
     void build(LinearLayout root);
   }
 
+  private interface PickerBuilder {
+    void build(LinearLayout root, Dialog dialog);
+  }
+
   private void addCollapsibleSection(
       LinearLayout root, int titleRes, int subtitleRes, boolean expanded, SectionBuilder builder) {
     LinearLayout header = new LinearLayout(this);
     header.setOrientation(LinearLayout.HORIZONTAL);
     header.setGravity(Gravity.CENTER_VERTICAL);
-    header.setPadding(dp(14), dp(12), dp(12), dp(12));
-    header.setBackground(rounded(COLOR_SURFACE, COLOR_BORDER, 1, 12f));
+    header.setPadding(dp(14), dp(11), dp(12), dp(11));
     header.setClickable(true);
     header.setFocusable(true);
+    header.setMinimumHeight(dp(72));
+
+    View rail = new View(this);
+    LinearLayout.LayoutParams railParams = new LinearLayout.LayoutParams(dp(4), dp(42));
+    railParams.setMarginEnd(dp(12));
+    header.addView(rail, railParams);
 
     LinearLayout words = new LinearLayout(this);
     words.setOrientation(LinearLayout.VERTICAL);
 
-    TextView title = text(getString(titleRes), 11f, COLOR_ACCENT, true);
-    title.setLetterSpacing(0.12f);
+    TextView title = text(getString(titleRes), 12f, COLOR_TEXT, true);
+    title.setLetterSpacing(0.08f);
     words.addView(title, matchWidth());
 
-    TextView subtitle = text(getString(subtitleRes), 12f, COLOR_MUTED, false);
+    TextView subtitle = text(getString(subtitleRes), 11.5f, COLOR_MUTED, false);
     LinearLayout.LayoutParams subtitleParams = matchWidth();
     subtitleParams.topMargin = dp(3);
     words.addView(subtitle, subtitleParams);
@@ -287,27 +302,47 @@ public final class MainActivity extends Activity {
     header.addView(
         words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
-    TextView arrow = text(expanded ? "▾" : "▸", 18f, COLOR_ACCENT, true);
+    TextView arrow = text("", 17f, COLOR_ACCENT, true);
     arrow.setGravity(Gravity.CENTER);
-    header.addView(arrow, new LinearLayout.LayoutParams(dp(34), dp(34)));
+    header.addView(arrow, new LinearLayout.LayoutParams(dp(36), dp(36)));
 
     LinearLayout body = new LinearLayout(this);
     body.setOrientation(LinearLayout.VERTICAL);
     body.setPadding(0, dp(8), 0, 0);
     builder.build(body);
     body.setVisibility(expanded ? View.VISIBLE : View.GONE);
+    styleSectionHeader(header, rail, arrow, expanded);
 
     header.setOnClickListener(
         v -> {
           boolean show = body.getVisibility() != View.VISIBLE;
           body.setVisibility(show ? View.VISIBLE : View.GONE);
-          arrow.setText(show ? "▾" : "▸");
+          styleSectionHeader(header, rail, arrow, show);
         });
 
     LinearLayout.LayoutParams headerParams = matchWidth();
-    headerParams.topMargin = dp(18);
+    headerParams.topMargin = dp(14);
     root.addView(header, headerParams);
     root.addView(body, matchWidth());
+  }
+
+  private void styleSectionHeader(
+      LinearLayout header, View rail, TextView arrow, boolean expanded) {
+    header.setBackground(
+        rounded(
+            expanded ? 0xFF1B1926 : COLOR_SURFACE,
+            expanded ? 0xFF554371 : COLOR_BORDER,
+            1,
+            14f));
+    rail.setBackground(rounded(expanded ? COLOR_ACCENT : 0xFF514266, 0, 0, 99f));
+    arrow.setText(expanded ? "−" : "+");
+    arrow.setTextColor(expanded ? COLOR_WINDOW : COLOR_ACCENT);
+    arrow.setBackground(
+        rounded(
+            expanded ? COLOR_ACCENT : COLOR_SURFACE_ALT,
+            expanded ? COLOR_ACCENT : COLOR_BORDER,
+            1,
+            10f));
   }
 
   private void addSetupCards(LinearLayout root) {
@@ -688,6 +723,593 @@ public final class MainActivity extends Activity {
     }
     if (soundSwitch != null) {
       soundSwitch.setChecked(preferences.isSoundFeedbackEnabled());
+    }
+  }
+
+  private void addAppearanceMenu(LinearLayout root) {
+    LinearLayout preview = new LinearLayout(this);
+    preview.setOrientation(LinearLayout.HORIZONTAL);
+    preview.setGravity(Gravity.CENTER_VERTICAL);
+    preview.setPadding(dp(14), dp(13), dp(14), dp(13));
+    preview.setBackground(rounded(0xFF14131C, 0xFF3A3150, 1, 14f));
+
+    appearancePreviewSwatch = new View(this);
+    preview.addView(appearancePreviewSwatch, new LinearLayout.LayoutParams(dp(86), dp(46)));
+
+    LinearLayout previewWords = new LinearLayout(this);
+    previewWords.setOrientation(LinearLayout.VERTICAL);
+    previewWords.setPadding(dp(14), 0, 0, 0);
+
+    TextView previewTitle =
+        text(getString(R.string.appearance_preview_title), 13f, COLOR_TEXT, true);
+    previewWords.addView(previewTitle);
+
+    appearancePreviewSummary = text("", 11.5f, COLOR_MUTED, false);
+    LinearLayout.LayoutParams previewSummaryParams = matchWidth();
+    previewSummaryParams.topMargin = dp(4);
+    previewWords.addView(appearancePreviewSummary, previewSummaryParams);
+
+    preview.addView(
+        previewWords, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+    root.addView(preview, matchWidth());
+
+    addAppearanceGroupLabel(root, R.string.appearance_group_style);
+    appearanceThemeValue =
+        addAppearanceRow(
+            root,
+            "◆",
+            R.string.appearance_theme_title,
+            R.string.appearance_theme_subtitle,
+            v -> showThemePicker());
+    appearanceOpacityValue =
+        addAppearanceRow(
+            root,
+            "%",
+            R.string.background_title,
+            R.string.background_subtitle,
+            v -> showOpacityPicker());
+
+    addAppearanceGroupLabel(root, R.string.appearance_group_lettering);
+    appearanceFontValue =
+        addAppearanceRow(
+            root,
+            "Aa",
+            R.string.appearance_font_title,
+            R.string.appearance_font_subtitle,
+            v -> showFontPicker());
+    appearanceColorValue =
+        addAppearanceRow(
+            root,
+            "●",
+            R.string.appearance_color_title,
+            R.string.appearance_color_subtitle,
+            v -> showColorPicker());
+
+    addAppearanceGroupLabel(root, R.string.appearance_group_advanced);
+    addAppearanceRow(
+        root,
+        "⋯",
+        R.string.custom_theme_title,
+        R.string.appearance_custom_subtitle,
+        v -> showCustomStylePicker());
+
+    refreshAppearanceSummary();
+  }
+
+  private void addAppearanceGroupLabel(LinearLayout root, int labelRes) {
+    TextView label = text(getString(labelRes), 10f, COLOR_MUTED, true);
+    label.setLetterSpacing(0.12f);
+    LinearLayout.LayoutParams params = matchWidth();
+    params.topMargin = dp(15);
+    params.bottomMargin = dp(6);
+    params.setMarginStart(dp(2));
+    root.addView(label, params);
+  }
+
+  private TextView addAppearanceRow(
+      LinearLayout root,
+      String mark,
+      int titleRes,
+      int subtitleRes,
+      View.OnClickListener listener) {
+    LinearLayout row = new LinearLayout(this);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(dp(12), dp(11), dp(12), dp(11));
+    row.setBackground(rounded(COLOR_SURFACE, COLOR_BORDER, 1, 13f));
+    row.setClickable(true);
+    row.setFocusable(true);
+    row.setMinimumHeight(dp(72));
+    row.setOnClickListener(listener);
+
+    TextView marker = text(mark, "Aa".equals(mark) ? 13f : 16f, COLOR_ACCENT, true);
+    marker.setGravity(Gravity.CENTER);
+    marker.setBackground(rounded(COLOR_SURFACE_ALT, 0xFF443754, 1, 11f));
+    row.addView(marker, new LinearLayout.LayoutParams(dp(46), dp(46)));
+
+    LinearLayout words = new LinearLayout(this);
+    words.setOrientation(LinearLayout.VERTICAL);
+    words.setPadding(dp(12), 0, dp(10), 0);
+
+    TextView title = text(getString(titleRes), 13.5f, COLOR_TEXT, true);
+    words.addView(title);
+
+    TextView subtitle = text(getString(subtitleRes), 11f, COLOR_MUTED, false);
+    LinearLayout.LayoutParams subtitleParams = matchWidth();
+    subtitleParams.topMargin = dp(3);
+    words.addView(subtitle, subtitleParams);
+
+    row.addView(
+        words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView value = text("", 11.5f, COLOR_ACCENT, true);
+    value.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+    value.setMaxLines(1);
+    row.addView(value, new LinearLayout.LayoutParams(dp(220), dp(44)));
+
+    LinearLayout.LayoutParams rowParams = matchWidth();
+    rowParams.bottomMargin = dp(8);
+    root.addView(row, rowParams);
+    return value;
+  }
+
+  private void refreshAppearanceSummary() {
+    if (appearancePreviewSummary == null) {
+      return;
+    }
+
+    KeyboardTheme activeTheme = preferences.getTheme();
+    String theme = appearanceThemeName(preferences.getThemeId());
+    String font = appearanceFontName(preferences.getKeyboardFontId());
+    String opacity = appearanceOpacityName(preferences.getBackgroundOpacity(activeTheme));
+    String color = appearanceColorName(activeTheme);
+
+    appearancePreviewSummary.setText(
+        getString(R.string.appearance_preview_summary, theme, font, opacity));
+    appearanceThemeValue.setText(theme + "  ›");
+    appearanceOpacityValue.setText(opacity + "  ›");
+    appearanceFontValue.setText(font + "  ›");
+    appearanceColorValue.setText(color + "  ›");
+
+    GradientDrawable preview =
+        new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {
+              activeTheme.backgroundTop, activeTheme.backgroundBottom, activeTheme.selectedFill
+            });
+    preview.setCornerRadius(dp(10));
+    preview.setStroke(dp(1), 0xFF514266);
+    appearancePreviewSwatch.setBackground(preview);
+  }
+
+  private String appearanceThemeName(String themeId) {
+    if (RuneThemes.ID_OLED.equals(themeId)) {
+      return getString(R.string.theme_oled_title);
+    }
+    if (RuneThemes.ID_TRANSPARENT.equals(themeId)) {
+      return getString(R.string.theme_transparent_title);
+    }
+    if (RuneThemes.ID_CUSTOM.equals(themeId)) {
+      return getString(R.string.theme_custom_title);
+    }
+    return getString(R.string.theme_default_title);
+  }
+
+  private String appearanceFontName(String fontId) {
+    if (KeyboardFonts.ID_INTER.equals(fontId)) {
+      return getString(R.string.font_inter);
+    }
+    if (KeyboardFonts.ID_ATKINSON.equals(fontId)) {
+      return getString(R.string.font_atkinson);
+    }
+    if (KeyboardFonts.ID_JETBRAINS_MONO.equals(fontId)) {
+      return getString(R.string.font_jetbrains_mono);
+    }
+    if (KeyboardFonts.ID_SPACE_GROTESK.equals(fontId)) {
+      return getString(R.string.font_space_grotesk);
+    }
+    if (KeyboardFonts.ID_MEDIEVAL_SHARP.equals(fontId)) {
+      return getString(R.string.font_medieval_sharp);
+    }
+    return getString(R.string.font_system);
+  }
+
+  private String appearanceOpacityName(int opacity) {
+    if (opacity == 170) {
+      return "67%";
+    }
+    if (opacity == 85) {
+      return "33%";
+    }
+    if (opacity == 0) {
+      return "0%";
+    }
+    return "100%";
+  }
+
+  private String appearanceColorName(KeyboardTheme theme) {
+    if (!preferences.hasKeyTextColorOverride()) {
+      return getString(R.string.color_theme);
+    }
+    int color = preferences.getKeyTextColor(theme);
+    if (color == 0xFFF8F8FC) {
+      return getString(R.string.color_white);
+    }
+    if (color == 0xFFC4B5FD) {
+      return getString(R.string.color_lavender);
+    }
+    if (color == 0xFF67E8F9) {
+      return getString(R.string.color_cyan);
+    }
+    if (color == 0xFF86EFAC) {
+      return getString(R.string.color_green);
+    }
+    if (color == 0xFFFDE68A) {
+      return getString(R.string.color_amber);
+    }
+    if (color == 0xFFF9A8D4) {
+      return getString(R.string.color_pink);
+    }
+    return getString(R.string.color_custom);
+  }
+
+  private void showThemePicker() {
+    showPickerDialog(
+        R.string.appearance_theme_title,
+        R.string.appearance_theme_subtitle,
+        false,
+        (root, dialog) -> {
+          addThemePickerOption(
+              root,
+              dialog,
+              RuneThemes.defaultTheme(),
+              R.string.theme_default_title,
+              R.string.theme_default_subtitle);
+          addThemePickerOption(
+              root,
+              dialog,
+              RuneThemes.oledTheme(),
+              R.string.theme_oled_title,
+              R.string.theme_oled_subtitle);
+          addThemePickerOption(
+              root,
+              dialog,
+              RuneThemes.transparentTheme(),
+              R.string.theme_transparent_title,
+              R.string.theme_transparent_subtitle);
+          addThemePickerOption(
+              root,
+              dialog,
+              RuneThemes.customTheme(preferences.getCustomThemeConfig()),
+              R.string.theme_custom_title,
+              R.string.theme_custom_subtitle);
+        });
+  }
+
+  private void addThemePickerOption(
+      LinearLayout root, Dialog dialog, KeyboardTheme theme, int titleRes, int subtitleRes) {
+    boolean selected = theme.id.equals(preferences.getThemeId());
+    LinearLayout row = new LinearLayout(this);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(dp(12), dp(10), dp(12), dp(10));
+    row.setBackground(
+        rounded(
+            selected ? 0xFF211B2F : COLOR_SURFACE_ALT,
+            selected ? theme.accent : COLOR_BORDER,
+            selected ? 2 : 1,
+            12f));
+    row.setClickable(true);
+    row.setFocusable(true);
+
+    View swatch = new View(this);
+    GradientDrawable swatchDrawable =
+        new GradientDrawable(
+            GradientDrawable.Orientation.LEFT_RIGHT,
+            new int[] {theme.backgroundTop, theme.backgroundBottom, theme.selectedFill});
+    swatchDrawable.setCornerRadius(dp(9));
+    swatch.setBackground(swatchDrawable);
+    row.addView(swatch, new LinearLayout.LayoutParams(dp(72), dp(42)));
+
+    LinearLayout words = new LinearLayout(this);
+    words.setOrientation(LinearLayout.VERTICAL);
+    words.setPadding(dp(12), 0, dp(8), 0);
+    TextView title = text(getString(titleRes), 13.5f, COLOR_TEXT, true);
+    words.addView(title);
+    TextView subtitle = text(getString(subtitleRes), 11f, COLOR_MUTED, false);
+    LinearLayout.LayoutParams subtitleParams = matchWidth();
+    subtitleParams.topMargin = dp(3);
+    words.addView(subtitle, subtitleParams);
+    row.addView(
+        words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView check = text(selected ? "✓" : "", 17f, theme.accent, true);
+    check.setGravity(Gravity.CENTER);
+    row.addView(check, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+    row.setOnClickListener(
+        v -> {
+          selectTheme(theme.id);
+          dialog.dismiss();
+        });
+
+    LinearLayout.LayoutParams params = matchWidth();
+    params.bottomMargin = dp(8);
+    root.addView(row, params);
+  }
+
+  private void showOpacityPicker() {
+    showPickerDialog(
+        R.string.background_title,
+        R.string.background_subtitle,
+        false,
+        (root, dialog) -> {
+          LinearLayout row = horizontalRow();
+          addOpacityPickerChip(row, dialog, 255, "100%", true);
+          addOpacityPickerChip(row, dialog, 170, "67%", false);
+          addOpacityPickerChip(row, dialog, 85, "33%", false);
+          addOpacityPickerChip(row, dialog, 0, "0%", false);
+          root.addView(row, matchWidth());
+        });
+  }
+
+  private void addOpacityPickerChip(
+      LinearLayout row, Dialog dialog, int opacity, String label, boolean first) {
+    int selectedOpacity = preferences.getBackgroundOpacity(preferences.getTheme());
+    boolean selected = selectedOpacity == opacity;
+    TextView chip = text(label, 13f, selected ? COLOR_WINDOW : COLOR_TEXT, true);
+    chip.setGravity(Gravity.CENTER);
+    chip.setPadding(dp(8), dp(13), dp(8), dp(13));
+    chip.setBackground(
+        rounded(
+            selected ? preferences.getTheme().accent : COLOR_SURFACE_ALT,
+            selected ? preferences.getTheme().accent : COLOR_BORDER,
+            selected ? 2 : 1,
+            11f));
+    chip.setClickable(true);
+    chip.setFocusable(true);
+    chip.setOnClickListener(
+        v -> {
+          selectOpacity(opacity);
+          dialog.dismiss();
+        });
+    addWeighted(row, chip, first);
+  }
+
+  private void showFontPicker() {
+    showPickerDialog(
+        R.string.appearance_font_title,
+        R.string.appearance_font_subtitle,
+        false,
+        (root, dialog) -> {
+          addFontPickerOption(root, dialog, KeyboardFonts.ID_SYSTEM, R.string.font_system);
+          addFontPickerOption(root, dialog, KeyboardFonts.ID_INTER, R.string.font_inter);
+          addFontPickerOption(root, dialog, KeyboardFonts.ID_ATKINSON, R.string.font_atkinson);
+          addFontPickerOption(
+              root, dialog, KeyboardFonts.ID_JETBRAINS_MONO, R.string.font_jetbrains_mono);
+          addFontPickerOption(
+              root, dialog, KeyboardFonts.ID_SPACE_GROTESK, R.string.font_space_grotesk);
+          addFontPickerOption(
+              root, dialog, KeyboardFonts.ID_MEDIEVAL_SHARP, R.string.font_medieval_sharp);
+        });
+  }
+
+  private void addFontPickerOption(
+      LinearLayout root, Dialog dialog, String fontId, int labelRes) {
+    boolean selected = fontId.equals(preferences.getKeyboardFontId());
+    LinearLayout row = new LinearLayout(this);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(dp(12), dp(9), dp(12), dp(9));
+    row.setBackground(
+        rounded(
+            selected ? 0xFF211B2F : COLOR_SURFACE_ALT,
+            selected ? COLOR_ACCENT : COLOR_BORDER,
+            selected ? 2 : 1,
+            12f));
+    row.setClickable(true);
+    row.setFocusable(true);
+
+    TextView sample = text("Aa", 18f, COLOR_TEXT, true);
+    sample.setGravity(Gravity.CENTER);
+    sample.setTypeface(KeyboardFonts.resolve(this, fontId), Typeface.BOLD);
+    sample.setBackground(rounded(0xFF14131C, 0xFF40354F, 1, 10f));
+    row.addView(sample, new LinearLayout.LayoutParams(dp(58), dp(44)));
+
+    LinearLayout words = new LinearLayout(this);
+    words.setOrientation(LinearLayout.VERTICAL);
+    words.setPadding(dp(12), 0, dp(8), 0);
+    TextView title = text(getString(labelRes), 13.5f, COLOR_TEXT, true);
+    title.setTypeface(KeyboardFonts.resolve(this, fontId), Typeface.BOLD);
+    words.addView(title);
+    TextView preview = text("RuneBoard", 11.5f, COLOR_MUTED, false);
+    preview.setTypeface(KeyboardFonts.resolve(this, fontId));
+    LinearLayout.LayoutParams previewParams = matchWidth();
+    previewParams.topMargin = dp(2);
+    words.addView(preview, previewParams);
+    row.addView(
+        words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView check = text(selected ? "✓" : "", 17f, COLOR_ACCENT, true);
+    check.setGravity(Gravity.CENTER);
+    row.addView(check, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+    row.setOnClickListener(
+        v -> {
+          preferences.setKeyboardFontId(fontId);
+          refreshAppearanceControls();
+          RuneBoardImeService.requestAppearanceRefresh();
+          dialog.dismiss();
+        });
+
+    LinearLayout.LayoutParams params = matchWidth();
+    params.bottomMargin = dp(8);
+    root.addView(row, params);
+  }
+
+  private void showColorPicker() {
+    showPickerDialog(
+        R.string.appearance_color_title,
+        R.string.appearance_color_subtitle,
+        false,
+        (root, dialog) -> {
+          KeyboardTheme theme = preferences.getTheme();
+          addColorPickerOption(root, dialog, theme.textPrimary, R.string.color_theme, true);
+          addColorPickerOption(root, dialog, 0xFFF8F8FC, R.string.color_white, false);
+          addColorPickerOption(root, dialog, 0xFFC4B5FD, R.string.color_lavender, false);
+          addColorPickerOption(root, dialog, 0xFF67E8F9, R.string.color_cyan, false);
+          addColorPickerOption(root, dialog, 0xFF86EFAC, R.string.color_green, false);
+          addColorPickerOption(root, dialog, 0xFFFDE68A, R.string.color_amber, false);
+          addColorPickerOption(root, dialog, 0xFFF9A8D4, R.string.color_pink, false);
+        });
+  }
+
+  private void addColorPickerOption(
+      LinearLayout root, Dialog dialog, int color, int labelRes, boolean themeColor) {
+    KeyboardTheme theme = preferences.getTheme();
+    boolean defaultColor = !preferences.hasKeyTextColorOverride();
+    boolean selected =
+        themeColor ? defaultColor : !defaultColor && preferences.getKeyTextColor(theme) == color;
+
+    LinearLayout row = new LinearLayout(this);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(dp(12), dp(9), dp(12), dp(9));
+    row.setBackground(
+        rounded(
+            selected ? 0xFF211B2F : COLOR_SURFACE_ALT,
+            selected ? COLOR_ACCENT : COLOR_BORDER,
+            selected ? 2 : 1,
+            12f));
+    row.setClickable(true);
+    row.setFocusable(true);
+
+    View swatch = new View(this);
+    GradientDrawable dot = new GradientDrawable();
+    dot.setShape(GradientDrawable.OVAL);
+    dot.setColor(color);
+    dot.setStroke(dp(selected ? 2 : 1), selected ? COLOR_ACCENT : 0xFF555565);
+    swatch.setBackground(dot);
+    LinearLayout.LayoutParams swatchParams = new LinearLayout.LayoutParams(dp(34), dp(34));
+    swatchParams.setMarginStart(dp(7));
+    swatchParams.setMarginEnd(dp(19));
+    row.addView(swatch, swatchParams);
+
+    TextView title = text(getString(labelRes), 13.5f, COLOR_TEXT, true);
+    row.addView(
+        title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView check = text(selected ? "✓" : "", 17f, COLOR_ACCENT, true);
+    check.setGravity(Gravity.CENTER);
+    row.addView(check, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+    row.setOnClickListener(
+        v -> {
+          if (themeColor) {
+            preferences.resetKeyTextColor();
+          } else {
+            preferences.setKeyTextColor(color);
+          }
+          refreshAppearanceControls();
+          RuneBoardImeService.requestAppearanceRefresh();
+          dialog.dismiss();
+        });
+
+    LinearLayout.LayoutParams params = matchWidth();
+    params.bottomMargin = dp(8);
+    root.addView(row, params);
+  }
+
+  private void showCustomStylePicker() {
+    showPickerDialog(
+        R.string.custom_theme_title,
+        R.string.appearance_custom_subtitle,
+        true,
+        (root, dialog) -> {
+          customAccentChips.clear();
+          customKeyChips.clear();
+          customBackgroundChips.clear();
+          customBackgroundBottoms.clear();
+          customRadiusChips.clear();
+          customGapChips.clear();
+          addCustomThemeControls(root);
+          if (customThemePanel != null) {
+            customThemePanel.setVisibility(View.VISIBLE);
+          }
+          refreshCustomThemeControls();
+        });
+  }
+
+  private void showPickerDialog(
+      int titleRes, int subtitleRes, boolean tall, PickerBuilder builder) {
+    Dialog dialog = new Dialog(this);
+    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+    LinearLayout shell = new LinearLayout(this);
+    shell.setOrientation(LinearLayout.VERTICAL);
+    shell.setPadding(dp(16), dp(15), dp(16), dp(16));
+    shell.setBackground(rounded(COLOR_SURFACE, 0xFF463A5A, 1, 18f));
+
+    LinearLayout header = new LinearLayout(this);
+    header.setOrientation(LinearLayout.HORIZONTAL);
+    header.setGravity(Gravity.CENTER_VERTICAL);
+
+    LinearLayout words = new LinearLayout(this);
+    words.setOrientation(LinearLayout.VERTICAL);
+    TextView title = text(getString(titleRes), 18f, COLOR_TEXT, true);
+    words.addView(title);
+    TextView subtitle = text(getString(subtitleRes), 11.5f, COLOR_MUTED, false);
+    LinearLayout.LayoutParams subtitleParams = matchWidth();
+    subtitleParams.topMargin = dp(3);
+    words.addView(subtitle, subtitleParams);
+    header.addView(
+        words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView close = text("×", 22f, COLOR_MUTED, false);
+    close.setGravity(Gravity.CENTER);
+    close.setClickable(true);
+    close.setFocusable(true);
+    close.setBackground(rounded(COLOR_SURFACE_ALT, COLOR_BORDER, 1, 10f));
+    close.setOnClickListener(v -> dialog.dismiss());
+    header.addView(close, new LinearLayout.LayoutParams(dp(38), dp(38)));
+    shell.addView(header, matchWidth());
+
+    View divider = new View(this);
+    divider.setBackgroundColor(0xFF30283F);
+    LinearLayout.LayoutParams dividerParams =
+        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1));
+    dividerParams.topMargin = dp(13);
+    dividerParams.bottomMargin = dp(12);
+    shell.addView(divider, dividerParams);
+
+    ScrollView scroller = new ScrollView(this);
+    scroller.setFillViewport(false);
+    LinearLayout content = new LinearLayout(this);
+    content.setOrientation(LinearLayout.VERTICAL);
+    builder.build(content, dialog);
+    scroller.addView(content, matchWidth());
+
+    int contentHeight =
+        tall
+            ? Math.max(
+                dp(260),
+                Math.min(dp(620), getResources().getDisplayMetrics().heightPixels - dp(190)))
+            : LinearLayout.LayoutParams.WRAP_CONTENT;
+    shell.addView(
+        scroller,
+        new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, contentHeight));
+
+    dialog.setContentView(shell);
+    dialog.setCanceledOnTouchOutside(true);
+    dialog.show();
+
+    Window window = dialog.getWindow();
+    if (window != null) {
+      window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+      window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+      window.setDimAmount(0.62f);
+      int available = getResources().getDisplayMetrics().widthPixels - dp(40);
+      window.setLayout(Math.min(dp(620), available), WindowManager.LayoutParams.WRAP_CONTENT);
     }
   }
 
@@ -1426,6 +2048,7 @@ public final class MainActivity extends Activity {
 
     refreshTypographyControls();
     refreshCustomThemeControls();
+    refreshAppearanceSummary();
   }
 
   private LinearLayout horizontalRow() {
