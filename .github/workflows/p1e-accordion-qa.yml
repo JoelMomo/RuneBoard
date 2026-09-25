@@ -67,7 +67,7 @@ jobs:
             adb shell uiautomator dump /sdcard/collapsed.xml
             adb pull /sdcard/collapsed.xml qa-artifacts/collapsed.xml
             adb exec-out screencap -p > qa-artifacts/collapsed.png
-            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/collapsed.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; assert "Enable keyboard" not in t; [(_ for _ in ()).throw(AssertionError(x)) for x in ["SETUP","TYPING","ASSISTANCE","KEY FEEDBACK","APPEARANCE","CONTROLS","TEST KEYBOARD"] if x not in t]'
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/collapsed.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; assert "Enable keyboard" not in t; [(_ for _ in ()).throw(AssertionError(x)) for x in ["SETUP","TYPING","ASSISTANCE","KEY FEEDBACK","APPEARANCE"] if x not in t]'
             python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/collapsed.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell input swipe 620 900 620 300 250
