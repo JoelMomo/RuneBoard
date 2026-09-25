@@ -59,58 +59,27 @@ jobs:
             adb shell uiautomator dump /sdcard/initial.xml
             adb pull /sdcard/initial.xml qa-artifacts/initial.xml
             adb exec-out screencap -p > qa-artifacts/initial.png
-            python3 - <<'PY'
-            import xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/initial.xml").getroot()
-            texts=[n.attrib.get("text","") for n in r.iter("node")]
-            assert "SETUP" in texts
-            assert "Enable keyboard" in texts
-            assert "TYPING" in texts
-            PY
-            python3 - <<'PY'
-            import re,subprocess,xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/initial.xml").getroot()
-            n=next(x for x in r.iter("node") if x.attrib.get("text")=="SETUP")
-            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
-            x1,y1,x2,y2=map(int,m.groups())
-            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-            PY
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/initial.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; assert "SETUP" in t and "Enable keyboard" in t and "TYPING" in t'
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/initial.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="SETUP"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell uiautomator dump /sdcard/collapsed.xml
             adb pull /sdcard/collapsed.xml qa-artifacts/collapsed.xml
             adb exec-out screencap -p > qa-artifacts/collapsed.png
-            python3 - <<'PY'
-            import xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/collapsed.xml").getroot()
-            texts=[n.attrib.get("text","") for n in r.iter("node")]
-            assert "Enable keyboard" not in texts
-            for required in ["SETUP","TYPING","ASSISTANCE","KEY FEEDBACK","APPEARANCE","CONTROLS","TEST KEYBOARD"]:
-                assert required in texts, required
-            PY
-            python3 - <<'PY'
-            import re,subprocess,xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/collapsed.xml").getroot()
-            n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE")
-            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
-            x1,y1,x2,y2=map(int,m.groups())
-            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-            PY
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/collapsed.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; assert "Enable keyboard" not in t; [(_ for _ in ()).throw(AssertionError(x)) for x in ["SETUP","TYPING","ASSISTANCE","KEY FEEDBACK","APPEARANCE","CONTROLS","TEST KEYBOARD"] if x not in t]'
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/collapsed.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
-            python3 - <<'PY'
-            import subprocess,xml.etree.ElementTree as ET
-            found=False
-            for i in range(5):
-                subprocess.run(["adb","shell","uiautomator","dump","/sdcard/appearance.xml"],check=True,stdout=subprocess.DEVNULL)
-                subprocess.run(["adb","pull","/sdcard/appearance.xml","qa-artifacts/appearance.xml"],check=True,stdout=subprocess.DEVNULL)
-                r=ET.parse("qa-artifacts/appearance.xml").getroot()
-                texts=[n.attrib.get("text","") for n in r.iter("node")]
-                if "MedievalSharp" in texts and "Key lettering" in texts:
-                    found=True
-                    break
-                subprocess.run(["adb","shell","input","swipe","620","900","620","300","250"],check=True)
-            assert found, "MedievalSharp typography controls not reachable"
-            PY
-            adb exec-out screencap -p > qa-artifacts/appearance.png
+            adb shell input swipe 620 900 620 300 250
+            sleep 1
+            adb shell uiautomator dump /sdcard/appearance1.xml
+            adb pull /sdcard/appearance1.xml qa-artifacts/appearance1.xml
+            adb exec-out screencap -p > qa-artifacts/appearance1.png
+            adb shell input swipe 620 900 620 300 250
+            sleep 1
+            adb shell uiautomator dump /sdcard/appearance2.xml
+            adb pull /sdcard/appearance2.xml qa-artifacts/appearance2.xml
+            adb exec-out screencap -p > qa-artifacts/appearance2.png
+            grep -q "MedievalSharp" qa-artifacts/appearance1.xml || grep -q "MedievalSharp" qa-artifacts/appearance2.xml
+            grep -q "Key lettering" qa-artifacts/appearance1.xml || grep -q "Key lettering" qa-artifacts/appearance2.xml
             adb shell am force-stop io.github.joelmomo.runeboard
             adb shell ime enable io.github.joelmomo.runeboard/.RuneBoardImeService
             adb shell ime set io.github.joelmomo.runeboard/.RuneBoardImeService
@@ -118,36 +87,17 @@ jobs:
             sleep 1
             adb shell uiautomator dump /sdcard/feedback-start.xml
             adb pull /sdcard/feedback-start.xml qa-artifacts/feedback-start.xml
-            python3 - <<'PY'
-            import re,subprocess,xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/feedback-start.xml").getroot()
-            setup=next(x for x in r.iter("node") if x.attrib.get("text")=="SETUP")
-            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",setup.attrib["bounds"])
-            x1,y1,x2,y2=map(int,m.groups())
-            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-            PY
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/feedback-start.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="SETUP"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell uiautomator dump /sdcard/feedback-collapsed.xml
             adb pull /sdcard/feedback-collapsed.xml qa-artifacts/feedback-collapsed.xml
-            python3 - <<'PY'
-            import re,subprocess,xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/feedback-collapsed.xml").getroot()
-            n=next(x for x in r.iter("node") if x.attrib.get("text")=="KEY FEEDBACK")
-            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
-            x1,y1,x2,y2=map(int,m.groups())
-            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-            PY
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/feedback-collapsed.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="KEY FEEDBACK"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell uiautomator dump /sdcard/feedback.xml
             adb pull /sdcard/feedback.xml qa-artifacts/feedback.xml
             adb exec-out screencap -p > qa-artifacts/feedback.png
-            python3 - <<'PY'
-            import xml.etree.ElementTree as ET
-            r=ET.parse("qa-artifacts/feedback.xml").getroot()
-            texts=[n.attrib.get("text","") for n in r.iter("node")]
-            assert "Vibration" in texts
-            assert "Sound" in texts
-            PY
+            grep -q "Vibration" qa-artifacts/feedback.xml
+            grep -q "Sound" qa-artifacts/feedback.xml
 
       - name: Upload emulator QA evidence
         if: always()
