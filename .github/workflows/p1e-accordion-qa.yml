@@ -1,0 +1,134 @@
+name: P1-E accordion QA
+
+on:
+  push:
+    branches:
+      - "prototype-1/p1-e-feedback-typography"
+
+jobs:
+  emulator-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Run accordion QA on Android 15 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: default
+          profile: pixel_2
+          emulator-boot-timeout: 300
+          disable-linux-hw-accel: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            mkdir -p qa-artifacts
+            adb shell wm size 1240x1080
+            adb shell wm density 320
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell ime enable io.github.joelmomo.runeboard/.RuneBoardImeService
+            adb shell ime set io.github.joelmomo.runeboard/.RuneBoardImeService
+            adb shell settings put secure enabled_accessibility_services io.github.joelmomo.runeboard/.RuneBoardControlService
+            adb shell settings put secure accessibility_enabled 1
+            adb shell am start -W -n io.github.joelmomo.runeboard/.MainActivity
+            sleep 2
+            adb shell uiautomator dump /sdcard/initial.xml
+            adb pull /sdcard/initial.xml qa-artifacts/initial.xml
+            adb exec-out screencap -p > qa-artifacts/initial.png
+            python3 - <<'PY'
+            import xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/initial.xml").getroot()
+            texts=[n.attrib.get("text","") for n in r.iter("node")]
+            for required in ["SETUP","TYPING","ASSISTANCE","KEY FEEDBACK","APPEARANCE","CONTROLS","TEST KEYBOARD"]:
+                assert required in texts, required
+            for hidden in ["Enable keyboard","Vibration","Key lettering","MedievalSharp"]:
+                assert hidden not in texts, f"{hidden} should start collapsed"
+            PY
+            python3 - <<'PY'
+            import re,subprocess,xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/initial.xml").getroot()
+            n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE")
+            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
+            x1,y1,x2,y2=map(int,m.groups())
+            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+            PY
+            sleep 1
+            adb shell uiautomator dump /sdcard/appearance.xml
+            adb pull /sdcard/appearance.xml qa-artifacts/appearance.xml
+            adb exec-out screencap -p > qa-artifacts/appearance.png
+            python3 - <<'PY'
+            import xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/appearance.xml").getroot()
+            texts=[n.attrib.get("text","") for n in r.iter("node")]
+            assert "Key lettering" in texts
+            assert "MedievalSharp" in texts
+            assert "Space Grotesk" in texts
+            PY
+            python3 - <<'PY'
+            import re,subprocess,xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/appearance.xml").getroot()
+            n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE")
+            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
+            x1,y1,x2,y2=map(int,m.groups())
+            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+            PY
+            sleep 1
+            adb shell uiautomator dump /sdcard/collapsed.xml
+            adb pull /sdcard/collapsed.xml qa-artifacts/collapsed.xml
+            python3 - <<'PY'
+            import xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/collapsed.xml").getroot()
+            texts=[n.attrib.get("text","") for n in r.iter("node")]
+            assert "Key lettering" not in texts
+            PY
+            python3 - <<'PY'
+            import re,subprocess,xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/collapsed.xml").getroot()
+            n=next(x for x in r.iter("node") if x.attrib.get("text")=="KEY FEEDBACK")
+            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"])
+            x1,y1,x2,y2=map(int,m.groups())
+            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
+            PY
+            sleep 1
+            adb shell uiautomator dump /sdcard/feedback.xml
+            adb pull /sdcard/feedback.xml qa-artifacts/feedback.xml
+            adb exec-out screencap -p > qa-artifacts/feedback.png
+            python3 - <<'PY'
+            import xml.etree.ElementTree as ET
+            r=ET.parse("qa-artifacts/feedback.xml").getroot()
+            texts=[n.attrib.get("text","") for n in r.iter("node")]
+            assert "Vibration" in texts
+            assert "Sound" in texts
+            PY
+
+      - name: Upload emulator QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1e-accordion-qa
+          path: qa-artifacts
+          if-no-files-found: warn
