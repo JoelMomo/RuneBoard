@@ -36,7 +36,19 @@
     <string name="sound_feedback_subtitle">Android system key sound</string>
 
     <string name="section_appearance">APPEARANCE</string>
-    <string name="section_appearance_subtitle">Theme and lower-screen visibility</string>
+    <string name="section_appearance_subtitle">Theme, lettering and lower-screen visibility</string>
+    <string name="appearance_preview_title">Current look</string>
+    <string name="appearance_preview_summary">%1$s · %2$s · %3$s background</string>
+    <string name="appearance_group_style">STYLE</string>
+    <string name="appearance_group_lettering">LETTERING</string>
+    <string name="appearance_group_advanced">ADVANCED</string>
+    <string name="appearance_theme_title">Theme</string>
+    <string name="appearance_theme_subtitle">Choose the keyboard palette</string>
+    <string name="appearance_font_title">Typeface</string>
+    <string name="appearance_font_subtitle">Font used for key labels</string>
+    <string name="appearance_color_title">Key label color</string>
+    <string name="appearance_color_subtitle">Theme color or a fixed override</string>
+    <string name="appearance_custom_subtitle">Palette, key shape and spacing</string>
     <string name="theme_default_title">RuneBoard</string>
     <string name="theme_default_subtitle">Balanced dark</string>
     <string name="theme_oled_title">OLED Black</string>
@@ -72,6 +84,7 @@
     <string name="color_green">Green</string>
     <string name="color_amber">Amber</string>
     <string name="color_pink">Pink</string>
+    <string name="color_custom">Custom</string>
 
     <string name="section_test">TEST KEYBOARD</string>
     <string name="section_test_subtitle">Tap the field to check your current setup</string>
