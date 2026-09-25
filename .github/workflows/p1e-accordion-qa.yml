@@ -50,6 +50,11 @@ jobs:
             adb shell wm size 1240x1080
             adb shell wm density 320
             adb install -r app/build/outputs/apk/debug/app-debug.apk
+            for i in $(seq 1 15); do
+              adb shell ime list -a | grep -q "io.github.joelmomo.runeboard/.RuneBoardImeService" && break
+              sleep 1
+            done
+            adb shell ime list -a | grep -q "io.github.joelmomo.runeboard/.RuneBoardImeService"
             adb shell ime enable io.github.joelmomo.runeboard/.RuneBoardImeService
             adb shell ime set io.github.joelmomo.runeboard/.RuneBoardImeService
             adb shell settings put secure enabled_accessibility_services io.github.joelmomo.runeboard/.RuneBoardControlService
