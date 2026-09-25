@@ -16,6 +16,9 @@ public final class KeyboardFontsTest {
         KeyboardFonts.normalizeId(KeyboardFonts.ID_JETBRAINS_MONO));
     assertEquals(
         KeyboardFonts.ID_SPACE_GROTESK, KeyboardFonts.normalizeId(KeyboardFonts.ID_SPACE_GROTESK));
+    assertEquals(
+        KeyboardFonts.ID_MEDIEVAL_SHARP,
+        KeyboardFonts.normalizeId(KeyboardFonts.ID_MEDIEVAL_SHARP));
   }
 
   @Test

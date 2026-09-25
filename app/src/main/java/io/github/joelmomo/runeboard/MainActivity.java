@@ -104,30 +104,59 @@ public final class MainActivity extends Activity {
 
     addHeader(root);
 
-    addSectionHeader(root, R.string.section_setup, R.string.section_setup_subtitle);
-    addSetupCards(root);
+    boolean setupIncomplete =
+        !isRuneBoardEnabled() || !isRuneBoardSelected() || !arePhysicalControlsEnabled();
 
-    addSectionHeader(root, R.string.section_language, R.string.section_language_subtitle);
-    addLanguageCards(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_setup,
+        R.string.section_setup_subtitle,
+        setupIncomplete,
+        this::addSetupCards);
 
-    addSectionHeader(
-        root, R.string.section_typing_assistance, R.string.section_typing_assistance_subtitle);
-    addTypingAssistance(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_language,
+        R.string.section_language_subtitle,
+        false,
+        this::addLanguageCards);
 
-    addSectionHeader(root, R.string.section_feedback, R.string.section_feedback_subtitle);
-    addFeedbackControls(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_typing_assistance,
+        R.string.section_typing_assistance_subtitle,
+        false,
+        this::addTypingAssistance);
 
-    addSectionHeader(root, R.string.section_appearance, R.string.section_appearance_subtitle);
-    addThemeCards(root);
-    addOpacityControl(root);
-    addTypographyControls(root);
-    addCustomThemeControls(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_feedback,
+        R.string.section_feedback_subtitle,
+        false,
+        this::addFeedbackControls);
 
-    addSectionHeader(root, R.string.section_controls, R.string.section_controls_subtitle);
-    addControllerBindings(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_appearance,
+        R.string.section_appearance_subtitle,
+        false,
+        section -> {
+          addThemeCards(section);
+          addOpacityControl(section);
+          addTypographyControls(section);
+          addCustomThemeControls(section);
+        });
 
-    addSectionHeader(root, R.string.section_test, R.string.section_test_subtitle);
-    addTestField(root);
+    addCollapsibleSection(
+        root,
+        R.string.section_controls,
+        R.string.section_controls_subtitle,
+        false,
+        this::addControllerBindings);
+
+    addCollapsibleSection(
+        root, R.string.section_test, R.string.section_test_subtitle, false, this::addTestField);
+
     addSupportLink(root);
 
     scroll.addView(
@@ -229,19 +258,56 @@ public final class MainActivity extends Activity {
     root.addView(divider, dividerParams);
   }
 
-  private void addSectionHeader(LinearLayout root, int titleRes, int subtitleRes) {
+  private interface SectionBuilder {
+    void build(LinearLayout root);
+  }
+
+  private void addCollapsibleSection(
+      LinearLayout root, int titleRes, int subtitleRes, boolean expanded, SectionBuilder builder) {
+    LinearLayout header = new LinearLayout(this);
+    header.setOrientation(LinearLayout.HORIZONTAL);
+    header.setGravity(Gravity.CENTER_VERTICAL);
+    header.setPadding(dp(14), dp(12), dp(12), dp(12));
+    header.setBackground(rounded(COLOR_SURFACE, COLOR_BORDER, 1, 12f));
+    header.setClickable(true);
+    header.setFocusable(true);
+
+    LinearLayout words = new LinearLayout(this);
+    words.setOrientation(LinearLayout.VERTICAL);
+
     TextView title = text(getString(titleRes), 11f, COLOR_ACCENT, true);
     title.setLetterSpacing(0.12f);
+    words.addView(title, matchWidth());
 
-    LinearLayout.LayoutParams titleParams = matchWidth();
-    titleParams.topMargin = dp(22);
-    root.addView(title, titleParams);
-
-    TextView subtitle = text(getString(subtitleRes), 13f, COLOR_MUTED, false);
+    TextView subtitle = text(getString(subtitleRes), 12f, COLOR_MUTED, false);
     LinearLayout.LayoutParams subtitleParams = matchWidth();
-    subtitleParams.topMargin = dp(4);
-    subtitleParams.bottomMargin = dp(12);
-    root.addView(subtitle, subtitleParams);
+    subtitleParams.topMargin = dp(3);
+    words.addView(subtitle, subtitleParams);
+
+    header.addView(
+        words, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+    TextView arrow = text(expanded ? "▾" : "▸", 18f, COLOR_ACCENT, true);
+    arrow.setGravity(Gravity.CENTER);
+    header.addView(arrow, new LinearLayout.LayoutParams(dp(34), dp(34)));
+
+    LinearLayout body = new LinearLayout(this);
+    body.setOrientation(LinearLayout.VERTICAL);
+    body.setPadding(0, dp(8), 0, 0);
+    builder.build(body);
+    body.setVisibility(expanded ? View.VISIBLE : View.GONE);
+
+    header.setOnClickListener(
+        v -> {
+          boolean show = body.getVisibility() != View.VISIBLE;
+          body.setVisibility(show ? View.VISIBLE : View.GONE);
+          arrow.setText(show ? "▾" : "▸");
+        });
+
+    LinearLayout.LayoutParams headerParams = matchWidth();
+    headerParams.topMargin = dp(18);
+    root.addView(header, headerParams);
+    root.addView(body, matchWidth());
   }
 
   private void addSetupCards(LinearLayout root) {
@@ -750,6 +816,7 @@ public final class MainActivity extends Activity {
     LinearLayout secondFonts = horizontalRow();
     addFontChip(secondFonts, KeyboardFonts.ID_JETBRAINS_MONO, R.string.font_jetbrains_mono, true);
     addFontChip(secondFonts, KeyboardFonts.ID_SPACE_GROTESK, R.string.font_space_grotesk, false);
+    addFontChip(secondFonts, KeyboardFonts.ID_MEDIEVAL_SHARP, R.string.font_medieval_sharp, false);
     root.addView(secondFonts, matchWidth());
 
     TextView colorLabel = text(getString(R.string.typography_color), 10f, COLOR_MUTED, true);

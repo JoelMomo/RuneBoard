@@ -64,6 +64,7 @@
     <string name="font_atkinson">Atkinson</string>
     <string name="font_jetbrains_mono">JetBrains Mono</string>
     <string name="font_space_grotesk">Space Grotesk</string>
+    <string name="font_medieval_sharp">MedievalSharp</string>
     <string name="color_theme">Theme</string>
     <string name="color_white">White</string>
     <string name="color_lavender">Lavender</string>
