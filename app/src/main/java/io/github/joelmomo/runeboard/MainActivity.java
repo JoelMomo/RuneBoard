@@ -50,17 +50,12 @@ public final class MainActivity extends Activity {
   private static final int COLOR_MUTED = 0xFF9FA0B4;
   private static final int COLOR_ACCENT = 0xFFA78BFA;
 
-  private final Map<String, LinearLayout> themeCards = new LinkedHashMap<>();
-  private final Map<String, View> themeSwatches = new LinkedHashMap<>();
-  private final Map<Integer, TextView> opacityChips = new LinkedHashMap<>();
   private final Map<Integer, TextView> customAccentChips = new LinkedHashMap<>();
   private final Map<Integer, TextView> customKeyChips = new LinkedHashMap<>();
   private final Map<Integer, TextView> customBackgroundChips = new LinkedHashMap<>();
   private final Map<Integer, Integer> customBackgroundBottoms = new LinkedHashMap<>();
   private final Map<Integer, TextView> customRadiusChips = new LinkedHashMap<>();
   private final Map<Integer, TextView> customGapChips = new LinkedHashMap<>();
-  private final Map<String, TextView> fontChips = new LinkedHashMap<>();
-  private final Map<Integer, TextView> keyTextColorChips = new LinkedHashMap<>();
   private final Map<String, LinearLayout> profileCards = new LinkedHashMap<>();
   private final Map<BindableAction, TextView> bindingChips = new LinkedHashMap<>();
 
@@ -74,7 +69,6 @@ public final class MainActivity extends Activity {
   private TextView setupControlsChip;
   private Switch hapticSwitch;
   private Switch soundSwitch;
-  private TextView defaultTextColorChip;
   private LinearLayout customThemePanel;
   private View appearancePreviewSwatch;
   private TextView appearancePreviewSummary;
@@ -330,10 +324,7 @@ public final class MainActivity extends Activity {
       LinearLayout header, View rail, TextView arrow, boolean expanded) {
     header.setBackground(
         rounded(
-            expanded ? 0xFF1B1926 : COLOR_SURFACE,
-            expanded ? 0xFF554371 : COLOR_BORDER,
-            1,
-            14f));
+            expanded ? 0xFF1B1926 : COLOR_SURFACE, expanded ? 0xFF554371 : COLOR_BORDER, 1, 14f));
     rail.setBackground(rounded(expanded ? COLOR_ACCENT : 0xFF514266, 0, 0, 99f));
     arrow.setText(expanded ? "−" : "+");
     arrow.setTextColor(expanded ? COLOR_WINDOW : COLOR_ACCENT);
@@ -1094,8 +1085,7 @@ public final class MainActivity extends Activity {
         });
   }
 
-  private void addFontPickerOption(
-      LinearLayout root, Dialog dialog, String fontId, int labelRes) {
+  private void addFontPickerOption(LinearLayout root, Dialog dialog, String fontId, int labelRes) {
     boolean selected = fontId.equals(preferences.getKeyboardFontId());
     LinearLayout row = new LinearLayout(this);
     row.setOrientation(LinearLayout.HORIZONTAL);
@@ -1310,242 +1300,6 @@ public final class MainActivity extends Activity {
       window.setDimAmount(0.62f);
       int available = getResources().getDisplayMetrics().widthPixels - dp(40);
       window.setLayout(Math.min(dp(620), available), WindowManager.LayoutParams.WRAP_CONTENT);
-    }
-  }
-
-  private void addThemeCards(LinearLayout root) {
-    LinearLayout firstRow = horizontalRow();
-    addThemeCard(
-        firstRow,
-        RuneThemes.defaultTheme(),
-        R.string.theme_default_title,
-        R.string.theme_default_subtitle,
-        true);
-    addThemeCard(
-        firstRow,
-        RuneThemes.oledTheme(),
-        R.string.theme_oled_title,
-        R.string.theme_oled_subtitle,
-        false);
-    root.addView(firstRow, matchWidth());
-
-    LinearLayout secondRow = horizontalRow();
-    LinearLayout.LayoutParams secondRowParams = matchWidth();
-    secondRowParams.topMargin = dp(9);
-    addThemeCard(
-        secondRow,
-        RuneThemes.transparentTheme(),
-        R.string.theme_transparent_title,
-        R.string.theme_transparent_subtitle,
-        true);
-    addThemeCard(
-        secondRow,
-        RuneThemes.customTheme(preferences.getCustomThemeConfig()),
-        R.string.theme_custom_title,
-        R.string.theme_custom_subtitle,
-        false);
-    root.addView(secondRow, secondRowParams);
-  }
-
-  private void addThemeCard(
-      LinearLayout row, KeyboardTheme theme, int titleRes, int subtitleRes, boolean first) {
-    LinearLayout card = new LinearLayout(this);
-    card.setOrientation(LinearLayout.VERTICAL);
-    card.setPadding(dp(12), dp(12), dp(12), dp(12));
-    card.setClickable(true);
-    card.setFocusable(true);
-    card.setContentDescription(getString(titleRes) + ". " + getString(subtitleRes));
-    card.setOnClickListener(v -> selectTheme(theme.id));
-
-    View swatch = new View(this);
-    GradientDrawable swatchDrawable =
-        new GradientDrawable(
-            GradientDrawable.Orientation.LEFT_RIGHT,
-            new int[] {theme.backgroundTop, theme.backgroundBottom, theme.selectedFill});
-    swatchDrawable.setCornerRadius(dp(8));
-    swatch.setBackground(swatchDrawable);
-    card.addView(
-        swatch, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(28)));
-
-    TextView title = text(getString(titleRes), 14f, COLOR_TEXT, true);
-    LinearLayout.LayoutParams titleParams = wrap();
-    titleParams.topMargin = dp(10);
-    card.addView(title, titleParams);
-
-    TextView subtitle = text(getString(subtitleRes), 11f, COLOR_MUTED, false);
-    LinearLayout.LayoutParams subtitleParams = wrap();
-    subtitleParams.topMargin = dp(3);
-    card.addView(subtitle, subtitleParams);
-
-    themeCards.put(theme.id, card);
-    themeSwatches.put(theme.id, swatch);
-    addWeighted(row, card, first);
-  }
-
-  private void addOpacityControl(LinearLayout root) {
-    TextView title = text(getString(R.string.background_title), 14f, COLOR_TEXT, true);
-    LinearLayout.LayoutParams titleParams = matchWidth();
-    titleParams.topMargin = dp(18);
-    root.addView(title, titleParams);
-
-    TextView subtitle = text(getString(R.string.background_subtitle), 11f, COLOR_MUTED, false);
-    LinearLayout.LayoutParams subtitleParams = matchWidth();
-    subtitleParams.topMargin = dp(3);
-    subtitleParams.bottomMargin = dp(10);
-    root.addView(subtitle, subtitleParams);
-
-    LinearLayout row = horizontalRow();
-    addOpacityChip(row, 255, "100%", true);
-    addOpacityChip(row, 170, "67%", false);
-    addOpacityChip(row, 85, "33%", false);
-    addOpacityChip(row, 0, "0%", false);
-    root.addView(row, matchWidth());
-  }
-
-  private void addOpacityChip(LinearLayout row, int opacity, String label, boolean first) {
-    TextView chip = text(label, 13f, COLOR_TEXT, true);
-    chip.setGravity(Gravity.CENTER);
-    chip.setPadding(dp(8), dp(10), dp(8), dp(10));
-    chip.setClickable(true);
-    chip.setFocusable(true);
-    chip.setOnClickListener(v -> selectOpacity(opacity));
-
-    opacityChips.put(opacity, chip);
-    addWeighted(row, chip, first);
-  }
-
-  private void addTypographyControls(LinearLayout root) {
-    TextView title = text(getString(R.string.typography_title), 14f, COLOR_TEXT, true);
-    LinearLayout.LayoutParams titleParams = matchWidth();
-    titleParams.topMargin = dp(18);
-    root.addView(title, titleParams);
-
-    TextView subtitle = text(getString(R.string.typography_subtitle), 11f, COLOR_MUTED, false);
-    LinearLayout.LayoutParams subtitleParams = matchWidth();
-    subtitleParams.topMargin = dp(4);
-    subtitleParams.bottomMargin = dp(10);
-    root.addView(subtitle, subtitleParams);
-
-    TextView fontLabel = text(getString(R.string.typography_font), 10f, COLOR_MUTED, true);
-    root.addView(fontLabel, matchWidth());
-
-    LinearLayout firstFonts = horizontalRow();
-    addFontChip(firstFonts, KeyboardFonts.ID_SYSTEM, R.string.font_system, true);
-    addFontChip(firstFonts, KeyboardFonts.ID_INTER, R.string.font_inter, false);
-    addFontChip(firstFonts, KeyboardFonts.ID_ATKINSON, R.string.font_atkinson, false);
-    root.addView(firstFonts, matchWidth());
-
-    LinearLayout secondFonts = horizontalRow();
-    addFontChip(secondFonts, KeyboardFonts.ID_JETBRAINS_MONO, R.string.font_jetbrains_mono, true);
-    addFontChip(secondFonts, KeyboardFonts.ID_SPACE_GROTESK, R.string.font_space_grotesk, false);
-    addFontChip(secondFonts, KeyboardFonts.ID_MEDIEVAL_SHARP, R.string.font_medieval_sharp, false);
-    root.addView(secondFonts, matchWidth());
-
-    TextView colorLabel = text(getString(R.string.typography_color), 10f, COLOR_MUTED, true);
-    LinearLayout.LayoutParams colorLabelParams = matchWidth();
-    colorLabelParams.topMargin = dp(14);
-    root.addView(colorLabel, colorLabelParams);
-
-    LinearLayout firstColors = horizontalRow();
-    addDefaultTextColorChip(firstColors, true);
-    addKeyTextColorChip(firstColors, 0xFFF8F8FC, R.string.color_white, false);
-    addKeyTextColorChip(firstColors, 0xFFC4B5FD, R.string.color_lavender, false);
-    addKeyTextColorChip(firstColors, 0xFF67E8F9, R.string.color_cyan, false);
-    root.addView(firstColors, matchWidth());
-
-    LinearLayout secondColors = horizontalRow();
-    addKeyTextColorChip(secondColors, 0xFF86EFAC, R.string.color_green, true);
-    addKeyTextColorChip(secondColors, 0xFFFDE68A, R.string.color_amber, false);
-    addKeyTextColorChip(secondColors, 0xFFF9A8D4, R.string.color_pink, false);
-    root.addView(secondColors, matchWidth());
-  }
-
-  private void addFontChip(LinearLayout row, String fontId, int labelRes, boolean first) {
-    TextView chip = text(getString(labelRes), 11f, COLOR_TEXT, true);
-    chip.setGravity(Gravity.CENTER);
-    chip.setPadding(dp(8), dp(10), dp(8), dp(10));
-    chip.setTypeface(KeyboardFonts.resolve(this, fontId), Typeface.BOLD);
-    chip.setClickable(true);
-    chip.setFocusable(true);
-    chip.setOnClickListener(
-        v -> {
-          preferences.setKeyboardFontId(fontId);
-          refreshTypographyControls();
-          RuneBoardImeService.requestAppearanceRefresh();
-        });
-    fontChips.put(fontId, chip);
-    addWeighted(row, chip, first);
-  }
-
-  private void addDefaultTextColorChip(LinearLayout row, boolean first) {
-    TextView chip = text(getString(R.string.color_theme), 11f, COLOR_TEXT, true);
-    chip.setGravity(Gravity.CENTER);
-    chip.setPadding(dp(8), dp(10), dp(8), dp(10));
-    chip.setClickable(true);
-    chip.setFocusable(true);
-    chip.setOnClickListener(
-        v -> {
-          preferences.resetKeyTextColor();
-          refreshTypographyControls();
-          RuneBoardImeService.requestAppearanceRefresh();
-        });
-    defaultTextColorChip = chip;
-    addWeighted(row, chip, first);
-  }
-
-  private void addKeyTextColorChip(LinearLayout row, int color, int labelRes, boolean first) {
-    TextView chip = text(getString(labelRes), 11f, contrastText(color), true);
-    chip.setGravity(Gravity.CENTER);
-    chip.setPadding(dp(8), dp(10), dp(8), dp(10));
-    chip.setClickable(true);
-    chip.setFocusable(true);
-    chip.setOnClickListener(
-        v -> {
-          preferences.setKeyTextColor(color);
-          refreshTypographyControls();
-          RuneBoardImeService.requestAppearanceRefresh();
-        });
-    keyTextColorChips.put(color, chip);
-    addWeighted(row, chip, first);
-  }
-
-  private void refreshTypographyControls() {
-    String selectedFont = preferences.getKeyboardFontId();
-    for (Map.Entry<String, TextView> entry : fontChips.entrySet()) {
-      boolean selected = entry.getKey().equals(selectedFont);
-      entry.getValue().setTextColor(selected ? COLOR_WINDOW : COLOR_TEXT);
-      entry
-          .getValue()
-          .setBackground(
-              rounded(
-                  selected ? COLOR_ACCENT : COLOR_SURFACE_ALT,
-                  selected ? COLOR_ACCENT : COLOR_BORDER,
-                  selected ? 2 : 1,
-                  9f));
-    }
-
-    KeyboardTheme activeTheme = preferences.getTheme();
-    boolean defaultColor = !preferences.hasKeyTextColorOverride();
-    if (defaultTextColorChip != null) {
-      int themeColor = activeTheme.textPrimary;
-      defaultTextColorChip.setTextColor(defaultColor ? contrastText(themeColor) : COLOR_MUTED);
-      defaultTextColorChip.setBackground(
-          rounded(
-              defaultColor ? themeColor : COLOR_SURFACE_ALT,
-              defaultColor ? COLOR_ACCENT : COLOR_BORDER,
-              defaultColor ? 2 : 1,
-              9f));
-    }
-
-    int selectedColor = preferences.getKeyTextColor(activeTheme);
-    for (Map.Entry<Integer, TextView> entry : keyTextColorChips.entrySet()) {
-      boolean selected = !defaultColor && entry.getKey() == selectedColor;
-      entry.getValue().setTextColor(contrastText(entry.getKey()));
-      entry
-          .getValue()
-          .setBackground(
-              rounded(
-                  entry.getKey(), selected ? COLOR_ACCENT : COLOR_BORDER, selected ? 2 : 1, 9f));
     }
   }
 
@@ -2000,53 +1754,6 @@ public final class MainActivity extends Activity {
   }
 
   private void refreshAppearanceControls() {
-    String selectedTheme = preferences.getThemeId();
-    for (Map.Entry<String, LinearLayout> entry : themeCards.entrySet()) {
-      KeyboardTheme theme =
-          RuneThemes.ID_CUSTOM.equals(entry.getKey())
-              ? RuneThemes.customTheme(preferences.getCustomThemeConfig())
-              : RuneThemes.byId(entry.getKey());
-      boolean selected = entry.getKey().equals(selectedTheme);
-      entry
-          .getValue()
-          .setBackground(
-              rounded(
-                  selected ? 0xFF201A2D : COLOR_SURFACE,
-                  selected ? theme.accent : COLOR_BORDER,
-                  selected ? 2 : 1,
-                  12f));
-
-      View swatch = themeSwatches.get(entry.getKey());
-      if (swatch != null) {
-        GradientDrawable preview =
-            new GradientDrawable(
-                GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] {theme.backgroundTop, theme.backgroundBottom, theme.selectedFill});
-        preview.setCornerRadius(dp(8));
-        swatch.setBackground(preview);
-      }
-    }
-
-    if (customThemePanel != null) {
-      customThemePanel.setVisibility(
-          RuneThemes.ID_CUSTOM.equals(selectedTheme) ? View.VISIBLE : View.GONE);
-    }
-
-    KeyboardTheme activeTheme = preferences.getTheme();
-    int activeOpacity = preferences.getBackgroundOpacity(activeTheme);
-    for (Map.Entry<Integer, TextView> entry : opacityChips.entrySet()) {
-      boolean selected = entry.getKey() == activeOpacity;
-      TextView chip = entry.getValue();
-      chip.setTextColor(selected ? 0xFF0D0E14 : COLOR_TEXT);
-      chip.setBackground(
-          rounded(
-              selected ? activeTheme.accent : COLOR_SURFACE_ALT,
-              selected ? activeTheme.accent : COLOR_BORDER,
-              1,
-              10f));
-    }
-
-    refreshTypographyControls();
     refreshCustomThemeControls();
     refreshAppearanceSummary();
   }
