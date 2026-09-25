@@ -27,6 +27,14 @@
     <string name="autocorrect_subtitle">Correct strong typo recommendations on Space</string>
     <string name="toggle_on">ON</string>
     <string name="toggle_off">OFF</string>
+
+    <string name="section_feedback">KEY FEEDBACK</string>
+    <string name="section_feedback_subtitle">Sound and vibration for key presses; navigation stays silent</string>
+    <string name="haptic_feedback_title">Vibration</string>
+    <string name="haptic_feedback_subtitle">Light system keyboard tap</string>
+    <string name="sound_feedback_title">Sound</string>
+    <string name="sound_feedback_subtitle">Android system key sound</string>
+
     <string name="section_appearance">APPEARANCE</string>
     <string name="section_appearance_subtitle">Theme and lower-screen visibility</string>
     <string name="theme_default_title">RuneBoard</string>
@@ -47,6 +55,22 @@
     <string name="custom_reset">RESET CUSTOM STYLE</string>
     <string name="background_title">Background</string>
     <string name="background_subtitle" formatted="false">Keys remain readable even at 0%</string>
+    <string name="typography_title">Key lettering</string>
+    <string name="typography_subtitle">Choose the typeface and key-label color independently from the theme.</string>
+    <string name="typography_font">TYPEFACE</string>
+    <string name="typography_color">KEY LABEL COLOR</string>
+    <string name="font_system">System</string>
+    <string name="font_inter">Inter</string>
+    <string name="font_atkinson">Atkinson</string>
+    <string name="font_jetbrains_mono">JetBrains Mono</string>
+    <string name="font_space_grotesk">Space Grotesk</string>
+    <string name="color_theme">Theme</string>
+    <string name="color_white">White</string>
+    <string name="color_lavender">Lavender</string>
+    <string name="color_cyan">Cyan</string>
+    <string name="color_green">Green</string>
+    <string name="color_amber">Amber</string>
+    <string name="color_pink">Pink</string>
 
     <string name="section_test">TEST KEYBOARD</string>
     <string name="section_test_subtitle">Tap the field to check your current setup</string>
