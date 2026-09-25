@@ -60,25 +60,12 @@ jobs:
             adb shell input swipe 620 900 620 300 250
             adb shell uiautomator dump /sdcard/settings.xml
             adb pull /sdcard/settings.xml qa-artifacts/settings.xml
-            python3 - <<'PY'
-            import re, subprocess, xml.etree.ElementTree as ET
-            root=ET.parse("qa-artifacts/settings.xml").getroot()
-            node=next(n for n in root.iter("node") if n.attrib.get("text")=="APPEARANCE")
-            m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib["bounds"])
-            x1,y1,x2,y2=map(int,m.groups())
-            subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)
-            PY
+            python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; root=ET.parse("qa-artifacts/settings.xml").getroot(); node=next(n for n in root.iter("node") if n.attrib.get("text")=="APPEARANCE"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell uiautomator dump /sdcard/appearance.xml
             adb pull /sdcard/appearance.xml qa-artifacts/appearance.xml
             adb exec-out screencap -p > qa-artifacts/appearance-nested.png
-            python3 - <<'PY'
-            import xml.etree.ElementTree as ET
-            root=ET.parse("qa-artifacts/appearance.xml").getroot()
-            texts=[n.attrib.get("text","") for n in root.iter("node")]
-            for expected in ["APPEARANCE","Current look","STYLE","LETTERING","ADVANCED","Theme","Typeface","Key label color"]:
-                assert expected in texts, expected
-            PY
+            python3 -c 'import xml.etree.ElementTree as ET; root=ET.parse("qa-artifacts/appearance.xml").getroot(); texts=[n.attrib.get("text","") for n in root.iter("node")]; missing=[x for x in ["APPEARANCE","Current look","STYLE","LETTERING","ADVANCED","Theme","Typeface","Key label color"] if x not in texts]; assert not missing, missing'
 
       - name: Upload evidence
         if: always()
