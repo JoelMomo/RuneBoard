@@ -67,12 +67,16 @@ jobs:
             adb pull /sdcard/sections.xml qa-artifacts/sections.xml
             python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/sections.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="APPEARANCE"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
+            adb shell uiautomator dump /sdcard/appearance-top.xml
+            adb pull /sdcard/appearance-top.xml qa-artifacts/appearance-top.xml
+            adb exec-out screencap -p > qa-artifacts/appearance-top.png
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/appearance-top.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; assert "Current look" in t and "Theme" in t; assert "Inter" not in t and "White" not in t'
             adb shell input swipe 620 900 620 330 250
             sleep 1
             adb shell uiautomator dump /sdcard/appearance-menu.xml
             adb pull /sdcard/appearance-menu.xml qa-artifacts/appearance-menu.xml
             adb exec-out screencap -p > qa-artifacts/appearance-menu.png
-            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/appearance-menu.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; [(_ for _ in ()).throw(AssertionError(x)) for x in ["Current look","Theme","Background","Typeface","Key label color"] if x not in t]; assert "Inter" not in t and "White" not in t'
+            python3 -c 'import xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/appearance-menu.xml").getroot(); t=[n.attrib.get("text","") for n in r.iter("node")]; [(_ for _ in ()).throw(AssertionError(x)) for x in ["Background","Typeface","Key label color"] if x not in t]; assert "Inter" not in t and "White" not in t'
             python3 -c 'import re,subprocess,xml.etree.ElementTree as ET; r=ET.parse("qa-artifacts/appearance-menu.xml").getroot(); n=next(x for x in r.iter("node") if x.attrib.get("text")=="Typeface"); m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.attrib["bounds"]); x1,y1,x2,y2=map(int,m.groups()); subprocess.run(["adb","shell","input","tap",str((x1+x2)//2),str((y1+y2)//2)],check=True)'
             sleep 1
             adb shell uiautomator dump /sdcard/font-picker.xml
