@@ -38,10 +38,9 @@ public final class KeyVariants {
       case "d":
         return List.of("ð", "ď");
       case "e":
-        if ("ru".equals(language)) {
-          return List.of("ё");
-        }
         return ordered(language, "é", "è", "ê", "ë");
+      case "е":
+        return List.of("ё");
       case "i":
         return ordered(language, "í", "ì", "î", "ï");
       case "l":
