@@ -122,10 +122,12 @@ The lower panel is `1080x1240` native and `1240x1080` in landscape.
 See:
 
 - `docs/PROTOTYPE_0_TEST_PLAN.md`
-- `docs/PROTOTYPE_0_RESULTS.md`\n- `docs/PROTOTYPE_1_RESULTS.md`
+- `docs/PROTOTYPE_0_RESULTS.md`
+- `docs/PROTOTYPE_1_RESULTS.md`
 - `docs/EMULATOR_TESTING.md`
 - `docs/CONTROLLER_MAPPING.md`
 - `docs/LANGUAGES.md`
+- `docs/LOCALIZATION.md`
 - `docs/SUGGESTIONS.md`
 - `docs/SYMBOLS.md`
 - `docs/CUSTOMIZATION.md`

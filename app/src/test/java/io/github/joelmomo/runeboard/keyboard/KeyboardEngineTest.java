@@ -29,6 +29,20 @@ public final class KeyboardEngineTest {
     }
 
     @Test
+    public void variantCommitConsumesOneShotShift() {
+        RecordingOutput output = new RecordingOutput();
+        KeyboardEngine engine =
+                new KeyboardEngine(KeyboardLayouts.qwerty(), output);
+
+        engine.handle(ControllerAction.SHIFT);
+        assertEquals(
+                KeyboardEngine.Update.VISUAL,
+                engine.commitTextVariant("Á"));
+        assertEquals(List.of("Á"), output.text);
+        assertFalse(engine.getState().isShifted());
+    }
+
+    @Test
     public void autoShiftUppercasesOneCharacterWithoutBecomingCapsLock() {
         RecordingOutput output = new RecordingOutput();
         KeyboardEngine engine =
