@@ -77,6 +77,7 @@ public final class MainActivity extends Activity {
   private TextView appearanceFontValue;
   private TextView appearanceColorValue;
   private EditText testField;
+  private boolean testPreviewPinned;
   private OnBackInvokedCallback backCallback;
 
   @Override
@@ -314,6 +315,11 @@ public final class MainActivity extends Activity {
           boolean show = body.getVisibility() != View.VISIBLE;
           body.setVisibility(show ? View.VISIBLE : View.GONE);
           styleSectionHeader(header, rail, arrow, show);
+          if (titleRes == R.string.section_test && !show) {
+            testPreviewPinned = false;
+          } else {
+            keepTestKeyboardPreviewVisible();
+          }
         });
 
     LinearLayout.LayoutParams headerParams = matchWidth();
@@ -1245,13 +1251,9 @@ public final class MainActivity extends Activity {
 
   private void showPickerDialog(
       int titleRes, int subtitleRes, boolean tall, PickerBuilder builder) {
-    boolean keepImeVisible = testField != null && testField.isShown();
+    boolean keepImeVisible = testPreviewPinned && testField != null && testField.isShown();
     if (keepImeVisible) {
-      testField.requestFocus();
-      InputMethodManager imm = getSystemService(InputMethodManager.class);
-      if (imm != null) {
-        imm.showSoftInput(testField, InputMethodManager.SHOW_IMPLICIT);
-      }
+      keepTestKeyboardPreviewVisible();
     }
 
     Dialog dialog = new Dialog(this);
@@ -1318,14 +1320,7 @@ public final class MainActivity extends Activity {
           if (!keepImeVisible || testField == null || !testField.isShown()) {
             return;
           }
-          testField.post(
-              () -> {
-                testField.requestFocus();
-                InputMethodManager imm = getSystemService(InputMethodManager.class);
-                if (imm != null) {
-                  imm.showSoftInput(testField, InputMethodManager.SHOW_IMPLICIT);
-                }
-              });
+          keepTestKeyboardPreviewVisible();
         });
 
     Window window = dialog.getWindow();
@@ -1749,6 +1744,24 @@ public final class MainActivity extends Activity {
     }
   }
 
+  private void keepTestKeyboardPreviewVisible() {
+    if (!testPreviewPinned || testField == null || !testField.isShown()) {
+      return;
+    }
+
+    testField.post(
+        () -> {
+          if (!testPreviewPinned || testField == null || !testField.isShown()) {
+            return;
+          }
+          testField.requestFocus();
+          InputMethodManager imm = getSystemService(InputMethodManager.class);
+          if (imm != null) {
+            imm.showSoftInput(testField, InputMethodManager.SHOW_IMPLICIT);
+          }
+        });
+  }
+
   private void addTestField(LinearLayout root) {
     testField = new EditText(this);
     testField.setHint(R.string.test_hint);
@@ -1760,6 +1773,17 @@ public final class MainActivity extends Activity {
     testField.setGravity(Gravity.TOP);
     testField.setPadding(dp(15), dp(14), dp(15), dp(14));
     testField.setBackground(rounded(COLOR_SURFACE, COLOR_BORDER, 1, 12f));
+    testField.setOnFocusChangeListener(
+        (view, hasFocus) -> {
+          if (hasFocus) {
+            testPreviewPinned = true;
+          }
+        });
+    testField.setOnClickListener(
+        view -> {
+          testPreviewPinned = true;
+          keepTestKeyboardPreviewVisible();
+        });
 
     LinearLayout.LayoutParams params = matchWidth();
     params.bottomMargin = dp(18);
