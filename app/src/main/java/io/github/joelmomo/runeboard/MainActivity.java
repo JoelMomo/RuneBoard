@@ -76,6 +76,7 @@ public final class MainActivity extends Activity {
   private TextView appearanceOpacityValue;
   private TextView appearanceFontValue;
   private TextView appearanceColorValue;
+  private EditText testField;
   private OnBackInvokedCallback backCallback;
 
   @Override
@@ -1244,6 +1245,15 @@ public final class MainActivity extends Activity {
 
   private void showPickerDialog(
       int titleRes, int subtitleRes, boolean tall, PickerBuilder builder) {
+    boolean keepImeVisible = testField != null && testField.isShown();
+    if (keepImeVisible) {
+      testField.requestFocus();
+      InputMethodManager imm = getSystemService(InputMethodManager.class);
+      if (imm != null) {
+        imm.showSoftInput(testField, InputMethodManager.SHOW_IMPLICIT);
+      }
+    }
+
     Dialog dialog = new Dialog(this);
     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -1303,12 +1313,33 @@ public final class MainActivity extends Activity {
 
     dialog.setContentView(shell);
     dialog.setCanceledOnTouchOutside(true);
-    dialog.show();
+    dialog.setOnDismissListener(
+        ignored -> {
+          if (!keepImeVisible || testField == null || !testField.isShown()) {
+            return;
+          }
+          testField.post(
+              () -> {
+                testField.requestFocus();
+                InputMethodManager imm = getSystemService(InputMethodManager.class);
+                if (imm != null) {
+                  imm.showSoftInput(testField, InputMethodManager.SHOW_IMPLICIT);
+                }
+              });
+        });
 
     Window window = dialog.getWindow();
     if (window != null) {
+      window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+    }
+    dialog.show();
+
+    window = dialog.getWindow();
+    if (window != null) {
       window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-      window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+      window.addFlags(
+          WindowManager.LayoutParams.FLAG_DIM_BEHIND
+              | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
       window.setDimAmount(0.62f);
       int available = getResources().getDisplayMetrics().widthPixels - dp(40);
       window.setLayout(Math.min(dp(620), available), WindowManager.LayoutParams.WRAP_CONTENT);
@@ -1719,7 +1750,7 @@ public final class MainActivity extends Activity {
   }
 
   private void addTestField(LinearLayout root) {
-    EditText testField = new EditText(this);
+    testField = new EditText(this);
     testField.setHint(R.string.test_hint);
     testField.setTextColor(COLOR_TEXT);
     testField.setHintTextColor(COLOR_MUTED);

@@ -92,6 +92,14 @@ public final class RuneBoardImeService extends InputMethodService
     return keyboardView != null && keyboardView.handleKeyCode(keyCode);
   }
 
+  public boolean handleControllerKeyDown(int keyCode, int repeatCount) {
+    return keyboardView != null && keyboardView.handleControllerKeyDown(keyCode, repeatCount);
+  }
+
+  public boolean handleControllerKeyUp(int keyCode) {
+    return keyboardView != null && keyboardView.handleControllerKeyUp(keyCode);
+  }
+
   public boolean isRepeatableControllerKey(int keyCode) {
     return keyboardView != null && keyboardView.isRepeatableKeyCode(keyCode);
   }
@@ -241,10 +249,7 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
-      if (event.getRepeatCount() == 0 || keyboardView.isRepeatableKeyCode(keyCode)) {
-        keyboardView.handleKeyCode(keyCode);
-      }
-      return true;
+      return keyboardView.handleControllerKeyDown(keyCode, event.getRepeatCount());
     }
     return super.onKeyDown(keyCode, event);
   }
@@ -252,7 +257,7 @@ public final class RuneBoardImeService extends InputMethodService
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
     if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
-      return true;
+      return keyboardView.handleControllerKeyUp(keyCode);
     }
     return super.onKeyUp(keyCode, event);
   }

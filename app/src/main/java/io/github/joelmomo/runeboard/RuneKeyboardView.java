@@ -17,6 +17,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowInsets;
 import io.github.joelmomo.runeboard.controller.AxisNavigationPolicy;
 import io.github.joelmomo.runeboard.controller.BindableAction;
@@ -28,6 +29,7 @@ import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyFeedbackPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
+import io.github.joelmomo.runeboard.keyboard.KeyVariants;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
@@ -96,10 +98,22 @@ public final class RuneKeyboardView extends View {
   private LinearGradient backgroundGradient;
   private boolean suggestionsRecommended;
   private final Runnable touchRepeatRunnable;
+  private final Runnable touchVariantRunnable;
+  private final Runnable controllerVariantRunnable;
   private final RectF touchRepeatBounds = new RectF();
+  private final RectF variantSourceBounds = new RectF();
+  private final List<RectF> variantTargets = new ArrayList<>();
+  private final int longPressTimeoutMs;
   private int touchRepeatRow = -1;
   private int touchRepeatCol = -1;
   private boolean touchRepeatActive;
+  private HitTarget pendingTouchVariantTarget;
+  private List<String> activeVariants = List.of();
+  private int activeVariantIndex = -1;
+  private boolean variantPopupVisible;
+  private boolean variantPopupControllerMode;
+  private int pendingControllerVariantKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+  private boolean controllerLongPressTriggered;
 
   public RuneKeyboardView(Context context) {
     this(
@@ -252,6 +266,9 @@ public final class RuneKeyboardView extends View {
             profile.locale);
 
     touchRepeatRunnable = this::repeatTouchKey;
+    touchVariantRunnable = this::showTouchVariants;
+    controllerVariantRunnable = this::showControllerVariants;
+    longPressTimeoutMs = ViewConfiguration.getLongPressTimeout();
     setFocusable(true);
     setFocusableInTouchMode(true);
   }
@@ -415,6 +432,10 @@ public final class RuneKeyboardView extends View {
           key,
           target.row,
           target.row == state.getSelectedRow() && target.col == state.getSelectedCol());
+    }
+
+    if (variantPopupVisible) {
+      drawVariantPopup(canvas);
     }
   }
 
@@ -806,16 +827,286 @@ public final class RuneKeyboardView extends View {
         paint);
   }
 
+  private void drawVariantPopup(Canvas canvas) {
+    if (variantTargets.isEmpty() || activeVariants.isEmpty()) {
+      return;
+    }
+
+    RectF first = variantTargets.get(0);
+    RectF last = variantTargets.get(variantTargets.size() - 1);
+    RectF panel =
+        new RectF(first.left - dp(6), first.top - dp(6), last.right + dp(6), first.bottom + dp(6));
+
+    paint.setStyle(Paint.Style.FILL);
+    paint.setColor(theme.backgroundTop);
+    paint.setAlpha(248);
+    canvas.drawRoundRect(panel, dp(11), dp(11), paint);
+
+    paint.setStyle(Paint.Style.STROKE);
+    paint.setStrokeWidth(dp(1));
+    paint.setColor(theme.accent);
+    paint.setAlpha(180);
+    canvas.drawRoundRect(panel, dp(11), dp(11), paint);
+    paint.setAlpha(255);
+
+    for (int index = 0; index < variantTargets.size(); index++) {
+      RectF target = variantTargets.get(index);
+      boolean selected = index == activeVariantIndex;
+
+      paint.setStyle(Paint.Style.FILL);
+      paint.setColor(selected ? theme.selectedFill : theme.utilityKeyFill);
+      paint.setAlpha(selected ? 250 : 235);
+      canvas.drawRoundRect(target, dp(8), dp(8), paint);
+
+      paint.setStyle(Paint.Style.STROKE);
+      paint.setStrokeWidth(dp(selected ? 2 : 1));
+      paint.setColor(selected ? theme.selectedStroke : theme.textSecondary);
+      paint.setAlpha(selected ? 240 : 80);
+      canvas.drawRoundRect(target, dp(8), dp(8), paint);
+      paint.setAlpha(255);
+
+      paint.setStyle(Paint.Style.FILL);
+      paint.setTypeface(keyboardTypefaceBold);
+      paint.setTextAlign(Paint.Align.CENTER);
+      paint.setTextSize(dp(18));
+      paint.setColor(selected ? theme.selectedContent : keyTextColor);
+      float baseline = target.centerY() - (paint.ascent() + paint.descent()) / 2f;
+      canvas.drawText(activeVariants.get(index), target.centerX(), baseline, paint);
+    }
+  }
+
+  private List<String> variantsForKey(KeyboardKey key) {
+    KeyboardState state = engine.getState();
+    if (key == null
+        || key.getType() != KeyboardKey.Type.TEXT
+        || state.isSymbols()
+        || state.isEditing()) {
+      return List.of();
+    }
+    return KeyVariants.forKey(key.getText(), profile.locale, state.isShifted());
+  }
+
+  private void beginTouchVariant(HitTarget target) {
+    pendingTouchVariantTarget = target;
+    removeCallbacks(touchVariantRunnable);
+    postDelayed(touchVariantRunnable, longPressTimeoutMs);
+  }
+
+  private void showTouchVariants() {
+    HitTarget target = pendingTouchVariantTarget;
+    if (target == null) {
+      return;
+    }
+    KeyboardKey key = engine.getState().getLayout().getKey(target.row, target.col);
+    List<String> variants = variantsForKey(key);
+    if (variants.isEmpty()) {
+      return;
+    }
+    showVariantPopup(variants, target.bounds, false);
+  }
+
+  private void showControllerVariants() {
+    if (pendingControllerVariantKeyCode == KeyEvent.KEYCODE_UNKNOWN) {
+      return;
+    }
+
+    KeyboardKey key = engine.getState().getSelectedKey();
+    List<String> variants = variantsForKey(key);
+    if (variants.isEmpty()) {
+      return;
+    }
+
+    RectF source = selectedKeyBounds();
+    if (source == null) {
+      return;
+    }
+
+    controllerLongPressTriggered = true;
+    provideKeyFeedback(key);
+    showVariantPopup(variants, source, true);
+  }
+
+  private void showVariantPopup(List<String> variants, RectF source, boolean controllerMode) {
+    activeVariants = List.copyOf(variants);
+    activeVariantIndex = 0;
+    variantPopupVisible = true;
+    variantPopupControllerMode = controllerMode;
+    variantSourceBounds.set(source);
+    rebuildVariantTargets();
+    invalidate();
+  }
+
+  private void rebuildVariantTargets() {
+    variantTargets.clear();
+    if (activeVariants.isEmpty()) {
+      return;
+    }
+
+    float margin = dp(8);
+    float gap = dp(4);
+    float height = dp(48);
+    float available =
+        Math.max(dp(36), getWidth() - margin * 2f - gap * Math.max(0, activeVariants.size() - 1));
+    float width = Math.min(dp(52), available / activeVariants.size());
+    float total = width * activeVariants.size() + gap * (activeVariants.size() - 1);
+    float left = variantSourceBounds.centerX() - total / 2f;
+    left = Math.max(margin, Math.min(left, getWidth() - margin - total));
+
+    float headerBottom = dp(theme.outerMarginDp + theme.headerHeightDp + 8f);
+    float top = variantSourceBounds.top - height - dp(8);
+    if (top < headerBottom) {
+      top = variantSourceBounds.bottom + dp(8);
+    }
+    top = Math.max(margin, Math.min(top, getHeight() - margin - height));
+
+    for (int index = 0; index < activeVariants.size(); index++) {
+      float itemLeft = left + index * (width + gap);
+      variantTargets.add(new RectF(itemLeft, top, itemLeft + width, top + height));
+    }
+  }
+
+  private RectF selectedKeyBounds() {
+    KeyboardState state = engine.getState();
+    for (HitTarget target : hitTargets) {
+      if (target.row == state.getSelectedRow() && target.col == state.getSelectedCol()) {
+        return new RectF(target.bounds);
+      }
+    }
+    return null;
+  }
+
+  private void updateTouchVariantSelection(float x, float y) {
+    if (!variantPopupVisible || variantPopupControllerMode || variantTargets.isEmpty()) {
+      return;
+    }
+
+    for (int index = 0; index < variantTargets.size(); index++) {
+      RectF target = variantTargets.get(index);
+      RectF expanded = new RectF(target);
+      expanded.inset(-dp(6), -dp(12));
+      if (expanded.contains(x, y)) {
+        if (activeVariantIndex != index) {
+          activeVariantIndex = index;
+          invalidate();
+        }
+        return;
+      }
+    }
+
+    RectF first = variantTargets.get(0);
+    RectF last = variantTargets.get(variantTargets.size() - 1);
+    if (y >= first.top - dp(20) && y <= first.bottom + dp(28)) {
+      int nearest = 0;
+      float nearestDistance = Float.MAX_VALUE;
+      for (int index = 0; index < variantTargets.size(); index++) {
+        float distance = Math.abs(x - variantTargets.get(index).centerX());
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = index;
+        }
+      }
+      if (activeVariantIndex != nearest) {
+        activeVariantIndex = nearest;
+        invalidate();
+      }
+    }
+  }
+
+  private void moveVariantSelection(int direction) {
+    if (!variantPopupVisible || activeVariants.isEmpty()) {
+      return;
+    }
+    int count = activeVariants.size();
+    activeVariantIndex = (activeVariantIndex + direction + count) % count;
+    invalidate();
+  }
+
+  private void commitActiveVariant() {
+    if (!variantPopupVisible
+        || activeVariantIndex < 0
+        || activeVariantIndex >= activeVariants.size()) {
+      dismissVariantPopup();
+      return;
+    }
+
+    String value = activeVariants.get(activeVariantIndex);
+    applyUpdate(engine.commitTextVariant(value));
+    dismissVariantPopup();
+  }
+
+  private void dismissVariantPopup() {
+    variantPopupVisible = false;
+    variantPopupControllerMode = false;
+    activeVariants = List.of();
+    activeVariantIndex = -1;
+    variantTargets.clear();
+    variantSourceBounds.setEmpty();
+    invalidate();
+  }
+
+  private void clearPendingTouchVariant() {
+    pendingTouchVariantTarget = null;
+    removeCallbacks(touchVariantRunnable);
+  }
+
+  private void cancelControllerVariantPending() {
+    pendingControllerVariantKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+    controllerLongPressTriggered = false;
+    removeCallbacks(controllerVariantRunnable);
+  }
+
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     int action = event.getActionMasked();
 
-    if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+    if (action == MotionEvent.ACTION_CANCEL) {
       cancelTouchRepeat();
+      clearPendingTouchVariant();
+      if (variantPopupVisible && !variantPopupControllerMode) {
+        dismissVariantPopup();
+      }
+      return true;
+    }
+
+    if (action == MotionEvent.ACTION_UP) {
+      cancelTouchRepeat();
+      if (variantPopupVisible && !variantPopupControllerMode) {
+        updateTouchVariantSelection(event.getX(), event.getY());
+        clearPendingTouchVariant();
+        commitActiveVariant();
+        return true;
+      }
+
+      HitTarget pending = pendingTouchVariantTarget;
+      if (pending != null) {
+        clearPendingTouchVariant();
+        RectF releaseBounds = new RectF(pending.bounds);
+        releaseBounds.inset(-dp(18), -dp(18));
+        if (releaseBounds.contains(event.getX(), event.getY())) {
+          KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+          KeyboardEngine.Update pressUpdate = engine.pressSelected();
+          applyUpdate(merge(selectionUpdate, pressUpdate));
+        }
+        return true;
+      }
       return true;
     }
 
     if (action == MotionEvent.ACTION_MOVE) {
+      if (variantPopupVisible && !variantPopupControllerMode) {
+        updateTouchVariantSelection(event.getX(), event.getY());
+        return true;
+      }
+
+      if (pendingTouchVariantTarget != null) {
+        RectF holdBounds = new RectF(pendingTouchVariantTarget.bounds);
+        holdBounds.inset(-dp(18), -dp(18));
+        if (!holdBounds.contains(event.getX(), event.getY())) {
+          clearPendingTouchVariant();
+        }
+        return true;
+      }
+
       if (touchRepeatActive && !touchRepeatBounds.contains(event.getX(), event.getY())) {
         cancelTouchRepeat();
       }
@@ -827,6 +1118,10 @@ public final class RuneKeyboardView extends View {
     }
 
     cancelTouchRepeat();
+    clearPendingTouchVariant();
+    if (variantPopupVisible) {
+      dismissVariantPopup();
+    }
     requestFocus();
     performClick();
 
@@ -857,6 +1152,13 @@ public final class RuneKeyboardView extends View {
         KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
         KeyboardKey selectedKey = engine.getState().getSelectedKey();
         provideKeyFeedback(selectedKey);
+
+        if (!variantsForKey(selectedKey).isEmpty()) {
+          applyUpdate(selectionUpdate);
+          beginTouchVariant(target);
+          return true;
+        }
+
         KeyboardEngine.Update pressUpdate = engine.pressSelected();
         applyUpdate(merge(selectionUpdate, pressUpdate));
         if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
@@ -906,6 +1208,9 @@ public final class RuneKeyboardView extends View {
   @Override
   protected void onDetachedFromWindow() {
     cancelTouchRepeat();
+    clearPendingTouchVariant();
+    cancelControllerVariantPending();
+    dismissVariantPopup();
     axisNavigationPolicy.reset();
     super.onDetachedFromWindow();
   }
@@ -919,12 +1224,17 @@ public final class RuneKeyboardView extends View {
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
     if (shouldCaptureKeyCode(keyCode)) {
-      if (event.getRepeatCount() == 0 || isRepeatableKeyCode(keyCode)) {
-        handleKeyCode(keyCode);
-      }
-      return true;
+      return handleControllerKeyDown(keyCode, event.getRepeatCount());
     }
     return super.onKeyDown(keyCode, event);
+  }
+
+  @Override
+  public boolean onKeyUp(int keyCode, KeyEvent event) {
+    if (shouldCaptureKeyCode(keyCode)) {
+      return handleControllerKeyUp(keyCode);
+    }
+    return super.onKeyUp(keyCode, event);
   }
 
   @Override
@@ -946,6 +1256,55 @@ public final class RuneKeyboardView extends View {
     return axisNavigationPolicy.shouldSuppressSyntheticDpad(event.getEventTime());
   }
 
+  public boolean handleControllerKeyDown(int keyCode, int repeatCount) {
+    ControllerAction action = controllerMapper.fromKeyCode(keyCode);
+    if (!engine.shouldCapture(action)) {
+      return false;
+    }
+
+    if (variantPopupVisible && variantPopupControllerMode) {
+      if (repeatCount > 0 && !isRepeatableKeyCode(keyCode)) {
+        return true;
+      }
+      return handleKeyCode(keyCode);
+    }
+
+    if (repeatCount > 0) {
+      if (pendingControllerVariantKeyCode == keyCode) {
+        return true;
+      }
+      if (!isRepeatableKeyCode(keyCode)) {
+        return true;
+      }
+      return handleKeyCode(keyCode);
+    }
+
+    if ((action == ControllerAction.PRESS_SELECTED || action == ControllerAction.PRESS_CENTER)
+        && !variantsForKey(engine.getState().getSelectedKey()).isEmpty()) {
+      cancelControllerVariantPending();
+      pendingControllerVariantKeyCode = keyCode;
+      postDelayed(controllerVariantRunnable, longPressTimeoutMs);
+      return true;
+    }
+
+    return handleKeyCode(keyCode);
+  }
+
+  public boolean handleControllerKeyUp(int keyCode) {
+    if (pendingControllerVariantKeyCode == keyCode) {
+      boolean longPress = controllerLongPressTriggered;
+      removeCallbacks(controllerVariantRunnable);
+      pendingControllerVariantKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+      controllerLongPressTriggered = false;
+      if (!longPress) {
+        return handleKeyCode(keyCode);
+      }
+      return true;
+    }
+
+    return engine.shouldCapture(controllerMapper.fromKeyCode(keyCode));
+  }
+
   public boolean handleKeyCode(int keyCode) {
     ControllerAction action = controllerMapper.fromKeyCode(keyCode);
     if (debugLogging) {
@@ -953,6 +1312,31 @@ public final class RuneKeyboardView extends View {
     }
     if (!engine.shouldCapture(action)) {
       return false;
+    }
+
+    if (variantPopupVisible && variantPopupControllerMode) {
+      if (action == ControllerAction.MOVE_LEFT) {
+        moveVariantSelection(-1);
+        return true;
+      }
+      if (action == ControllerAction.MOVE_RIGHT) {
+        moveVariantSelection(1);
+        return true;
+      }
+      if (action == ControllerAction.MOVE_UP || action == ControllerAction.MOVE_DOWN) {
+        return true;
+      }
+      if (action == ControllerAction.PRESS_SELECTED || action == ControllerAction.PRESS_CENTER) {
+        provideKeyFeedback(engine.getState().getSelectedKey());
+        commitActiveVariant();
+        return true;
+      }
+      if (action == ControllerAction.BACKSPACE) {
+        provideActionFeedback(action);
+        dismissVariantPopup();
+        return true;
+      }
+      return true;
     }
 
     int oldOpacity = engine.getState().getOpacity();
@@ -1021,6 +1405,15 @@ public final class RuneKeyboardView extends View {
 
     if (action == null) {
       return false;
+    }
+
+    if (variantPopupVisible && variantPopupControllerMode) {
+      if (action == ControllerAction.MOVE_LEFT) {
+        moveVariantSelection(-1);
+      } else if (action == ControllerAction.MOVE_RIGHT) {
+        moveVariantSelection(1);
+      }
+      return true;
     }
 
     applyUpdate(engine.handle(action));
