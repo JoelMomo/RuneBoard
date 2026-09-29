@@ -36,6 +36,7 @@ import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.keyboard.KeyboardState;
+import io.github.joelmomo.runeboard.keyboard.SpacebarCursorPolicy;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
@@ -107,6 +108,10 @@ public final class RuneKeyboardView extends View {
   private int touchRepeatRow = -1;
   private int touchRepeatCol = -1;
   private boolean touchRepeatActive;
+  private HitTarget pendingSpacebarTarget;
+  private float spacebarDownX;
+  private float spacebarLastStepX;
+  private boolean spacebarCursorActive;
   private HitTarget pendingTouchVariantTarget;
   private List<String> activeVariants = List.of();
   private int activeVariantIndex = -1;
@@ -1039,6 +1044,49 @@ public final class RuneKeyboardView extends View {
     invalidate();
   }
 
+  private void beginSpacebarCursor(HitTarget target, float x) {
+    pendingSpacebarTarget = target;
+    spacebarDownX = x;
+    spacebarLastStepX = x;
+    spacebarCursorActive = false;
+  }
+
+  private void updateSpacebarCursor(float x) {
+    if (pendingSpacebarTarget == null) {
+      return;
+    }
+
+    if (!spacebarCursorActive
+        && Math.abs(x - spacebarDownX) >= dp(SpacebarCursorPolicy.ACTIVATION_DISTANCE_DP)) {
+      spacebarCursorActive = true;
+    }
+    if (!spacebarCursorActive) {
+      return;
+    }
+
+    float stepPx = dp(SpacebarCursorPolicy.STEP_DISTANCE_DP);
+    int steps = SpacebarCursorPolicy.cursorSteps(x - spacebarLastStepX, stepPx);
+    if (steps == 0) {
+      return;
+    }
+
+    int direction = steps < 0 ? -1 : 1;
+    int count = Math.abs(steps);
+    if (listener != null) {
+      for (int index = 0; index < count; index++) {
+        listener.onMoveCursor(direction);
+      }
+    }
+    spacebarLastStepX += steps * stepPx;
+  }
+
+  private void clearSpacebarCursor() {
+    pendingSpacebarTarget = null;
+    spacebarDownX = 0f;
+    spacebarLastStepX = 0f;
+    spacebarCursorActive = false;
+  }
+
   private void clearPendingTouchVariant() {
     pendingTouchVariantTarget = null;
     removeCallbacks(touchVariantRunnable);
@@ -1056,6 +1104,7 @@ public final class RuneKeyboardView extends View {
 
     if (action == MotionEvent.ACTION_CANCEL) {
       cancelTouchRepeat();
+      clearSpacebarCursor();
       clearPendingTouchVariant();
       if (variantPopupVisible && !variantPopupControllerMode) {
         dismissVariantPopup();
@@ -1065,6 +1114,25 @@ public final class RuneKeyboardView extends View {
 
     if (action == MotionEvent.ACTION_UP) {
       cancelTouchRepeat();
+      if (pendingSpacebarTarget != null) {
+        updateSpacebarCursor(event.getX());
+        HitTarget pending = pendingSpacebarTarget;
+        boolean cursorGesture = spacebarCursorActive;
+        clearSpacebarCursor();
+        if (!cursorGesture) {
+          RectF releaseBounds = new RectF(pending.bounds);
+          releaseBounds.inset(-dp(18), -dp(18));
+          if (releaseBounds.contains(event.getX(), event.getY())) {
+            KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+            KeyboardKey selectedKey = engine.getState().getSelectedKey();
+            provideKeyFeedback(selectedKey);
+            KeyboardEngine.Update pressUpdate = engine.pressSelected();
+            applyUpdate(merge(selectionUpdate, pressUpdate));
+          }
+        }
+        return true;
+      }
+
       if (variantPopupVisible && !variantPopupControllerMode) {
         updateTouchVariantSelection(event.getX());
         clearPendingTouchVariant();
@@ -1088,6 +1156,11 @@ public final class RuneKeyboardView extends View {
     }
 
     if (action == MotionEvent.ACTION_MOVE) {
+      if (pendingSpacebarTarget != null) {
+        updateSpacebarCursor(event.getX());
+        return true;
+      }
+
       if (variantPopupVisible && !variantPopupControllerMode) {
         updateTouchVariantSelection(event.getX());
         return true;
@@ -1113,6 +1186,7 @@ public final class RuneKeyboardView extends View {
     }
 
     cancelTouchRepeat();
+    clearSpacebarCursor();
     clearPendingTouchVariant();
     if (variantPopupVisible) {
       dismissVariantPopup();
@@ -1146,6 +1220,13 @@ public final class RuneKeyboardView extends View {
       if (target.bounds.contains(event.getX(), event.getY())) {
         KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
         KeyboardKey selectedKey = engine.getState().getSelectedKey();
+
+        if (selectedKey.getType() == KeyboardKey.Type.SPACE) {
+          applyUpdate(selectionUpdate);
+          beginSpacebarCursor(target, event.getX());
+          return true;
+        }
+
         provideKeyFeedback(selectedKey);
 
         if (!variantsForKey(selectedKey).isEmpty()) {
@@ -1203,6 +1284,7 @@ public final class RuneKeyboardView extends View {
   @Override
   protected void onDetachedFromWindow() {
     cancelTouchRepeat();
+    clearSpacebarCursor();
     clearPendingTouchVariant();
     cancelControllerVariantPending();
     dismissVariantPopup();
