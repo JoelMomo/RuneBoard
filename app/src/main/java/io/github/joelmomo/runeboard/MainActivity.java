@@ -1364,35 +1364,35 @@ public final class MainActivity extends Activity {
         accentRow,
         customAccentChips,
         0xFFA78BFA,
-        "Purple",
+        R.string.custom_color_purple,
         true,
         () -> applyCustomAccent(0xFFA78BFA));
     addCustomColorChip(
         accentRow,
         customAccentChips,
         0xFF22D3EE,
-        "Cyan",
+        R.string.custom_color_cyan,
         false,
         () -> applyCustomAccent(0xFF22D3EE));
     addCustomColorChip(
         accentRow,
         customAccentChips,
         0xFF34D399,
-        "Green",
+        R.string.custom_color_green,
         false,
         () -> applyCustomAccent(0xFF34D399));
     addCustomColorChip(
         accentRow,
         customAccentChips,
         0xFFFBBF24,
-        "Amber",
+        R.string.custom_color_amber,
         false,
         () -> applyCustomAccent(0xFFFBBF24));
     addCustomColorChip(
         accentRow,
         customAccentChips,
         0xFFF472B6,
-        "Pink",
+        R.string.custom_color_pink,
         false,
         () -> applyCustomAccent(0xFFF472B6));
     panel.addView(accentRow, matchWidth());
@@ -1400,38 +1400,38 @@ public final class MainActivity extends Activity {
     addCustomLabel(panel, R.string.custom_keys);
     LinearLayout keyRow = horizontalRow();
     addCustomColorChip(
-        keyRow, customKeyChips, 0xFF2B2B38, "Graphite", true, () -> applyCustomKeyFill(0xFF2B2B38));
+        keyRow, customKeyChips, 0xFF2B2B38, R.string.custom_key_graphite, true, () -> applyCustomKeyFill(0xFF2B2B38));
     addCustomColorChip(
-        keyRow, customKeyChips, 0xFF17171D, "Black", false, () -> applyCustomKeyFill(0xFF17171D));
+        keyRow, customKeyChips, 0xFF17171D, R.string.custom_key_black, false, () -> applyCustomKeyFill(0xFF17171D));
     addCustomColorChip(
-        keyRow, customKeyChips, 0xFF1E293B, "Navy", false, () -> applyCustomKeyFill(0xFF1E293B));
+        keyRow, customKeyChips, 0xFF1E293B, R.string.custom_key_navy, false, () -> applyCustomKeyFill(0xFF1E293B));
     addCustomColorChip(
-        keyRow, customKeyChips, 0xFF3B314D, "Violet", false, () -> applyCustomKeyFill(0xFF3B314D));
+        keyRow, customKeyChips, 0xFF3B314D, R.string.custom_key_violet, false, () -> applyCustomKeyFill(0xFF3B314D));
     panel.addView(keyRow, matchWidth());
 
     addCustomLabel(panel, R.string.custom_background);
     LinearLayout backgroundRow = horizontalRow();
-    addCustomBackgroundChip(backgroundRow, 0xFF0D0E14, 0xFF181321, "Rune", true);
-    addCustomBackgroundChip(backgroundRow, 0xFF000000, 0xFF000000, "Black", false);
-    addCustomBackgroundChip(backgroundRow, 0xFF06131F, 0xFF0D2638, "Navy", false);
-    addCustomBackgroundChip(backgroundRow, 0xFF130C20, 0xFF25143A, "Violet", false);
+    addCustomBackgroundChip(backgroundRow, 0xFF0D0E14, 0xFF181321, R.string.custom_background_rune, true);
+    addCustomBackgroundChip(backgroundRow, 0xFF000000, 0xFF000000, R.string.custom_background_black, false);
+    addCustomBackgroundChip(backgroundRow, 0xFF06131F, 0xFF0D2638, R.string.custom_background_navy, false);
+    addCustomBackgroundChip(backgroundRow, 0xFF130C20, 0xFF25143A, R.string.custom_background_violet, false);
     panel.addView(backgroundRow, matchWidth());
 
     addCustomLabel(panel, R.string.custom_radius);
     LinearLayout radiusRow = horizontalRow();
     addCustomMetricChip(
-        radiusRow, customRadiusChips, 4, "Square", true, () -> applyCustomRadius(4f));
+        radiusRow, customRadiusChips, 4, R.string.custom_shape_square, true, () -> applyCustomRadius(4f));
     addCustomMetricChip(
-        radiusRow, customRadiusChips, 12, "Round", false, () -> applyCustomRadius(12f));
+        radiusRow, customRadiusChips, 12, R.string.custom_shape_round, false, () -> applyCustomRadius(12f));
     addCustomMetricChip(
-        radiusRow, customRadiusChips, 20, "Soft", false, () -> applyCustomRadius(20f));
+        radiusRow, customRadiusChips, 20, R.string.custom_shape_soft, false, () -> applyCustomRadius(20f));
     panel.addView(radiusRow, matchWidth());
 
     addCustomLabel(panel, R.string.custom_gap);
     LinearLayout gapRow = horizontalRow();
-    addCustomMetricChip(gapRow, customGapChips, 3, "Tight", true, () -> applyCustomGap(3f));
-    addCustomMetricChip(gapRow, customGapChips, 6, "Normal", false, () -> applyCustomGap(6f));
-    addCustomMetricChip(gapRow, customGapChips, 9, "Wide", false, () -> applyCustomGap(9f));
+    addCustomMetricChip(gapRow, customGapChips, 3, R.string.custom_spacing_tight, true, () -> applyCustomGap(3f));
+    addCustomMetricChip(gapRow, customGapChips, 6, R.string.custom_spacing_normal, false, () -> applyCustomGap(6f));
+    addCustomMetricChip(gapRow, customGapChips, 9, R.string.custom_spacing_wide, false, () -> applyCustomGap(9f));
     panel.addView(gapRow, matchWidth());
 
     TextView reset = text(getString(R.string.custom_reset), 12f, COLOR_ACCENT, true);
@@ -1464,10 +1464,10 @@ public final class MainActivity extends Activity {
       LinearLayout row,
       Map<Integer, TextView> target,
       int color,
-      String label,
+      int labelRes,
       boolean first,
       Runnable action) {
-    TextView chip = text(label, 11f, contrastText(color), true);
+    TextView chip = text(getString(labelRes), 11f, contrastText(color), true);
     chip.setGravity(Gravity.CENTER);
     chip.setPadding(dp(6), dp(10), dp(6), dp(10));
     chip.setClickable(true);
@@ -1479,8 +1479,8 @@ public final class MainActivity extends Activity {
   }
 
   private void addCustomBackgroundChip(
-      LinearLayout row, int top, int bottom, String label, boolean first) {
-    TextView chip = text(label, 11f, contrastText(top), true);
+      LinearLayout row, int top, int bottom, int labelRes, boolean first) {
+    TextView chip = text(getString(labelRes), 11f, contrastText(top), true);
     chip.setGravity(Gravity.CENTER);
     chip.setPadding(dp(6), dp(10), dp(6), dp(10));
     chip.setClickable(true);
@@ -1499,10 +1499,10 @@ public final class MainActivity extends Activity {
       LinearLayout row,
       Map<Integer, TextView> target,
       int value,
-      String label,
+      int labelRes,
       boolean first,
       Runnable action) {
-    TextView chip = text(label, 11f, COLOR_TEXT, true);
+    TextView chip = text(getString(labelRes), 11f, COLOR_TEXT, true);
     chip.setGravity(Gravity.CENTER);
     chip.setPadding(dp(7), dp(10), dp(7), dp(10));
     chip.setClickable(true);

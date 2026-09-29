@@ -489,12 +489,14 @@ public final class RuneKeyboardView extends View {
     paint.setColor(theme.textSecondary);
     paint.setTextSize(dp(9));
     canvas.drawText(
-        profile.shortLabel
-            + " / "
-            + (state.isEditing() ? "EDIT" : state.isSymbols() ? "SYM" : profile.layoutName)
-            + "  "
-            + ControllerKeyNames.nameFor(
-                controllerMapper.getBindings().getKeyCode(BindableAction.LANGUAGE_NEXT)),
+        getContext().getString(
+            R.string.header_profile_controller_summary,
+            profile.shortLabel,
+            state.isEditing()
+                ? getContext().getString(R.string.key_edit)
+                : state.isSymbols() ? getContext().getString(R.string.key_symbols) : profile.layoutName,
+            ControllerKeyNames.nameFor(
+                controllerMapper.getBindings().getKeyCode(BindableAction.LANGUAGE_NEXT))),
         titleX,
         outer + dp(30),
         paint);
@@ -765,7 +767,7 @@ public final class RuneKeyboardView extends View {
       case EDIT:
         return getContext().getString(state.isEditing() ? R.string.key_letters : R.string.key_edit);
       case COMMAND:
-        return key.getText();
+        return editorCommandLabel(key.getCommand(), key.getText());
       case SPACE:
         return getContext().getString(R.string.key_space);
       case BACKSPACE:
@@ -781,6 +783,49 @@ public final class RuneKeyboardView extends View {
     }
   }
 
+  private String editorCommandLabel(EditorCommand command, String fallback) {
+    if (command == null) {
+      return fallback;
+    }
+    switch (command) {
+      case SELECT_ALL:
+        return getContext().getString(R.string.command_select_all);
+      case CUT:
+        return getContext().getString(R.string.command_cut);
+      case COPY:
+        return getContext().getString(R.string.command_copy);
+      case PASTE:
+        return getContext().getString(R.string.command_paste);
+      case UNDO:
+        return getContext().getString(R.string.command_undo);
+      case REDO:
+        return getContext().getString(R.string.command_redo);
+      case HOME:
+        return getContext().getString(R.string.command_home);
+      case END:
+        return getContext().getString(R.string.command_end);
+      case CURSOR_LEFT:
+        return getContext().getString(R.string.command_cursor_left);
+      case CURSOR_RIGHT:
+        return getContext().getString(R.string.command_cursor_right);
+      case WORD_LEFT:
+        return getContext().getString(R.string.command_word_left);
+      case WORD_RIGHT:
+        return getContext().getString(R.string.command_word_right);
+      case SELECT_LEFT:
+        return getContext().getString(R.string.command_select_left);
+      case SELECT_RIGHT:
+        return getContext().getString(R.string.command_select_right);
+      case SELECT_WORD_LEFT:
+        return getContext().getString(R.string.command_select_word_left);
+      case SELECT_WORD_RIGHT:
+        return getContext().getString(R.string.command_select_word_right);
+      case DELETE_FORWARD:
+        return getContext().getString(R.string.command_delete_forward);
+      default:
+        return fallback;
+    }
+  }
   private void drawMinimized(Canvas canvas) {
     float outer = dp(theme.outerMarginDp);
     float centerY = getHeight() / 2f;
