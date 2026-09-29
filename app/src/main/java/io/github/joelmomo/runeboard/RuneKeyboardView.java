@@ -112,6 +112,8 @@ public final class RuneKeyboardView extends View {
   private int activeVariantIndex = -1;
   private boolean variantPopupVisible;
   private boolean variantPopupControllerMode;
+  private float touchVariantAnchorX;
+  private boolean touchVariantSelectionMoved;
   private int pendingControllerVariantKeyCode = KeyEvent.KEYCODE_UNKNOWN;
   private boolean controllerLongPressTriggered;
 
@@ -932,6 +934,8 @@ public final class RuneKeyboardView extends View {
     variantPopupVisible = true;
     variantPopupControllerMode = controllerMode;
     variantSourceBounds.set(source);
+    touchVariantAnchorX = source.centerX();
+    touchVariantSelectionMoved = false;
     rebuildVariantTargets();
     invalidate();
   }
@@ -975,40 +979,29 @@ public final class RuneKeyboardView extends View {
     return null;
   }
 
-  private void updateTouchVariantSelection(float x, float y) {
+  private void updateTouchVariantSelection(float x) {
     if (!variantPopupVisible || variantPopupControllerMode || variantTargets.isEmpty()) {
       return;
     }
 
+    if (!touchVariantSelectionMoved && Math.abs(x - touchVariantAnchorX) < dp(12)) {
+      return;
+    }
+    touchVariantSelectionMoved = true;
+
+    int nearest = 0;
+    float nearestDistance = Float.MAX_VALUE;
     for (int index = 0; index < variantTargets.size(); index++) {
-      RectF target = variantTargets.get(index);
-      RectF expanded = new RectF(target);
-      expanded.inset(-dp(6), -dp(12));
-      if (expanded.contains(x, y)) {
-        if (activeVariantIndex != index) {
-          activeVariantIndex = index;
-          invalidate();
-        }
-        return;
+      float distance = Math.abs(x - variantTargets.get(index).centerX());
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = index;
       }
     }
 
-    RectF first = variantTargets.get(0);
-    RectF last = variantTargets.get(variantTargets.size() - 1);
-    if (y >= first.top - dp(20) && y <= first.bottom + dp(28)) {
-      int nearest = 0;
-      float nearestDistance = Float.MAX_VALUE;
-      for (int index = 0; index < variantTargets.size(); index++) {
-        float distance = Math.abs(x - variantTargets.get(index).centerX());
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          nearest = index;
-        }
-      }
-      if (activeVariantIndex != nearest) {
-        activeVariantIndex = nearest;
-        invalidate();
-      }
+    if (activeVariantIndex != nearest) {
+      activeVariantIndex = nearest;
+      invalidate();
     }
   }
 
@@ -1041,6 +1034,8 @@ public final class RuneKeyboardView extends View {
     activeVariantIndex = -1;
     variantTargets.clear();
     variantSourceBounds.setEmpty();
+    touchVariantAnchorX = 0f;
+    touchVariantSelectionMoved = false;
     invalidate();
   }
 
@@ -1071,7 +1066,7 @@ public final class RuneKeyboardView extends View {
     if (action == MotionEvent.ACTION_UP) {
       cancelTouchRepeat();
       if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX(), event.getY());
+        updateTouchVariantSelection(event.getX());
         clearPendingTouchVariant();
         commitActiveVariant();
         return true;
@@ -1094,7 +1089,7 @@ public final class RuneKeyboardView extends View {
 
     if (action == MotionEvent.ACTION_MOVE) {
       if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX(), event.getY());
+        updateTouchVariantSelection(event.getX());
         return true;
       }
 

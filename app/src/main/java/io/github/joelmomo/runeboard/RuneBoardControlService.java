@@ -23,6 +23,7 @@ public final class RuneBoardControlService extends AccessibilityService {
             RuneBoardImeService ime = RuneBoardImeService.getActiveInstance();
             if (ime == null
                     || !ime.isControllerCaptureAvailable()
+                    || !ime.isGlobalControllerCaptureAllowed()
                     || !ime.shouldCaptureControllerKey(repeatingDpadKeyCode)) {
                 stopDpadRepeat();
                 return;
@@ -57,6 +58,7 @@ public final class RuneBoardControlService extends AccessibilityService {
         RuneBoardImeService ime = RuneBoardImeService.getActiveInstance();
         if (ime == null
                 || !ime.isControllerCaptureAvailable()
+                || !ime.isGlobalControllerCaptureAllowed()
                 || !ime.shouldCaptureControllerKey(keyCode)) {
             if (isDpadNavigationKey(keyCode)) {
                 stopDpadRepeat();

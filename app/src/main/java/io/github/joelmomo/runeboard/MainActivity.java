@@ -29,6 +29,7 @@ import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
+import io.github.joelmomo.runeboard.controller.ControllerCapturePolicy;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
@@ -1769,6 +1770,7 @@ public final class MainActivity extends Activity {
     testField.setHintTextColor(COLOR_MUTED);
     testField.setTextSize(15f);
     testField.setSingleLine(false);
+    testField.setPrivateImeOptions(ControllerCapturePolicy.TEST_PREVIEW_IME_OPTION);
     testField.setMinLines(3);
     testField.setGravity(Gravity.TOP);
     testField.setPadding(dp(15), dp(14), dp(15), dp(14));

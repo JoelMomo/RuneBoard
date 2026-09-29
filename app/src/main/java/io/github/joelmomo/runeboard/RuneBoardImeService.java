@@ -14,6 +14,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
+import io.github.joelmomo.runeboard.controller.ControllerCapturePolicy;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.editor.EditorActionResolver;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
@@ -82,6 +83,14 @@ public final class RuneBoardImeService extends InputMethodService
 
   public boolean isControllerCaptureAvailable() {
     return keyboardView != null && isInputViewShown();
+  }
+
+  public boolean isGlobalControllerCaptureAllowed() {
+    EditorInfo info = getCurrentInputEditorInfo();
+    boolean testPreviewEditor =
+        info != null
+            && ControllerCapturePolicy.TEST_PREVIEW_IME_OPTION.equals(info.privateImeOptions);
+    return ControllerCapturePolicy.shouldCaptureGlobally(testPreviewEditor);
   }
 
   public boolean shouldCaptureControllerKey(int keyCode) {
