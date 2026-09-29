@@ -77,7 +77,7 @@
     <string name="typography_color">KEY LABEL COLOR</string>
     <string name="font_system">System</string>
     <string name="font_inter" translatable="false">Inter</string>
-    <string name="font_atkinson" translatable="false">Atkinson</string>
+    <string name="font_atkinson" translatable="false">Atkinson Hyperlegible</string>
     <string name="font_jetbrains_mono" translatable="false">JetBrains Mono</string>
     <string name="font_space_grotesk" translatable="false">Space Grotesk</string>
     <string name="font_medieval_sharp" translatable="false">MedievalSharp</string>
@@ -90,6 +90,43 @@
     <string name="color_pink">Pink</string>
     <string name="color_custom">Custom</string>
 
+    <string name="custom_color_purple">Purple</string>
+    <string name="custom_color_cyan">Cyan</string>
+    <string name="custom_color_green">Green</string>
+    <string name="custom_color_amber">Amber</string>
+    <string name="custom_color_pink">Pink</string>
+    <string name="custom_key_graphite">Graphite</string>
+    <string name="custom_key_black">Black</string>
+    <string name="custom_key_navy">Navy</string>
+    <string name="custom_key_violet">Violet</string>
+    <string name="custom_background_rune" translatable="false">Rune</string>
+    <string name="custom_background_black">Black</string>
+    <string name="custom_background_navy">Navy</string>
+    <string name="custom_background_violet">Violet</string>
+    <string name="custom_shape_square">Square</string>
+    <string name="custom_shape_round">Round</string>
+    <string name="custom_shape_soft">Soft</string>
+    <string name="custom_spacing_tight">Tight</string>
+    <string name="custom_spacing_normal">Normal</string>
+    <string name="custom_spacing_wide">Wide</string>
+
+    <string name="command_select_all">SELECT ALL</string>
+    <string name="command_cut">CUT</string>
+    <string name="command_copy">COPY</string>
+    <string name="command_paste">PASTE</string>
+    <string name="command_undo">UNDO</string>
+    <string name="command_redo">REDO</string>
+    <string name="command_home">HOME</string>
+    <string name="command_end">END</string>
+    <string name="command_cursor_left">LEFT</string>
+    <string name="command_cursor_right">RIGHT</string>
+    <string name="command_word_left">WORD LEFT</string>
+    <string name="command_word_right">WORD RIGHT</string>
+    <string name="command_select_left">SEL LEFT</string>
+    <string name="command_select_right">SEL RIGHT</string>
+    <string name="command_select_word_left">SEL WORD L</string>
+    <string name="command_select_word_right">SEL WORD R</string>
+    <string name="command_delete_forward">DELETE</string>
     <string name="section_test">TEST KEYBOARD</string>
     <string name="section_test_subtitle">Tap the field to check your current setup</string>
     <string name="test_hint">Tap here and type with RuneBoard</string>
@@ -114,6 +151,7 @@
     <string name="header_title" translatable="false">RUNEBOARD</string>
     <string name="header_controller" translatable="false">D-PAD</string>
     <string name="header_background">BG %1$d%%</string>
+    <string name="header_profile_controller_summary">%1$s / %2$s  %3$s</string>
     <string name="minimized_restore">%1$s / %2$s  RESTORE</string>
 
     <string name="section_controls">CONTROLS</string>
