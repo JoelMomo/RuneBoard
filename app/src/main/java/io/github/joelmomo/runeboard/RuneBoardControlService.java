@@ -23,6 +23,7 @@ public final class RuneBoardControlService extends AccessibilityService {
             RuneBoardImeService ime = RuneBoardImeService.getActiveInstance();
             if (ime == null
                     || !ime.isControllerCaptureAvailable()
+                    || !ime.isGlobalControllerCaptureAllowed()
                     || !ime.shouldCaptureControllerKey(repeatingDpadKeyCode)) {
                 stopDpadRepeat();
                 return;
@@ -57,6 +58,7 @@ public final class RuneBoardControlService extends AccessibilityService {
         RuneBoardImeService ime = RuneBoardImeService.getActiveInstance();
         if (ime == null
                 || !ime.isControllerCaptureAvailable()
+                || !ime.isGlobalControllerCaptureAllowed()
                 || !ime.shouldCaptureControllerKey(keyCode)) {
             if (isDpadNavigationKey(keyCode)) {
                 stopDpadRepeat();
@@ -69,19 +71,13 @@ public final class RuneBoardControlService extends AccessibilityService {
         }
 
         if (event.getAction() == KeyEvent.ACTION_UP) {
-            return true;
+            return ime.handleControllerKeyUp(keyCode);
         }
         if (event.getAction() != KeyEvent.ACTION_DOWN) {
             return false;
         }
 
-        if (event.getRepeatCount() > 0
-                && !ime.isRepeatableControllerKey(keyCode)) {
-            return true;
-        }
-
-        ime.handleControllerKey(keyCode);
-        return true;
+        return ime.handleControllerKeyDown(keyCode, event.getRepeatCount());
     }
 
     private boolean handleDpadKeyEvent(

@@ -194,6 +194,16 @@ public final class KeyboardEngine {
         }
     }
 
+    public Update commitTextVariant(String text) {
+        if (text == null || text.isEmpty()) {
+            return Update.NONE;
+        }
+        output.onText(text);
+        return state.consumeOneShotShift()
+                ? Update.VISUAL
+                : Update.NONE;
+    }
+
     public Update pressSelected() {
         if (state.isMinimized()) {
             return setMinimized(false);
