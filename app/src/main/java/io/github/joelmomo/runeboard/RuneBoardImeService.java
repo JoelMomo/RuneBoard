@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.text.InputType;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,6 +45,7 @@ public final class RuneBoardImeService extends InputMethodService
   private static volatile RuneBoardImeService activeInstance;
 
   private final SelectionController selectionController = new SelectionController();
+  private final SparseBooleanArray capturedKeyDowns = new SparseBooleanArray();
 
   private RuneKeyboardView keyboardView;
   private RunePreferences preferences;
@@ -82,7 +84,10 @@ public final class RuneBoardImeService extends InputMethodService
   }
 
   public boolean isControllerCaptureAvailable() {
-    return keyboardView != null && isInputViewShown();
+    EditorInfo info = getCurrentInputEditorInfo();
+    int inputType = info != null ? info.inputType : InputType.TYPE_NULL;
+    return keyboardView != null
+        && ControllerCapturePolicy.shouldCaptureForEditor(isInputViewShown(), inputType);
   }
 
   public boolean isGlobalControllerCaptureAllowed() {
@@ -174,6 +179,9 @@ public final class RuneBoardImeService extends InputMethodService
   public void onStartInput(EditorInfo info, boolean restarting) {
     super.onStartInput(info, restarting);
     setExtractViewShown(false);
+    if (!restarting) {
+      capturedKeyDowns.clear();
+    }
 
     if (info == null || info.inputType == InputType.TYPE_NULL) {
       return;
@@ -250,22 +258,36 @@ public final class RuneBoardImeService extends InputMethodService
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyboardView != null && keyboardView.shouldSuppressSyntheticDpad(event)) {
+    // The focused app forwards its key events to the IME even while the keyboard is hidden
+    // (games with a TYPE_NULL surface do this), so only take them while RuneBoard is on screen.
+    if (!isControllerCaptureAvailable()) {
+      return super.onKeyDown(keyCode, event);
+    }
+
+    if (keyboardView.shouldSuppressSyntheticDpad(event)) {
       if (debugLogging) {
         Log.d(TAG, "suppressedSyntheticDpad keyCode=" + keyCode);
       }
       return true;
     }
 
-    if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
-      return keyboardView.handleControllerKeyDown(keyCode, event.getRepeatCount());
+    if (keyboardView.shouldCaptureKeyCode(keyCode)) {
+      boolean handled = keyboardView.handleControllerKeyDown(keyCode, event.getRepeatCount());
+      if (handled) {
+        capturedKeyDowns.put(keyCode, true);
+      }
+      return handled;
     }
     return super.onKeyDown(keyCode, event);
   }
 
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
-    if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
+    // Releases follow their press: a press RuneBoard took keeps its release even if the keyboard
+    // hid in between, and a press the app received never loses its release to RuneBoard.
+    boolean capturedDown = capturedKeyDowns.get(keyCode);
+    capturedKeyDowns.delete(keyCode);
+    if (capturedDown && keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
       return keyboardView.handleControllerKeyUp(keyCode);
     }
     return super.onKeyUp(keyCode, event);
@@ -273,7 +295,7 @@ public final class RuneBoardImeService extends InputMethodService
 
   @Override
   public boolean onGenericMotionEvent(MotionEvent event) {
-    if (keyboardView != null && keyboardView.handleMotionEvent(event)) {
+    if (isControllerCaptureAvailable() && keyboardView.handleMotionEvent(event)) {
       return true;
     }
     return super.onGenericMotionEvent(event);
