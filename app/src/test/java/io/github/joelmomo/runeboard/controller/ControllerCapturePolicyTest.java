@@ -27,6 +27,12 @@ public final class ControllerCapturePolicyTest {
   }
 
   @Test
+  public void visibleKeyboardOnNonTextEditorClassesCapturesController() {
+    assertTrue(ControllerCapturePolicy.shouldCaptureForEditor(true, InputType.TYPE_CLASS_NUMBER));
+    assertTrue(ControllerCapturePolicy.shouldCaptureForEditor(true, InputType.TYPE_CLASS_PHONE));
+  }
+
+  @Test
   public void hiddenKeyboardNeverCapturesController() {
     assertFalse(
         ControllerCapturePolicy.shouldCaptureForEditor(false, InputType.TYPE_CLASS_TEXT));
