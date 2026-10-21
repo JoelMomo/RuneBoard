@@ -1326,14 +1326,23 @@ public final class RuneKeyboardView extends View {
     removeCallbacks(touchRepeatRunnable);
   }
 
-  @Override
-  protected void onDetachedFromWindow() {
+  /**
+   * Ends any press, repeat, swipe or variant popup in progress. Hiding the IME window does not
+   * detach this view, so the service calls this too; otherwise that state would reappear the next
+   * time the keyboard is shown.
+   */
+  public void cancelTransientInput() {
     cancelTouchRepeat();
     clearSpacebarCursor();
     clearPendingTouchVariant();
     cancelControllerVariantPending();
     dismissVariantPopup();
     axisNavigationPolicy.reset();
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    cancelTransientInput();
     super.onDetachedFromWindow();
   }
 

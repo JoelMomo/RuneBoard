@@ -16,6 +16,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import io.github.joelmomo.runeboard.controller.ControllerCapturePolicy;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.controller.ControllerPressTracker;
 import io.github.joelmomo.runeboard.editor.EditorActionResolver;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.editor.EditorInputPolicy;
@@ -44,6 +45,7 @@ public final class RuneBoardImeService extends InputMethodService
   private static volatile RuneBoardImeService activeInstance;
 
   private final SelectionController selectionController = new SelectionController();
+  private final ControllerPressTracker pressTracker = new ControllerPressTracker();
 
   private RuneKeyboardView keyboardView;
   private RunePreferences preferences;
@@ -81,11 +83,19 @@ public final class RuneBoardImeService extends InputMethodService
     }
   }
 
-  public boolean isControllerCaptureAvailable() {
-    return keyboardView != null && isInputViewShown();
+  /** Whether the accessibility service should take this key before the focused app sees it. */
+  public boolean shouldCaptureGlobalControllerKey(int keyCode) {
+    return isGlobalControllerCaptureAllowed() && shouldCaptureControllerKey(keyCode);
   }
 
-  public boolean isGlobalControllerCaptureAllowed() {
+  private boolean isControllerCaptureAvailable() {
+    EditorInfo info = getCurrentInputEditorInfo();
+    int inputType = info != null ? info.inputType : InputType.TYPE_NULL;
+    return keyboardView != null
+        && ControllerCapturePolicy.shouldCaptureForEditor(isInputViewShown(), inputType);
+  }
+
+  private boolean isGlobalControllerCaptureAllowed() {
     EditorInfo info = getCurrentInputEditorInfo();
     boolean testPreviewEditor =
         info != null
@@ -93,8 +103,8 @@ public final class RuneBoardImeService extends InputMethodService
     return ControllerCapturePolicy.shouldCaptureGlobally(testPreviewEditor);
   }
 
-  public boolean shouldCaptureControllerKey(int keyCode) {
-    return keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode);
+  private boolean shouldCaptureControllerKey(int keyCode) {
+    return isControllerCaptureAvailable() && keyboardView.shouldCaptureKeyCode(keyCode);
   }
 
   public boolean handleControllerKey(int keyCode) {
@@ -174,6 +184,9 @@ public final class RuneBoardImeService extends InputMethodService
   public void onStartInput(EditorInfo info, boolean restarting) {
     super.onStartInput(info, restarting);
     setExtractViewShown(false);
+    if (!restarting) {
+      pressTracker.clear();
+    }
 
     if (info == null || info.inputType == InputType.TYPE_NULL) {
       return;
@@ -230,6 +243,7 @@ public final class RuneBoardImeService extends InputMethodService
     selectionController.reset();
     clearSuggestions();
     if (keyboardView != null) {
+      keyboardView.cancelTransientInput();
       keyboardView.resetShiftMode();
     }
     super.onFinishInputView(finishingInput);
@@ -250,30 +264,40 @@ public final class RuneBoardImeService extends InputMethodService
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyboardView != null && keyboardView.shouldSuppressSyntheticDpad(event)) {
+    // The focused app forwards its key events to the IME even while the keyboard is hidden
+    // (games with a TYPE_NULL surface do this), so new presses are only taken while RuneBoard
+    // is on screen.
+    int repeatCount = event.getRepeatCount();
+    if (isControllerCaptureAvailable() && keyboardView.shouldSuppressSyntheticDpad(event)) {
+      pressTracker.claimDown(keyCode, repeatCount, true);
       if (debugLogging) {
         Log.d(TAG, "suppressedSyntheticDpad keyCode=" + keyCode);
       }
       return true;
     }
 
-    if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
-      return keyboardView.handleControllerKeyDown(keyCode, event.getRepeatCount());
+    boolean captureActive = shouldCaptureControllerKey(keyCode);
+    if (!pressTracker.claimDown(keyCode, repeatCount, captureActive)) {
+      return super.onKeyDown(keyCode, event);
     }
-    return super.onKeyDown(keyCode, event);
+    // A held press keeps its repeats after the keyboard hides, but they no longer type.
+    return !captureActive || keyboardView.handleControllerKeyDown(keyCode, repeatCount);
   }
 
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
-    if (keyboardView != null && keyboardView.shouldCaptureKeyCode(keyCode)) {
-      return keyboardView.handleControllerKeyUp(keyCode);
+    if (!pressTracker.claimUp(keyCode)) {
+      return super.onKeyUp(keyCode, event);
     }
-    return super.onKeyUp(keyCode, event);
+    if (keyboardView != null) {
+      keyboardView.handleControllerKeyUp(keyCode);
+    }
+    return true;
   }
 
   @Override
   public boolean onGenericMotionEvent(MotionEvent event) {
-    if (keyboardView != null && keyboardView.handleMotionEvent(event)) {
+    if (isControllerCaptureAvailable() && keyboardView.handleMotionEvent(event)) {
       return true;
     }
     return super.onGenericMotionEvent(event);
