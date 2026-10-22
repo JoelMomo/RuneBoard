@@ -59,6 +59,8 @@
     <string name="theme_oled_subtitle">Pure black</string>
     <string name="theme_transparent_title">Transparent</string>
     <string name="theme_transparent_subtitle">See the app below</string>
+    <string name="theme_fosforo_title" translatable="false">Fósforo</string>
+    <string name="theme_fosforo_subtitle">Neon on a dark terminal, to match otium</string>
     <string name="theme_custom_title">Custom</string>
     <string name="theme_custom_subtitle">Your colors and geometry</string>
     <string name="custom_theme_title">Custom style</string>

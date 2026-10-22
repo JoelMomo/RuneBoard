@@ -57,6 +57,7 @@
     <string name="theme_oled_subtitle">Negro puro</string>
     <string name="theme_transparent_title">Transparente</string>
     <string name="theme_transparent_subtitle">Deja ver la app inferior</string>
+    <string name="theme_fosforo_subtitle">Neón sobre un terminal oscuro, a juego con otium</string>
     <string name="theme_custom_title">Personalizado</string>
     <string name="theme_custom_subtitle">Tus colores y geometría</string>
     <string name="custom_theme_title">Estilo personalizado</string>

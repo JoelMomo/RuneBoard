@@ -2,6 +2,9 @@ package io.github.joelmomo.runeboard;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -11,6 +14,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.media.AudioManager;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
@@ -28,6 +32,7 @@ import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyFeedbackPolicy;
+import io.github.joelmomo.runeboard.keyboard.KeyPressDepth;
 import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyVariants;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
@@ -77,6 +82,9 @@ public final class RuneKeyboardView extends View {
 
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final KeyPressDepth pressDepth = new KeyPressDepth();
+  private final RectF pressedKeyBounds = new RectF();
   private final List<HitTarget> hitTargets = new ArrayList<>();
   private final List<SuggestionTarget> suggestionTargets = new ArrayList<>();
   private final List<String> suggestions = new ArrayList<>();
@@ -97,6 +105,8 @@ public final class RuneKeyboardView extends View {
   private EditorActionSpec editorAction = EditorActionSpec.enter();
   private Listener listener;
   private LinearGradient backgroundGradient;
+  private BitmapShader backgroundDotShader;
+  private int pressedControllerKeyCode = KeyEvent.KEYCODE_UNKNOWN;
   private boolean suggestionsRecommended;
   private final Runnable touchRepeatRunnable;
   private final Runnable touchVariantRunnable;
@@ -276,6 +286,8 @@ public final class RuneKeyboardView extends View {
     touchVariantRunnable = this::showTouchVariants;
     controllerVariantRunnable = this::showControllerVariants;
     longPressTimeoutMs = ViewConfiguration.getLongPressTimeout();
+    glowPaint.setStyle(Paint.Style.FILL);
+    glowPaint.setMaskFilter(new BlurMaskFilter(dp(10), BlurMaskFilter.Blur.NORMAL));
     setFocusable(true);
     setFocusableInTouchMode(true);
   }
@@ -356,6 +368,7 @@ public final class RuneKeyboardView extends View {
             theme.backgroundTop,
             theme.backgroundBottom,
             Shader.TileMode.CLAMP);
+    backgroundDotShader = theme.backgroundDot == 0 ? null : createDotShader(theme.backgroundDot);
     rebuildGeometry(width, height);
   }
 
@@ -431,6 +444,7 @@ public final class RuneKeyboardView extends View {
 
     drawHeader(canvas);
 
+    long now = SystemClock.uptimeMillis();
     for (HitTarget target : hitTargets) {
       KeyboardKey key = state.getLayout().getKey(target.row, target.col);
       drawKey(
@@ -438,11 +452,16 @@ public final class RuneKeyboardView extends View {
           target.bounds,
           key,
           target.row,
-          target.row == state.getSelectedRow() && target.col == state.getSelectedCol());
+          target.row == state.getSelectedRow() && target.col == state.getSelectedCol(),
+          pressDepth.depthOf(target.row, target.col, now));
     }
 
     if (variantPopupVisible) {
       drawVariantPopup(canvas);
+    }
+
+    if (pressDepth.isAnimating(now)) {
+      postInvalidateOnAnimation();
     }
   }
 
@@ -450,8 +469,25 @@ public final class RuneKeyboardView extends View {
     backgroundPaint.setShader(backgroundGradient);
     backgroundPaint.setAlpha(alpha);
     canvas.drawRect(0f, 0f, getWidth(), getHeight(), backgroundPaint);
+    if (backgroundDotShader != null) {
+      backgroundPaint.setShader(backgroundDotShader);
+      canvas.drawRect(0f, 0f, getWidth(), getHeight(), backgroundPaint);
+    }
     backgroundPaint.setShader(null);
     backgroundPaint.setAlpha(255);
+  }
+
+  /** One tile with a small dot, repeated: the whole matrix is a single draw call. */
+  private BitmapShader createDotShader(int color) {
+    int step = Math.max(8, dp(21));
+    int size = Math.max(2, dp(0.9f));
+    Bitmap tile = Bitmap.createBitmap(step, step, Bitmap.Config.ARGB_8888);
+    for (int x = 0; x < size; x++) {
+      for (int y = 0; y < size; y++) {
+        tile.setPixel(x, y, color);
+      }
+    }
+    return new BitmapShader(tile, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
   }
 
   private void drawHeader(Canvas canvas) {
@@ -606,7 +642,16 @@ public final class RuneKeyboardView extends View {
     return value.substring(0, Math.min(keep, value.length())) + "...";
   }
 
-  private void drawKey(Canvas canvas, RectF rect, KeyboardKey key, int row, boolean selected) {
+  private void drawKey(
+      Canvas canvas, RectF rect, KeyboardKey key, int row, boolean selected, float depth) {
+    if (depth > 0f) {
+      // A pressed key sinks: it shrinks a little, drops and darkens, then springs back.
+      float inset = dp(1.5f) * depth;
+      pressedKeyBounds.set(rect);
+      pressedKeyBounds.inset(inset, inset);
+      pressedKeyBounds.offset(0f, dp(2f) * depth);
+      rect = pressedKeyBounds;
+    }
     KeyboardState state = engine.getState();
     boolean primaryTyping =
         key.getType() == KeyboardKey.Type.TEXT || key.getType() == KeyboardKey.Type.SPACE;
@@ -626,6 +671,12 @@ public final class RuneKeyboardView extends View {
     }
 
     if (selected) {
+      if (theme.selectedGlow) {
+        glowPaint.setColor(theme.selectedFill);
+        glowPaint.setAlpha(Math.round(170 * (1f - 0.5f * depth)));
+        canvas.drawRoundRect(rect, dp(theme.keyRadiusDp), dp(theme.keyRadiusDp), glowPaint);
+      }
+
       paint.setStyle(Paint.Style.STROKE);
       paint.setStrokeWidth(dp(3));
       paint.setColor(theme.selectedStroke);
@@ -640,7 +691,7 @@ public final class RuneKeyboardView extends View {
           paint);
 
       paint.setStyle(Paint.Style.FILL);
-      paint.setColor(theme.selectedFill);
+      paint.setColor(pressShade(theme.selectedFill, depth));
       paint.setAlpha(245);
       canvas.drawRoundRect(rect, dp(theme.keyRadiusDp), dp(theme.keyRadiusDp), paint);
 
@@ -658,11 +709,14 @@ public final class RuneKeyboardView extends View {
           paint);
     } else {
       paint.setStyle(Paint.Style.FILL);
-      paint.setColor(fill);
+      paint.setColor(pressShade(fill, depth));
       paint.setAlpha(alpha);
       canvas.drawRoundRect(rect, dp(theme.keyRadiusDp), dp(theme.keyRadiusDp), paint);
 
-      if (primaryTyping) {
+      int outline = primaryTyping ? theme.keyOutline : theme.utilityKeyOutline;
+      if (outline != 0) {
+        drawNeonOutline(canvas, rect, outline, commandRow ? 0.6f : 1f);
+      } else if (primaryTyping) {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(dp(1));
         paint.setColor(theme.textSecondary);
@@ -702,6 +756,32 @@ public final class RuneKeyboardView extends View {
     paint.setAlpha(255);
 
     drawControllerHint(canvas, rect, key, row, selected);
+  }
+
+  /** Phosphor bloom without a blur: a wide faint stroke under the sharp one. */
+  private void drawNeonOutline(Canvas canvas, RectF rect, int color, float strength) {
+    float radius = dp(theme.keyRadiusDp);
+    paint.setStyle(Paint.Style.STROKE);
+    paint.setColor(color);
+    paint.setStrokeWidth(dp(4));
+    paint.setAlpha(Math.round(0x30 * strength));
+    canvas.drawRoundRect(rect, radius, radius, paint);
+    paint.setStrokeWidth(Math.max(1, dp(1.5f)));
+    paint.setAlpha(Math.round(200 * strength));
+    canvas.drawRoundRect(rect, radius, radius, paint);
+    paint.setAlpha(255);
+  }
+
+  private static int pressShade(int color, float depth) {
+    if (depth <= 0f) {
+      return color;
+    }
+    float keep = 1f - 0.25f * depth;
+    return Color.argb(
+        Color.alpha(color),
+        Math.round(Color.red(color) * keep),
+        Math.round(Color.green(color) * keep),
+        Math.round(Color.blue(color) * keep));
   }
 
   private void drawControllerHint(
@@ -1148,6 +1228,7 @@ public final class RuneKeyboardView extends View {
     int action = event.getActionMasked();
 
     if (action == MotionEvent.ACTION_CANCEL) {
+      releasePressedKey();
       cancelTouchRepeat();
       clearSpacebarCursor();
       clearPendingTouchVariant();
@@ -1158,6 +1239,7 @@ public final class RuneKeyboardView extends View {
     }
 
     if (action == MotionEvent.ACTION_UP) {
+      releasePressedKey();
       cancelTouchRepeat();
       if (pendingSpacebarTarget != null) {
         updateSpacebarCursor(event.getX());
@@ -1263,6 +1345,7 @@ public final class RuneKeyboardView extends View {
 
     for (HitTarget target : hitTargets) {
       if (target.bounds.contains(event.getX(), event.getY())) {
+        pressKey(target.row, target.col, KeyEvent.KEYCODE_UNKNOWN);
         KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
         KeyboardKey selectedKey = engine.getState().getSelectedKey();
 
@@ -1338,6 +1421,62 @@ public final class RuneKeyboardView extends View {
     cancelControllerVariantPending();
     dismissVariantPopup();
     axisNavigationPolicy.reset();
+    pressDepth.clear();
+    pressedControllerKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+  }
+
+  private void pressKey(int row, int col, int controllerKeyCode) {
+    pressDepth.press(row, col, SystemClock.uptimeMillis());
+    pressedControllerKeyCode = controllerKeyCode;
+    invalidate();
+  }
+
+  private void releasePressedKey() {
+    pressDepth.release(SystemClock.uptimeMillis());
+    pressedControllerKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+    invalidate();
+  }
+
+  /** Sinks the on-screen key a controller button stands for, if it has one. */
+  private void pressKeyForController(int keyCode, ControllerAction action) {
+    KeyboardState state = engine.getState();
+    if (state.isMinimized()) {
+      return;
+    }
+    if (action == ControllerAction.PRESS_SELECTED || action == ControllerAction.PRESS_CENTER) {
+      pressKey(state.getSelectedRow(), state.getSelectedCol(), keyCode);
+      return;
+    }
+
+    KeyboardKey.Type type = keyTypeFor(action);
+    if (type == null) {
+      return;
+    }
+    KeyboardLayout layout = state.getLayout();
+    for (int row = 0; row < layout.getRowCount(); row++) {
+      KeyboardRow keys = layout.getRow(row);
+      for (int col = 0; col < keys.size(); col++) {
+        if (keys.getKey(col).getType() == type) {
+          pressKey(row, col, keyCode);
+          return;
+        }
+      }
+    }
+  }
+
+  private static KeyboardKey.Type keyTypeFor(ControllerAction action) {
+    switch (action) {
+      case BACKSPACE:
+        return KeyboardKey.Type.BACKSPACE;
+      case SPACE:
+        return KeyboardKey.Type.SPACE;
+      case SHIFT:
+        return KeyboardKey.Type.SHIFT;
+      case ENTER:
+        return KeyboardKey.Type.ENTER;
+      default:
+        return null;
+    }
   }
 
   @Override
@@ -1410,6 +1549,8 @@ public final class RuneKeyboardView extends View {
       return handleKeyCode(keyCode);
     }
 
+    pressKeyForController(keyCode, action);
+
     if ((action == ControllerAction.PRESS_SELECTED || action == ControllerAction.PRESS_CENTER)
         && !variantsForKey(engine.getState().getSelectedKey()).isEmpty()) {
       cancelControllerVariantPending();
@@ -1422,6 +1563,9 @@ public final class RuneKeyboardView extends View {
   }
 
   public boolean handleControllerKeyUp(int keyCode) {
+    if (pressedControllerKeyCode == keyCode) {
+      releasePressedKey();
+    }
     if (pendingControllerVariantKeyCode == keyCode) {
       boolean longPress = controllerLongPressTriggered;
       removeCallbacks(controllerVariantRunnable);

@@ -6,6 +6,13 @@ public final class RuneThemes {
     public static final String ID_OLED = "oled";
     public static final String ID_TRANSPARENT = "transparent";
     public static final String ID_CUSTOM = "custom";
+    public static final String ID_FOSFORO = "fosforo";
+
+    // Palette shared with otium's Fósforo shelf theme so both screens read as one terminal.
+    private static final int FOSFORO_PHOSPHOR = 0xFF7CFFB2;
+    private static final int FOSFORO_WHITE_HOT = 0xFFE8FFF4;
+    private static final int FOSFORO_FLOOR = 0xFF3A8FB7;
+    private static final int FOSFORO_DOT = 0xFF0F1A28;
 
     private RuneThemes() {
     }
@@ -76,6 +83,36 @@ public final class RuneThemes {
                 38f);
     }
 
+    /**
+     * Fósforo: a phosphor terminal on pure black with a sparse dot matrix. Keys are dark with neon
+     * outlines (green for typing, blue for utilities) and the selected key is lit solid with a glow.
+     */
+    public static KeyboardTheme fosforoTheme() {
+        return new KeyboardTheme(
+                ID_FOSFORO,
+                255,
+                0xFF000000,
+                0xFF000000,
+                darken(FOSFORO_PHOSPHOR, 0.12f),
+                darken(FOSFORO_FLOOR, 0.10f),
+                FOSFORO_PHOSPHOR,
+                FOSFORO_WHITE_HOT,
+                contentFor(FOSFORO_PHOSPHOR),
+                FOSFORO_PHOSPHOR,
+                0xFF7F96A8,
+                FOSFORO_PHOSPHOR,
+                240,
+                235,
+                10f,
+                6f,
+                2f,
+                38f,
+                FOSFORO_PHOSPHOR,
+                FOSFORO_FLOOR,
+                FOSFORO_DOT,
+                true);
+    }
+
     public static KeyboardTheme customTheme(CustomThemeConfig config) {
         CustomThemeConfig value =
                 config == null ? CustomThemeConfig.defaults() : config;
@@ -110,13 +147,17 @@ public final class RuneThemes {
         if (ID_CUSTOM.equals(id)) {
             return customTheme(CustomThemeConfig.defaults());
         }
+        if (ID_FOSFORO.equals(id)) {
+            return fosforoTheme();
+        }
         return defaultTheme();
     }
 
     public static String normalizeId(String id) {
         if (ID_OLED.equals(id)
                 || ID_TRANSPARENT.equals(id)
-                || ID_CUSTOM.equals(id)) {
+                || ID_CUSTOM.equals(id)
+                || ID_FOSFORO.equals(id)) {
             return id;
         }
         return ID_DEFAULT;

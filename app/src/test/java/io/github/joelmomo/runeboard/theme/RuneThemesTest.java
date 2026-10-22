@@ -1,6 +1,7 @@
 package io.github.joelmomo.runeboard.theme;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -64,6 +65,59 @@ public final class RuneThemesTest {
         assertSelectedContentReadable(RuneThemes.defaultTheme());
         assertSelectedContentReadable(RuneThemes.oledTheme());
         assertSelectedContentReadable(RuneThemes.transparentTheme());
+        assertSelectedContentReadable(RuneThemes.fosforoTheme());
+    }
+
+    @Test
+    public void fosforoIdIsRecognized() {
+        assertEquals(
+                RuneThemes.ID_FOSFORO,
+                RuneThemes.normalizeId(RuneThemes.ID_FOSFORO));
+        assertEquals(
+                RuneThemes.ID_FOSFORO,
+                RuneThemes.byId(RuneThemes.ID_FOSFORO).id);
+    }
+
+    @Test
+    public void fosforoSharesOtiumPhosphorTerminalLook() {
+        KeyboardTheme theme = RuneThemes.fosforoTheme();
+
+        assertEquals(0xFF000000, theme.backgroundTop);
+        assertEquals(0xFF000000, theme.backgroundBottom);
+        assertEquals(0xFF7CFFB2, theme.selectedFill);
+        assertEquals(0xFF7CFFB2, theme.accent);
+        assertEquals(0xFF7CFFB2, theme.keyOutline);
+        assertEquals(0xFF3A8FB7, theme.utilityKeyOutline);
+        assertEquals(0xFF0F1A28, theme.backgroundDot);
+        assertTrue(theme.selectedGlow);
+        assertEquals(255, theme.defaultBackgroundOpacity);
+        assertTrue(theme.keyRadiusDp <= 4f);
+    }
+
+    @Test
+    public void fosforoKeyLabelsStayReadableOnTheirKeys() {
+        KeyboardTheme theme = RuneThemes.fosforoTheme();
+
+        assertTrue(contrastRatio(theme.textPrimary, theme.keyFill) >= 4.5d);
+        assertTrue(contrastRatio(theme.textPrimary, theme.utilityKeyFill) >= 4.5d);
+        assertTrue(contrastRatio(theme.textSecondary, theme.utilityKeyFill) >= 4.5d);
+    }
+
+    @Test
+    public void earlierThemesKeepTheirSoftStyle() {
+        KeyboardTheme[] themes = {
+                RuneThemes.defaultTheme(),
+                RuneThemes.oledTheme(),
+                RuneThemes.transparentTheme(),
+                RuneThemes.customTheme(CustomThemeConfig.defaults())
+        };
+
+        for (KeyboardTheme theme : themes) {
+            assertEquals(theme.id, 0, theme.keyOutline);
+            assertEquals(theme.id, 0, theme.utilityKeyOutline);
+            assertEquals(theme.id, 0, theme.backgroundDot);
+            assertFalse(theme.id, theme.selectedGlow);
+        }
     }
 
     @Test

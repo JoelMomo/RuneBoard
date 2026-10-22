@@ -903,6 +903,9 @@ public final class MainActivity extends Activity {
     if (RuneThemes.ID_CUSTOM.equals(themeId)) {
       return getString(R.string.theme_custom_title);
     }
+    if (RuneThemes.ID_FOSFORO.equals(themeId)) {
+      return getString(R.string.theme_fosforo_title);
+    }
     return getString(R.string.theme_default_title);
   }
 
@@ -988,6 +991,12 @@ public final class MainActivity extends Activity {
               RuneThemes.transparentTheme(),
               R.string.theme_transparent_title,
               R.string.theme_transparent_subtitle);
+          addThemePickerOption(
+              root,
+              dialog,
+              RuneThemes.fosforoTheme(),
+              R.string.theme_fosforo_title,
+              R.string.theme_fosforo_subtitle);
           addThemePickerOption(
               root,
               dialog,
