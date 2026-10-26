@@ -65,7 +65,7 @@ There are no third-party runtime dependencies.
 
 ### Phone (MOBILE) profile
 
-RuneBoard can also run as an everyday keyboard on a single-screen Android phone. Settings → **INTERFACE** picks Automatic, AYN Thor or Phone; Automatic detects the Thor from the device itself, never from orientation or width. The phone profile uses a compact layout with an editing bar and four typing rows, a screen-relative height, a contextual Enter key and no controller hints, and it does not need the accessibility service. The Thor presentation is unchanged. See `docs/MOBILE_PROFILE.md`.
+RuneBoard can also run as an everyday keyboard on a single-screen Android phone. Settings → **INTERFACE** picks Automatic, AYN Thor or Phone; Automatic detects the Thor from the device itself, never from orientation or width. The phone profile uses a compact layout with an editing bar (replaced by suggestions while there are any) and four typing rows, a screen-relative height, a contextual Enter key and no controller hints or header, and it does not need the accessibility service. The Thor presentation is unchanged. See `docs/MOBILE_PROFILE.md`.
 
 ## Architecture
 

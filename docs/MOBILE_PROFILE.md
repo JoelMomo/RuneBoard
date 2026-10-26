@@ -22,11 +22,11 @@ A device with none of them resolves to MOBILE. If detection is wrong, pick AYN T
 
 | Area | THOR | MOBILE |
 |---|---|---|
-| Height | All the height Android offers the IME | 36 % of the screen in portrait (260–320 dp), 55 % in landscape (170–230 dp), plus the navigation-bar inset, never more than offered |
+| Height | All the height Android offers the IME | 31 % of the screen in portrait (220–280 dp), 48 % in landscape (140–190 dp), plus the navigation-bar inset, never more than offered |
 | Layout | Command row, number row, 3 letter rows, action row | Compact editing bar (COPY PASTE UNDO REDO EDIT; drag the space bar to move the cursor) + 3 letter rows + action row |
 | Numbers/symbols | Number row always visible; SYM page | `?123` page with digits, symbols and the language extras (¿ ¡ € …) |
 | Accents | Long press | Long press; Spanish keeps a dedicated Ñ key |
-| Header | Title, profile, controller names, BG %, suggestions from 48 % width | Language chip (tap = next language) and up to three full-width suggestions |
+| Header | Title, profile, controller names, BG %, suggestions from 48 % width | None. Up to three suggestions replace the editing bar while there are any; the language is chosen in Settings → TYPING |
 | Controller hints (A/B/X/Y…) | Shown on action keys | Hidden |
 | On-screen Enter | Always types a newline | Shows and runs the editor action (Send, Search, Go, Next, Done…), newline otherwise |
 | Opacity / minimize keys | In the command row | Not shown |
@@ -37,6 +37,10 @@ A device with none of them resolves to MOBILE. If detection is wrong, pick AYN T
 A game controller connected to a phone still navigates the keyboard while it is visible, through the same capture policy as the Thor: nothing is captured while the keyboard is hidden.
 
 ## Testing
+
+## Nothing Ndot typeface
+
+Settings → APPEARANCE → Typeface offers **Nothing Ndot** when the device ships `/system/fonts/Ndot-57.otf` (Nothing OS). The font is loaded from the system at runtime and is never bundled in the APK; on other devices the option is hidden and a stored choice falls back to the system font. It works on both profiles.
 
 Unit tests: `UiProfileResolverTest`, `KeyboardHeightPolicyTest`, `MobileLayoutTest`.
 
