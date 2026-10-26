@@ -137,6 +137,7 @@
     <string name="key_shift">SHIFT</string>
     <string name="key_symbols">SYM</string>
     <string name="key_letters">ABC</string>
+    <string name="key_symbols_mobile" translatable="false">\?123</string>
     <string name="key_edit">EDIT</string>
     <string name="key_caps">CAPS</string>
     <string name="key_space">SPACE</string>

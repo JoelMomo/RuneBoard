@@ -2,6 +2,7 @@ package io.github.joelmomo.runeboard;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.BlurMaskFilter;
@@ -29,6 +30,7 @@ import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.device.UiProfile;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyFeedbackPolicy;
@@ -36,6 +38,7 @@ import io.github.joelmomo.runeboard.keyboard.KeyPressDepth;
 import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyVariants;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
+import io.github.joelmomo.runeboard.keyboard.KeyboardHeightPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
@@ -53,6 +56,9 @@ import java.util.List;
 public final class RuneKeyboardView extends View {
 
   private static final String TAG = "RuneBoard";
+  private static final float MOBILE_OUTER_MARGIN_DP = 4f;
+  private static final float MOBILE_HEADER_HEIGHT_DP = 40f;
+  private static final float MOBILE_LANGUAGE_CHIP_DP = 48f;
 
   public interface Listener extends KeyboardEngine.Output {
     void onSuggestionSelected(String suggestion);
@@ -101,6 +107,9 @@ public final class RuneKeyboardView extends View {
   private final int keyTextColor;
   private final boolean hapticFeedbackEnabled;
   private final boolean soundFeedbackEnabled;
+  private final UiProfile uiProfile;
+  private final boolean mobile;
+  private int bottomInsetPx;
 
   private EditorActionSpec editorAction = EditorActionSpec.enter();
   private Listener listener;
@@ -183,8 +192,38 @@ public final class RuneKeyboardView extends View {
       int keyTextColor,
       boolean hapticFeedbackEnabled,
       boolean soundFeedbackEnabled) {
+    this(
+        context,
+        UiProfile.THOR,
+        profile,
+        theme,
+        initialOpacity,
+        controllerMapper,
+        keyboardTypeface,
+        keyTextColor,
+        hapticFeedbackEnabled,
+        soundFeedbackEnabled);
+  }
+
+  /**
+   * @param uiProfile THOR or MOBILE (already resolved, never AUTO); selects the layouts, the height
+   *     policy and the header presentation.
+   */
+  public RuneKeyboardView(
+      Context context,
+      UiProfile uiProfile,
+      KeyboardProfile profile,
+      KeyboardTheme theme,
+      int initialOpacity,
+      ControllerMapper controllerMapper,
+      Typeface keyboardTypeface,
+      int keyTextColor,
+      boolean hapticFeedbackEnabled,
+      boolean soundFeedbackEnabled) {
     super(context);
     debugLogging = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    mobile = uiProfile == UiProfile.MOBILE;
+    this.uiProfile = mobile ? UiProfile.MOBILE : UiProfile.THOR;
     this.profile = profile;
     this.theme = theme;
     this.controllerMapper = controllerMapper;
@@ -198,8 +237,8 @@ public final class RuneKeyboardView extends View {
 
     engine =
         new KeyboardEngine(
-            profile.layout,
-            profile.symbolLayout,
+            mobile ? profile.mobileLayout : profile.layout,
+            mobile ? profile.mobileSymbolLayout : profile.symbolLayout,
             KeyboardLayouts.editorLayout(),
             new KeyboardEngine.Output() {
               @Override
@@ -281,6 +320,9 @@ public final class RuneKeyboardView extends View {
             },
             initialOpacity,
             profile.locale);
+    // A phone's Enter key follows the editor (Send, Search, Next...); the Thor keeps its
+    // newline Enter and the contextual action on the controller binding.
+    engine.setContextualEnterKey(mobile);
 
     touchRepeatRunnable = this::repeatTouchKey;
     touchVariantRunnable = this::showTouchVariants;
@@ -350,7 +392,16 @@ public final class RuneKeyboardView extends View {
     int width = MeasureSpec.getSize(widthMeasureSpec);
     int availableHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-    int desiredHeight = engine.getState().isMinimized() ? dp(58) : availableHeight;
+    Configuration configuration = getResources().getConfiguration();
+    int desiredHeight =
+        KeyboardHeightPolicy.heightPx(
+            uiProfile,
+            engine.getState().isMinimized(),
+            availableHeight,
+            configuration.screenHeightDp,
+            configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+            bottomInsetPx,
+            getResources().getDisplayMetrics().density);
 
     setMeasuredDimension(
         resolveSize(width, widthMeasureSpec), resolveSize(desiredHeight, heightMeasureSpec));
@@ -382,18 +433,25 @@ public final class RuneKeyboardView extends View {
     }
 
     KeyboardLayout layout = state.getLayout();
-    float outer = dp(theme.outerMarginDp);
+    float outer = dp(outerMarginDp());
     float gap = dp(theme.keyGapDp);
-    float headerHeight = dp(theme.headerHeightDp);
-    languageTarget.set(
-        outer, outer, Math.min(width * 0.46f, outer + dp(285)), outer + headerHeight);
+    float headerHeight = dp(headerHeightDp());
+    if (mobile) {
+      languageTarget.set(outer, outer, outer + dp(MOBILE_LANGUAGE_CHIP_DP), outer + headerHeight);
+    } else {
+      languageTarget.set(
+          outer, outer, Math.min(width * 0.46f, outer + dp(285)), outer + headerHeight);
+    }
     float contentTop = outer + headerHeight + gap;
     float rowGaps = gap * (layout.getRowCount() - 1);
     // Keep the utility row at the top, then shift the typing block
     // downward by exactly the old bottom margin. This preserves key
     // heights while making the thumb row finish flush with the bottom.
     float typingBlockOffset = outer;
-    float availableHeight = Math.max(1f, height - contentTop - typingBlockOffset - rowGaps);
+    // Only MOBILE reserves the system navigation area; the Thor panel has always used it all.
+    float reservedBottom = mobile ? bottomInsetPx : 0f;
+    float availableHeight =
+        Math.max(1f, height - contentTop - typingBlockOffset - rowGaps - reservedBottom);
     float heightUnit = availableHeight / layout.getTotalHeightWeight();
 
     float top = contentTop;
@@ -422,6 +480,13 @@ public final class RuneKeyboardView extends View {
   @Override
   public WindowInsets onApplyWindowInsets(WindowInsets insets) {
     WindowInsets applied = super.onApplyWindowInsets(insets);
+    if (mobile) {
+      int bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+      if (bottom != bottomInsetPx) {
+        bottomInsetPx = bottom;
+        requestLayout();
+      }
+    }
     if (getWidth() > 0 && getHeight() > 0) {
       rebuildGeometry(getWidth(), getHeight());
       invalidate();
@@ -492,6 +557,10 @@ public final class RuneKeyboardView extends View {
 
   private void drawHeader(Canvas canvas) {
     suggestionTargets.clear();
+    if (mobile) {
+      drawMobileHeader(canvas);
+      return;
+    }
     KeyboardState state = engine.getState();
     float outer = dp(theme.outerMarginDp);
     float headerHeight = dp(theme.headerHeightDp);
@@ -566,6 +635,93 @@ public final class RuneKeyboardView extends View {
     float lineY = outer + headerHeight + dp(2);
     canvas.drawRect(outer, lineY, getWidth() - outer, lineY + dp(1), paint);
     paint.setAlpha(255);
+  }
+
+  /**
+   * Phone header: a language chip on the left (tap for the next language) and the suggestions
+   * across the rest of the width. No controller names or opacity readout.
+   */
+  private void drawMobileHeader(Canvas canvas) {
+    KeyboardState state = engine.getState();
+    float outer = dp(outerMarginDp());
+    float headerHeight = dp(headerHeightDp());
+    drawHeaderSurface(canvas, outer, headerHeight);
+
+    RectF chip = new RectF(languageTarget);
+    chip.inset(dp(4), dp(5));
+    paint.setStyle(Paint.Style.FILL);
+    paint.setColor(theme.accent);
+    paint.setAlpha(255);
+    canvas.drawRoundRect(chip, dp(8), dp(8), paint);
+
+    paint.setTypeface(keyboardTypefaceBold);
+    paint.setTextAlign(Paint.Align.CENTER);
+    paint.setTextSize(dp(12));
+    paint.setColor(theme.backgroundTop);
+    float chipBaseline = chip.centerY() - (paint.ascent() + paint.descent()) / 2f;
+    canvas.drawText(profile.shortLabel, chip.centerX(), chipBaseline, paint);
+
+    float left = languageTarget.right + dp(6);
+    float right = getWidth() - outer - dp(4);
+    if (!state.isEditing() && !suggestions.isEmpty()) {
+      drawMobileSuggestions(canvas, left, right, outer, headerHeight);
+      return;
+    }
+
+    paint.setTypeface(keyboardTypeface);
+    paint.setTextAlign(Paint.Align.LEFT);
+    paint.setTextSize(dp(12));
+    paint.setColor(theme.textSecondary);
+    String mode =
+        state.isEditing()
+            ? getContext().getString(R.string.key_edit)
+            : state.isSymbols() ? getContext().getString(R.string.key_symbols) : profile.layoutName;
+    String summary =
+        fitText(profile.displayName + " · " + mode, Math.max(1f, right - left - dp(6)));
+    float baseline = outer + headerHeight / 2f - (paint.ascent() + paint.descent()) / 2f;
+    canvas.drawText(summary, left + dp(6), baseline, paint);
+  }
+
+  private void drawMobileSuggestions(
+      Canvas canvas, float left, float right, float outer, float headerHeight) {
+    int count = Math.min(3, suggestions.size());
+    float gap = dp(4);
+    float width = (right - left - gap * (count - 1)) / count;
+    float top = outer + dp(4);
+    float bottom = outer + headerHeight - dp(4);
+
+    for (int index = 0; index < count; index++) {
+      float chipLeft = left + index * (width + gap);
+      RectF bounds = new RectF(chipLeft, top, chipLeft + width, bottom);
+      String suggestion = suggestions.get(index);
+      // Touch targets span the full header height even though the chip is drawn inset.
+      RectF touchBounds = new RectF(bounds.left, outer, bounds.right, outer + headerHeight);
+      suggestionTargets.add(new SuggestionTarget(touchBounds, suggestion));
+
+      boolean recommended = index == 0 && suggestionsRecommended;
+      paint.setStyle(Paint.Style.FILL);
+      paint.setColor(recommended ? theme.selectedFill : theme.utilityKeyFill);
+      paint.setAlpha(recommended ? 245 : 210);
+      canvas.drawRoundRect(bounds, dp(8), dp(8), paint);
+      paint.setAlpha(255);
+
+      paint.setStyle(Paint.Style.FILL);
+      paint.setTypeface(index == 0 ? keyboardTypefaceBold : keyboardTypeface);
+      paint.setTextAlign(Paint.Align.CENTER);
+      paint.setTextSize(dp(14));
+      paint.setColor(recommended ? theme.selectedContent : keyTextColor);
+      String fitted = fitText(suggestion, Math.max(1f, width - dp(10)));
+      float baseline = bounds.centerY() - (paint.ascent() + paint.descent()) / 2f;
+      canvas.drawText(fitted, bounds.centerX(), baseline, paint);
+    }
+  }
+
+  private float outerMarginDp() {
+    return mobile ? Math.min(theme.outerMarginDp, MOBILE_OUTER_MARGIN_DP) : theme.outerMarginDp;
+  }
+
+  private float headerHeightDp() {
+    return mobile ? MOBILE_HEADER_HEIGHT_DP : theme.headerHeightDp;
   }
 
   private void drawHeaderSurface(Canvas canvas, float outer, float headerHeight) {
@@ -737,7 +893,7 @@ public final class RuneKeyboardView extends View {
     if (key.getType() == KeyboardKey.Type.BACKSPACE) {
       textSize = dp(27);
     } else if (key.getType() == KeyboardKey.Type.ENTER) {
-      textSize = dp(22);
+      textSize = mobile && editorAction.performsEditorAction() ? dp(12) : dp(22);
     } else if (key.getType() == KeyboardKey.Type.SPACE) {
       textSize = dp(12);
     } else if (key.getType() != KeyboardKey.Type.TEXT) {
@@ -786,7 +942,7 @@ public final class RuneKeyboardView extends View {
 
   private void drawControllerHint(
       Canvas canvas, RectF rect, KeyboardKey key, int row, boolean selected) {
-    BindableAction action = bindableActionFor(key);
+    BindableAction action = mobile ? null : bindableActionFor(key);
     if (action == null) {
       return;
     }
@@ -842,6 +998,9 @@ public final class RuneKeyboardView extends View {
         return getContext()
             .getString(state.isCapsLocked() ? R.string.key_caps : R.string.key_shift);
       case MODE:
+        if (mobile && !state.isSymbols()) {
+          return getContext().getString(R.string.key_symbols_mobile);
+        }
         return getContext()
             .getString(state.isSymbols() ? R.string.key_letters : R.string.key_symbols);
       case EDIT:
@@ -853,13 +1012,36 @@ public final class RuneKeyboardView extends View {
       case BACKSPACE:
         return "⌫";
       case ENTER:
-        return "↵";
+        return mobile ? mobileEnterLabel() : "↵";
       case OPACITY:
         return getContext().getString(R.string.key_opacity, state.getOpacityPercent());
       case MINIMIZE:
         return getContext().getString(R.string.key_minimize);
       default:
         return "";
+    }
+  }
+
+  /** The phone Enter key names the action it will run, since it no longer always types. */
+  private String mobileEnterLabel() {
+    switch (editorAction.kind()) {
+      case GO:
+        return getContext().getString(R.string.key_go);
+      case SEARCH:
+        return getContext().getString(R.string.key_search);
+      case SEND:
+        return getContext().getString(R.string.key_send);
+      case NEXT:
+        return getContext().getString(R.string.key_next);
+      case DONE:
+        return getContext().getString(R.string.key_done);
+      case PREVIOUS:
+        return getContext().getString(R.string.key_previous);
+      case CUSTOM:
+        return editorAction.customLabel();
+      case ENTER:
+      default:
+        return "↵";
     }
   }
 
@@ -1086,7 +1268,7 @@ public final class RuneKeyboardView extends View {
     float left = variantSourceBounds.centerX() - total / 2f;
     left = Math.max(margin, Math.min(left, getWidth() - margin - total));
 
-    float headerBottom = dp(theme.outerMarginDp + theme.headerHeightDp + 8f);
+    float headerBottom = dp(outerMarginDp() + headerHeightDp() + 8f);
     float top = variantSourceBounds.top - height - dp(8);
     if (top < headerBottom) {
       top = variantSourceBounds.bottom + dp(8);
