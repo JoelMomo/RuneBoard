@@ -13,6 +13,8 @@ public final class KeyboardProfile {
     public final String shortLabel;
     public final KeyboardLayout layout;
     public final KeyboardLayout symbolLayout;
+    public final KeyboardLayout mobileLayout;
+    public final KeyboardLayout mobileSymbolLayout;
     public final Locale locale;
 
     public KeyboardProfile(
@@ -22,7 +24,9 @@ public final class KeyboardProfile {
             String layoutName,
             String shortLabel,
             KeyboardLayout layout,
-            KeyboardLayout symbolLayout) {
+            KeyboardLayout symbolLayout,
+            KeyboardLayout mobileLayout,
+            KeyboardLayout mobileSymbolLayout) {
         this.id = id;
         this.localeTag = localeTag;
         this.displayName = displayName;
@@ -30,6 +34,8 @@ public final class KeyboardProfile {
         this.shortLabel = shortLabel;
         this.layout = layout;
         this.symbolLayout = symbolLayout;
+        this.mobileLayout = mobileLayout;
+        this.mobileSymbolLayout = mobileSymbolLayout;
         this.locale = Locale.forLanguageTag(localeTag);
     }
 }
