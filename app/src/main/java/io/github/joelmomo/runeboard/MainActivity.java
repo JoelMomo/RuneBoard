@@ -53,6 +53,8 @@ public final class MainActivity extends Activity {
   private static final int COLOR_TEXT = 0xFFF8F8FC;
   private static final int COLOR_MUTED = 0xFF9FA0B4;
   private static final int COLOR_ACCENT = 0xFFA78BFA;
+  /** R 201, G 62, B 9: a warm red-orange offered as accent and key-text color. */
+  private static final int COLOR_EMBER = 0xFFC93E09;
 
   private final Map<Integer, TextView> customAccentChips = new LinkedHashMap<>();
   private final Map<Integer, TextView> customKeyChips = new LinkedHashMap<>();
@@ -1099,6 +1101,9 @@ public final class MainActivity extends Activity {
     if (color == 0xFFF9A8D4) {
       return getString(R.string.color_pink);
     }
+    if (color == COLOR_EMBER) {
+      return getString(R.string.color_ember);
+    }
     return getString(R.string.color_custom);
   }
 
@@ -1319,6 +1324,7 @@ public final class MainActivity extends Activity {
           addColorPickerOption(root, dialog, 0xFF86EFAC, R.string.color_green, false);
           addColorPickerOption(root, dialog, 0xFFFDE68A, R.string.color_amber, false);
           addColorPickerOption(root, dialog, 0xFFF9A8D4, R.string.color_pink, false);
+          addColorPickerOption(root, dialog, COLOR_EMBER, R.string.color_ember, false);
         });
   }
 
@@ -1543,6 +1549,13 @@ public final class MainActivity extends Activity {
         R.string.custom_color_pink,
         false,
         () -> applyCustomAccent(0xFFF472B6));
+    addCustomColorChip(
+        accentRow,
+        customAccentChips,
+        COLOR_EMBER,
+        R.string.custom_color_ember,
+        false,
+        () -> applyCustomAccent(COLOR_EMBER));
     panel.addView(accentRow, matchWidth());
 
     addCustomLabel(panel, R.string.custom_keys);

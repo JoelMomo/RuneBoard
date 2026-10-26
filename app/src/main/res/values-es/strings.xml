@@ -93,6 +93,7 @@
     <string name="color_green">Verde</string>
     <string name="color_amber">Ámbar</string>
     <string name="color_pink">Rosa</string>
+    <string name="color_ember">Brasa</string>
     <string name="color_custom">Personalizado</string>
 
     <string name="custom_color_purple">Morado</string>
@@ -100,6 +101,7 @@
     <string name="custom_color_green">Verde</string>
     <string name="custom_color_amber">Ámbar</string>
     <string name="custom_color_pink">Rosa</string>
+    <string name="custom_color_ember">Brasa</string>
     <string name="custom_key_graphite">Grafito</string>
     <string name="custom_key_black">Negro</string>
     <string name="custom_key_navy">Azul marino</string>

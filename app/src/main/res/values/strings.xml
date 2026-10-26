@@ -102,6 +102,7 @@
     <string name="color_green">Green</string>
     <string name="color_amber">Amber</string>
     <string name="color_pink">Pink</string>
+    <string name="color_ember">Ember</string>
     <string name="color_custom">Custom</string>
 
     <string name="custom_color_purple">Purple</string>
@@ -109,6 +110,7 @@
     <string name="custom_color_green">Green</string>
     <string name="custom_color_amber">Amber</string>
     <string name="custom_color_pink">Pink</string>
+    <string name="custom_color_ember">Ember</string>
     <string name="custom_key_graphite">Graphite</string>
     <string name="custom_key_black">Black</string>
     <string name="custom_key_navy">Navy</string>
