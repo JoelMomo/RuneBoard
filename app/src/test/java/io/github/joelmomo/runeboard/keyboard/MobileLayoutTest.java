@@ -55,6 +55,10 @@ public final class MobileLayoutTest {
     assertTrue(barTypes.contains(KeyboardKey.Type.EDIT));
     assertFalse(barTypes.contains(KeyboardKey.Type.OPACITY));
     assertFalse(barTypes.contains(KeyboardKey.Type.MINIMIZE));
+    // The space bar drag moves the cursor, so the bar leaves room for wider keys.
+    assertFalse(commands.contains(EditorCommand.CURSOR_LEFT));
+    assertFalse(commands.contains(EditorCommand.CURSOR_RIGHT));
+    assertEquals(5, bar.size());
   }
 
   @Test

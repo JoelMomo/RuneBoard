@@ -272,11 +272,10 @@ public final class KeyboardLayouts {
     }
 
     // No opacity or minimize on a phone: the keyboard covers its own
-    // area and the system back gesture already dismisses it.
+    // area and the system back gesture already dismisses it. No cursor
+    // arrows either: dragging along the space bar moves the cursor.
     private static List<KeyboardKey> mobileToolbarKeys() {
         return List.of(
-                command(EditorCommand.CURSOR_LEFT, "←", 1f),
-                command(EditorCommand.CURSOR_RIGHT, "→", 1f),
                 command(EditorCommand.COPY, "COPY", 1f),
                 command(EditorCommand.PASTE, "PASTE", 1f),
                 command(EditorCommand.UNDO, "UNDO", 1f),

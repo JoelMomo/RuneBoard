@@ -23,7 +23,7 @@ A device with none of them resolves to MOBILE. If detection is wrong, pick AYN T
 | Area | THOR | MOBILE |
 |---|---|---|
 | Height | All the height Android offers the IME | 36 % of the screen in portrait (260–320 dp), 55 % in landscape (170–230 dp), plus the navigation-bar inset, never more than offered |
-| Layout | Command row, number row, 3 letter rows, action row | Compact editing bar (← → COPY PASTE UNDO REDO EDIT) + 3 letter rows + action row |
+| Layout | Command row, number row, 3 letter rows, action row | Compact editing bar (COPY PASTE UNDO REDO EDIT; drag the space bar to move the cursor) + 3 letter rows + action row |
 | Numbers/symbols | Number row always visible; SYM page | `?123` page with digits, symbols and the language extras (¿ ¡ € …) |
 | Accents | Long press | Long press; Spanish keeps a dedicated Ñ key |
 | Header | Title, profile, controller names, BG %, suggestions from 48 % width | Language chip (tap = next language) and up to three full-width suggestions |
