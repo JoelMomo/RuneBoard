@@ -12,6 +12,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -980,7 +981,12 @@ public final class MainActivity extends Activity {
     TextView value = text("", 11.5f, COLOR_ACCENT, true);
     value.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
     value.setMaxLines(1);
-    row.addView(value, new LinearLayout.LayoutParams(dp(220), dp(44)));
+    // Sized to its text (capped) so the title keeps its width on a phone; a fixed 220 dp left
+    // the title about 0 dp wide there and every row collapsed into an empty block.
+    value.setMaxWidth(dp(160));
+    value.setEllipsize(TextUtils.TruncateAt.END);
+    row.addView(
+        value, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, dp(44)));
 
     LinearLayout.LayoutParams rowParams = matchWidth();
     rowParams.setMarginStart(dp(6));
