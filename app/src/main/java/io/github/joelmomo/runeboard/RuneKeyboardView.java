@@ -57,8 +57,6 @@ public final class RuneKeyboardView extends View {
 
   private static final String TAG = "RuneBoard";
   private static final float MOBILE_OUTER_MARGIN_DP = 4f;
-  private static final float MOBILE_HEADER_HEIGHT_DP = 40f;
-  private static final float MOBILE_LANGUAGE_CHIP_DP = 48f;
 
   public interface Listener extends KeyboardEngine.Output {
     void onSuggestionSelected(String suggestion);
@@ -437,13 +435,15 @@ public final class RuneKeyboardView extends View {
     float outer = dp(outerMarginDp());
     float gap = dp(theme.keyGapDp);
     float headerHeight = dp(headerHeightDp());
+    float contentTop;
     if (mobile) {
-      languageTarget.set(outer, outer, outer + dp(MOBILE_LANGUAGE_CHIP_DP), outer + headerHeight);
+      // No header on a phone: the editing bar is the top row and suggestions take its place.
+      contentTop = outer;
     } else {
       languageTarget.set(
           outer, outer, Math.min(width * 0.46f, outer + dp(285)), outer + headerHeight);
+      contentTop = outer + headerHeight + gap;
     }
-    float contentTop = outer + headerHeight + gap;
     float rowGaps = gap * (layout.getRowCount() - 1);
     // Keep the utility row at the top, then shift the typing block
     // downward by exactly the old bottom margin. This preserves key
@@ -525,8 +525,15 @@ public final class RuneKeyboardView extends View {
 
     drawHeader(canvas);
 
+    // On a phone, suggestions are drawn over the editing bar while there are any.
+    boolean suggestionBar = mobile && !state.isEditing() && !suggestions.isEmpty();
+    RectF bar = new RectF();
     long now = SystemClock.uptimeMillis();
     for (HitTarget target : hitTargets) {
+      if (suggestionBar && target.row == 0) {
+        bar.union(target.bounds);
+        continue;
+      }
       KeyboardKey key = state.getLayout().getKey(target.row, target.col);
       drawKey(
           canvas,
@@ -535,6 +542,10 @@ public final class RuneKeyboardView extends View {
           target.row,
           target.row == state.getSelectedRow() && target.col == state.getSelectedCol(),
           pressDepth.depthOf(target.row, target.col, now));
+    }
+
+    if (suggestionBar && !bar.isEmpty()) {
+      drawMobileSuggestions(canvas, bar);
     }
 
     if (variantPopupVisible) {
@@ -574,7 +585,6 @@ public final class RuneKeyboardView extends View {
   private void drawHeader(Canvas canvas) {
     suggestionTargets.clear();
     if (mobile) {
-      drawMobileHeader(canvas);
       return;
     }
     KeyboardState state = engine.getState();
@@ -653,72 +663,23 @@ public final class RuneKeyboardView extends View {
     paint.setAlpha(255);
   }
 
-  /**
-   * Phone header: a language chip on the left (tap for the next language) and the suggestions
-   * across the rest of the width. No controller names or opacity readout.
-   */
-  private void drawMobileHeader(Canvas canvas) {
-    KeyboardState state = engine.getState();
-    float outer = dp(outerMarginDp());
-    float headerHeight = dp(headerHeightDp());
-    drawHeaderSurface(canvas, outer, headerHeight);
-
-    RectF chip = new RectF(languageTarget);
-    chip.inset(dp(4), dp(5));
-    paint.setStyle(Paint.Style.FILL);
-    paint.setColor(theme.accent);
-    paint.setAlpha(255);
-    canvas.drawRoundRect(chip, dp(8), dp(8), paint);
-
-    paint.setTypeface(keyboardTypefaceBold);
-    paint.setTextAlign(Paint.Align.CENTER);
-    paint.setTextSize(dp(12));
-    paint.setColor(theme.backgroundTop);
-    float chipBaseline = chip.centerY() - (paint.ascent() + paint.descent()) / 2f;
-    canvas.drawText(profile.shortLabel, chip.centerX(), chipBaseline, paint);
-
-    float left = languageTarget.right + dp(6);
-    float right = getWidth() - outer - dp(4);
-    if (!state.isEditing() && !suggestions.isEmpty()) {
-      drawMobileSuggestions(canvas, left, right, outer, headerHeight);
-      return;
-    }
-
-    paint.setTypeface(keyboardTypeface);
-    paint.setTextAlign(Paint.Align.LEFT);
-    paint.setTextSize(dp(12));
-    paint.setColor(theme.textSecondary);
-    String mode =
-        state.isEditing()
-            ? getContext().getString(R.string.key_edit)
-            : state.isSymbols() ? getContext().getString(R.string.key_symbols) : profile.layoutName;
-    String summary =
-        fitText(profile.displayName + " · " + mode, Math.max(1f, right - left - dp(6)));
-    float baseline = outer + headerHeight / 2f - (paint.ascent() + paint.descent()) / 2f;
-    canvas.drawText(summary, left + dp(6), baseline, paint);
-  }
-
-  private void drawMobileSuggestions(
-      Canvas canvas, float left, float right, float outer, float headerHeight) {
+  /** Up to three suggestion chips laid over the phone editing bar. */
+  private void drawMobileSuggestions(Canvas canvas, RectF bar) {
     int count = Math.min(3, suggestions.size());
-    float gap = dp(4);
-    float width = (right - left - gap * (count - 1)) / count;
-    float top = outer + dp(4);
-    float bottom = outer + headerHeight - dp(4);
+    float gap = dp(theme.keyGapDp);
+    float width = (bar.width() - gap * (count - 1)) / count;
 
     for (int index = 0; index < count; index++) {
-      float chipLeft = left + index * (width + gap);
-      RectF bounds = new RectF(chipLeft, top, chipLeft + width, bottom);
+      float chipLeft = bar.left + index * (width + gap);
+      RectF bounds = new RectF(chipLeft, bar.top, chipLeft + width, bar.bottom);
       String suggestion = suggestions.get(index);
-      // Touch targets span the full header height even though the chip is drawn inset.
-      RectF touchBounds = new RectF(bounds.left, outer, bounds.right, outer + headerHeight);
-      suggestionTargets.add(new SuggestionTarget(touchBounds, suggestion));
+      suggestionTargets.add(new SuggestionTarget(bounds, suggestion));
 
       boolean recommended = index == 0 && suggestionsRecommended;
       paint.setStyle(Paint.Style.FILL);
       paint.setColor(recommended ? theme.selectedFill : theme.utilityKeyFill);
       paint.setAlpha(recommended ? 245 : 210);
-      canvas.drawRoundRect(bounds, dp(8), dp(8), paint);
+      canvas.drawRoundRect(bounds, dp(theme.keyRadiusDp), dp(theme.keyRadiusDp), paint);
       paint.setAlpha(255);
 
       paint.setStyle(Paint.Style.FILL);
@@ -737,7 +698,7 @@ public final class RuneKeyboardView extends View {
   }
 
   private float headerHeightDp() {
-    return mobile ? MOBILE_HEADER_HEIGHT_DP : theme.headerHeightDp;
+    return mobile ? 0f : theme.headerHeightDp;
   }
 
   private void drawHeaderSurface(Canvas canvas, float outer, float headerHeight) {

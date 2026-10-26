@@ -40,24 +40,24 @@ public final class KeyboardHeightPolicyTest {
   @Test
   public void mobilePortraitTakesAShareOfTheScreenWithinBounds() {
     // Nothing Phone class screen: ~915 dp tall, so the share is capped at the maximum.
-    assertEquals(320f, KeyboardHeightPolicy.mobileKeyboardHeightDp(915, false), 0.01f);
+    assertEquals(280f, KeyboardHeightPolicy.mobileKeyboardHeightDp(915, false), 0.01f);
     // Small phone: the share drops below the minimum, which keeps keys usable.
-    assertEquals(260f, KeyboardHeightPolicy.mobileKeyboardHeightDp(640, false), 0.01f);
-    assertEquals(288f, KeyboardHeightPolicy.mobileKeyboardHeightDp(800, false), 0.01f);
+    assertEquals(220f, KeyboardHeightPolicy.mobileKeyboardHeightDp(640, false), 0.01f);
+    assertEquals(248f, KeyboardHeightPolicy.mobileKeyboardHeightDp(800, false), 0.01f);
   }
 
   @Test
   public void mobileLandscapeIsShorterThanPortrait() {
     float landscape = KeyboardHeightPolicy.mobileKeyboardHeightDp(392, true);
-    assertEquals(392 * 0.55f, landscape, 0.01f);
+    assertEquals(392 * 0.48f, landscape, 0.01f);
     assertTrue(landscape < KeyboardHeightPolicy.mobileKeyboardHeightDp(915, false));
-    assertEquals(170f, KeyboardHeightPolicy.mobileKeyboardHeightDp(280, true), 0.01f);
-    assertEquals(230f, KeyboardHeightPolicy.mobileKeyboardHeightDp(600, true), 0.01f);
+    assertEquals(140f, KeyboardHeightPolicy.mobileKeyboardHeightDp(280, true), 0.01f);
+    assertEquals(190f, KeyboardHeightPolicy.mobileKeyboardHeightDp(600, true), 0.01f);
   }
 
   @Test
   public void mobileAddsBottomInsetAndNeverExceedsTheOfferedHeight() {
-    int keys = Math.round(320f * PHONE_DENSITY);
+    int keys = Math.round(280f * PHONE_DENSITY);
     assertEquals(
         keys + 63,
         KeyboardHeightPolicy.heightPx(
@@ -81,7 +81,7 @@ public final class KeyboardHeightPolicyTest {
 
   @Test
   public void unknownScreenHeightFallsBackToMinimum() {
-    assertEquals(260f, KeyboardHeightPolicy.mobileKeyboardHeightDp(0, false), 0.01f);
-    assertEquals(170f, KeyboardHeightPolicy.mobileKeyboardHeightDp(-1, true), 0.01f);
+    assertEquals(220f, KeyboardHeightPolicy.mobileKeyboardHeightDp(0, false), 0.01f);
+    assertEquals(140f, KeyboardHeightPolicy.mobileKeyboardHeightDp(-1, true), 0.01f);
   }
 }

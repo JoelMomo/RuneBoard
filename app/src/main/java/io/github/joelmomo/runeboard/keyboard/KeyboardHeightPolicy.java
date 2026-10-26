@@ -13,12 +13,12 @@ public final class KeyboardHeightPolicy {
 
   public static final float MINIMIZED_HEIGHT_DP = 58f;
 
-  static final float PORTRAIT_SCREEN_SHARE = 0.36f;
-  static final float PORTRAIT_MIN_DP = 260f;
-  static final float PORTRAIT_MAX_DP = 320f;
-  static final float LANDSCAPE_SCREEN_SHARE = 0.55f;
-  static final float LANDSCAPE_MIN_DP = 170f;
-  static final float LANDSCAPE_MAX_DP = 230f;
+  static final float PORTRAIT_SCREEN_SHARE = 0.31f;
+  static final float PORTRAIT_MIN_DP = 220f;
+  static final float PORTRAIT_MAX_DP = 280f;
+  static final float LANDSCAPE_SCREEN_SHARE = 0.48f;
+  static final float LANDSCAPE_MIN_DP = 140f;
+  static final float LANDSCAPE_MAX_DP = 190f;
 
   private KeyboardHeightPolicy() {}
 
