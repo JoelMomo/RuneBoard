@@ -109,7 +109,7 @@ public final class RuneKeyboardView extends View {
   private final boolean soundFeedbackEnabled;
   private final UiProfile uiProfile;
   private final boolean mobile;
-  private int bottomInsetPx;
+  private int measuredInsetPx;
 
   private EditorActionSpec editorAction = EditorActionSpec.enter();
   private Listener listener;
@@ -393,6 +393,7 @@ public final class RuneKeyboardView extends View {
     int availableHeight = MeasureSpec.getSize(heightMeasureSpec);
 
     Configuration configuration = getResources().getConfiguration();
+    measuredInsetPx = mobileBottomInsetPx();
     int desiredHeight =
         KeyboardHeightPolicy.heightPx(
             uiProfile,
@@ -400,7 +401,7 @@ public final class RuneKeyboardView extends View {
             availableHeight,
             configuration.screenHeightDp,
             configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
-            bottomInsetPx,
+            measuredInsetPx,
             getResources().getDisplayMetrics().density);
 
     setMeasuredDimension(
@@ -449,7 +450,7 @@ public final class RuneKeyboardView extends View {
     // heights while making the thumb row finish flush with the bottom.
     float typingBlockOffset = outer;
     // Only MOBILE reserves the system navigation area; the Thor panel has always used it all.
-    float reservedBottom = mobile ? bottomInsetPx : 0f;
+    float reservedBottom = mobileBottomInsetPx();
     float availableHeight =
         Math.max(1f, height - contentTop - typingBlockOffset - rowGaps - reservedBottom);
     float heightUnit = availableHeight / layout.getTotalHeightWeight();
@@ -480,18 +481,33 @@ public final class RuneKeyboardView extends View {
   @Override
   public WindowInsets onApplyWindowInsets(WindowInsets insets) {
     WindowInsets applied = super.onApplyWindowInsets(insets);
-    if (mobile) {
-      int bottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
-      if (bottom != bottomInsetPx) {
-        bottomInsetPx = bottom;
-        requestLayout();
-      }
+    if (mobile && getHeight() > 0 && measuredInsetPx != mobileBottomInsetPx()) {
+      // Insets can arrive after the first measure (e.g. a view recreated on language change);
+      // re-measure outside the current traversal so the reserved area is added to the height.
+      post(this::requestLayout);
     }
     if (getWidth() > 0 && getHeight() > 0) {
       rebuildGeometry(getWidth(), getHeight());
       invalidate();
     }
     return applied;
+  }
+
+  /**
+   * System area MOBILE keeps clear below its keys. In gesture navigation the IME draws its own
+   * back / switch-keyboard bar, which is taller than the gesture handle: tappableElement covers
+   * it, navigationBars only the handle. Always 0 for THOR.
+   */
+  private int mobileBottomInsetPx() {
+    if (!mobile) {
+      return 0;
+    }
+    WindowInsets insets = getRootWindowInsets();
+    if (insets == null) {
+      return 0;
+    }
+    return insets.getInsets(WindowInsets.Type.navigationBars() | WindowInsets.Type.tappableElement())
+        .bottom;
   }
 
   @Override
@@ -891,7 +907,8 @@ public final class RuneKeyboardView extends View {
 
     float textSize;
     if (key.getType() == KeyboardKey.Type.BACKSPACE) {
-      textSize = dp(27);
+      // Phone symbol rows are narrow enough that the Thor-sized glyph would be ellipsized.
+      textSize = mobile ? dp(22) : dp(27);
     } else if (key.getType() == KeyboardKey.Type.ENTER) {
       textSize = mobile && editorAction.performsEditorAction() ? dp(12) : dp(22);
     } else if (key.getType() == KeyboardKey.Type.SPACE) {
