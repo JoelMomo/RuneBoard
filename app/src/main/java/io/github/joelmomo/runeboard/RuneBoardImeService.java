@@ -17,6 +17,8 @@ import android.view.inputmethod.InputConnection;
 import io.github.joelmomo.runeboard.controller.ControllerCapturePolicy;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
 import io.github.joelmomo.runeboard.controller.ControllerPressTracker;
+import io.github.joelmomo.runeboard.device.DeviceUiProfiles;
+import io.github.joelmomo.runeboard.device.UiProfile;
 import io.github.joelmomo.runeboard.editor.EditorActionResolver;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.editor.EditorInputPolicy;
@@ -140,6 +142,7 @@ public final class RuneBoardImeService extends InputMethodService
     RuneKeyboardView view =
         new RuneKeyboardView(
             this,
+            resolveUiProfile(),
             profile,
             theme,
             initialOpacity,
@@ -154,6 +157,14 @@ public final class RuneBoardImeService extends InputMethodService
     view.setFocusableInTouchMode(true);
     view.requestFocus();
     return view;
+  }
+
+  /**
+   * Resolved on demand rather than once: AUTO also looks at which display the IME window is on,
+   * which is only known after Android has bound the IME to a display.
+   */
+  private UiProfile resolveUiProfile() {
+    return DeviceUiProfiles.resolve(this, preferences.getUiProfilePreference());
   }
 
   private void refreshAppearance() {
@@ -174,7 +185,12 @@ public final class RuneBoardImeService extends InputMethodService
 
   @Override
   public boolean onEvaluateInputViewShown() {
-    super.onEvaluateInputViewShown();
+    boolean systemDecision = super.onEvaluateInputViewShown();
+    if (resolveUiProfile() == UiProfile.MOBILE) {
+      // A phone follows Android's own rule, so a paired hardware keyboard can hide the
+      // on-screen one unless the user turned "show on-screen keyboard" on.
+      return systemDecision;
+    }
     // RuneBoard is intentionally a software IME even though the Thor
     // exposes physical controller/keyboard capabilities.
     return true;
@@ -189,6 +205,13 @@ public final class RuneBoardImeService extends InputMethodService
     }
 
     if (info == null || info.inputType == InputType.TYPE_NULL) {
+      return;
+    }
+
+    // The forced show below exists only for the Thor's secondary-display IME. A phone must let
+    // the app and the user decide when the keyboard appears, or it would pop back up over apps
+    // every time input restarts.
+    if (resolveUiProfile() != UiProfile.THOR) {
       return;
     }
 
