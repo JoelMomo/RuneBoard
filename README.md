@@ -63,6 +63,10 @@ Prototype 1 starts from the validated Prototype 0 foundation:
 
 There are no third-party runtime dependencies.
 
+### Phone (MOBILE) profile
+
+RuneBoard can also run as an everyday keyboard on a single-screen Android phone. Settings → **INTERFACE** picks Automatic, AYN Thor or Phone; Automatic detects the Thor from the device itself, never from orientation or width. The phone profile uses a compact layout with an editing bar and four typing rows, a screen-relative height, a contextual Enter key and no controller hints, and it does not need the accessibility service. The Thor presentation is unchanged. See `docs/MOBILE_PROFILE.md`.
+
 ## Architecture
 
 The product code is split into independent layers:
@@ -74,6 +78,7 @@ The product code is split into independent layers:
 - `editor/`: editor-action resolution and input-field policy;
 - `suggestion/`: word extraction, Android spell-check adapter and correction policy;
 - `settings/`: persistent user preferences;
+- `device/`: THOR/MOBILE interface profile and its conservative AUTO detection;
 - `RuneKeyboardView`: rendering, touch hit testing and motion-event adapter;
 - `RuneBoardImeService`: Android IME and `InputConnection` adapter;
 - `RuneBoardControlService`: physical-button filtering while RuneBoard is active.
