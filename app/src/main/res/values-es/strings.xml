@@ -15,6 +15,17 @@
     <string name="physical_controls_subtitle">Permite la cruceta y los botones del mando</string>
     <string name="setup_ready">LISTO</string>
     <string name="setup_required">CONFIGURAR</string>
+    <string name="setup_optional">OPCIONAL</string>
+    <string name="physical_controls_optional_subtitle">Opcional en un teléfono: solo hace falta para escribir con un mando</string>
+
+    <string name="section_interface">INTERFAZ</string>
+    <string name="section_interface_subtitle">Panel de doble pantalla de Thor o teclado de teléfono</string>
+    <string name="ui_profile_auto_title">Automático</string>
+    <string name="ui_profile_auto_subtitle">Detectado en este dispositivo: %1$s</string>
+    <string name="ui_profile_thor_title">AYN Thor</string>
+    <string name="ui_profile_thor_subtitle">Panel grande en la pantalla inferior con atajos de mando</string>
+    <string name="ui_profile_mobile_title">Teléfono</string>
+    <string name="ui_profile_mobile_subtitle">Teclado táctil compacto para una sola pantalla</string>
 
     <string name="section_language">ESCRITURA</string>
     <string name="section_language_subtitle">Idioma y distribución del teclado</string>

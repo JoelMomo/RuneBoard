@@ -16,6 +16,17 @@
     <string name="physical_controls_subtitle">Allow D-pad and controller buttons</string>
     <string name="setup_ready">READY</string>
     <string name="setup_required">SET UP</string>
+    <string name="setup_optional">OPTIONAL</string>
+    <string name="physical_controls_optional_subtitle">Optional on a phone: only needed to type with a game controller</string>
+
+    <string name="section_interface">INTERFACE</string>
+    <string name="section_interface_subtitle">Thor dual-screen panel or phone keyboard</string>
+    <string name="ui_profile_auto_title">Automatic</string>
+    <string name="ui_profile_auto_subtitle">Detected on this device: %1$s</string>
+    <string name="ui_profile_thor_title">AYN Thor</string>
+    <string name="ui_profile_thor_subtitle">Large lower-screen panel with controller shortcuts</string>
+    <string name="ui_profile_mobile_title">Phone</string>
+    <string name="ui_profile_mobile_subtitle">Compact touch keyboard for a single screen</string>
 
     <string name="section_language">TYPING</string>
     <string name="section_language_subtitle">Language and keyboard layout</string>

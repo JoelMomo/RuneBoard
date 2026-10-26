@@ -31,6 +31,8 @@ import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerCapturePolicy;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
+import io.github.joelmomo.runeboard.device.DeviceUiProfiles;
+import io.github.joelmomo.runeboard.device.UiProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.settings.RunePreferences;
@@ -59,6 +61,7 @@ public final class MainActivity extends Activity {
   private final Map<Integer, TextView> customGapChips = new LinkedHashMap<>();
   private final Map<String, LinearLayout> profileCards = new LinkedHashMap<>();
   private final Map<BindableAction, TextView> bindingChips = new LinkedHashMap<>();
+  private final Map<UiProfile, LinearLayout> uiProfileCards = new LinkedHashMap<>();
 
   private RunePreferences preferences;
   private BindableAction pendingBinding;
@@ -68,6 +71,8 @@ public final class MainActivity extends Activity {
   private TextView setupKeyboardChip;
   private TextView setupSelectedChip;
   private TextView setupControlsChip;
+  private TextView setupControlsSubtitle;
+  private TextView uiProfileAutoSubtitle;
   private Switch hapticSwitch;
   private Switch soundSwitch;
   private LinearLayout customThemePanel;
@@ -113,7 +118,9 @@ public final class MainActivity extends Activity {
     addHeader(root);
 
     boolean setupIncomplete =
-        !isRuneBoardEnabled() || !isRuneBoardSelected() || !arePhysicalControlsEnabled();
+        !isRuneBoardEnabled()
+            || !isRuneBoardSelected()
+            || (arePhysicalControlsRequired() && !arePhysicalControlsEnabled());
 
     addCollapsibleSection(
         root,
@@ -121,6 +128,13 @@ public final class MainActivity extends Activity {
         R.string.section_setup_subtitle,
         setupIncomplete,
         this::addSetupCards);
+
+    addCollapsibleSection(
+        root,
+        R.string.section_interface,
+        R.string.section_interface_subtitle,
+        false,
+        this::addUiProfileCards);
 
     addCollapsibleSection(
         root,
@@ -169,6 +183,7 @@ public final class MainActivity extends Activity {
     setContentView(scroll);
 
     refreshSetupControls();
+    refreshUiProfileControls();
     refreshLanguageControls();
     refreshFeedbackControls();
     refreshAppearanceControls();
@@ -180,6 +195,7 @@ public final class MainActivity extends Activity {
     super.onResume();
     if (preferences != null) {
       refreshSetupControls();
+      refreshUiProfileControls();
       refreshLanguageControls();
       refreshFeedbackControls();
       refreshAppearanceControls();
@@ -375,16 +391,17 @@ public final class MainActivity extends Activity {
           }
         });
 
-    addSetupCard(
-        root,
-        3,
-        R.string.physical_controls_title,
-        R.string.physical_controls_subtitle,
-        setupControlsChip,
-        v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+    setupControlsSubtitle =
+        addSetupCard(
+            root,
+            3,
+            R.string.physical_controls_title,
+            R.string.physical_controls_subtitle,
+            setupControlsChip,
+            v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
   }
 
-  private void addSetupCard(
+  private TextView addSetupCard(
       LinearLayout root,
       int step,
       int titleRes,
@@ -425,6 +442,7 @@ public final class MainActivity extends Activity {
     LinearLayout.LayoutParams params = matchWidth();
     params.bottomMargin = dp(8);
     root.addView(card, params);
+    return subtitle;
   }
 
   private TextView setupStatusChip() {
@@ -438,7 +456,115 @@ public final class MainActivity extends Activity {
   private void refreshSetupControls() {
     styleSetupStatus(setupKeyboardChip, isRuneBoardEnabled());
     styleSetupStatus(setupSelectedChip, isRuneBoardSelected());
-    styleSetupStatus(setupControlsChip, arePhysicalControlsEnabled());
+    boolean controlsRequired = arePhysicalControlsRequired();
+    boolean controlsEnabled = arePhysicalControlsEnabled();
+    if (controlsRequired || controlsEnabled) {
+      styleSetupStatus(setupControlsChip, controlsEnabled);
+    } else {
+      styleSetupOptional(setupControlsChip);
+    }
+    if (setupControlsSubtitle != null) {
+      setupControlsSubtitle.setText(
+          controlsRequired
+              ? R.string.physical_controls_subtitle
+              : R.string.physical_controls_optional_subtitle);
+    }
+  }
+
+  private void styleSetupOptional(TextView chip) {
+    if (chip == null) {
+      return;
+    }
+    chip.setText(R.string.setup_optional);
+    chip.setTextColor(COLOR_MUTED);
+    chip.setBackground(rounded(COLOR_SURFACE_ALT, COLOR_BORDER, 1, 99f));
+  }
+
+  /**
+   * The accessibility service only exists to read the Thor's physical buttons; a phone keyboard
+   * is fully usable by touch without it.
+   */
+  private boolean arePhysicalControlsRequired() {
+    return resolvedUiProfile() == UiProfile.THOR;
+  }
+
+  private UiProfile resolvedUiProfile() {
+    return DeviceUiProfiles.resolve(this, preferences.getUiProfilePreference());
+  }
+
+  private void addUiProfileCards(LinearLayout root) {
+    addUiProfileCard(
+        root, UiProfile.AUTO, R.string.ui_profile_auto_title, R.string.ui_profile_auto_subtitle);
+    addUiProfileCard(
+        root, UiProfile.THOR, R.string.ui_profile_thor_title, R.string.ui_profile_thor_subtitle);
+    addUiProfileCard(
+        root,
+        UiProfile.MOBILE,
+        R.string.ui_profile_mobile_title,
+        R.string.ui_profile_mobile_subtitle);
+  }
+
+  private void addUiProfileCard(
+      LinearLayout root, UiProfile profile, int titleRes, int subtitleRes) {
+    LinearLayout card = new LinearLayout(this);
+    card.setOrientation(LinearLayout.VERTICAL);
+    card.setPadding(dp(14), dp(12), dp(14), dp(12));
+    card.setClickable(true);
+    card.setFocusable(true);
+    card.setOnClickListener(
+        v -> {
+          preferences.setUiProfilePreference(profile);
+          refreshUiProfileControls();
+          refreshSetupControls();
+          RuneBoardImeService.requestAppearanceRefresh();
+        });
+
+    card.addView(text(getString(titleRes), 14f, COLOR_TEXT, true));
+
+    TextView subtitle = text("", 11f, COLOR_MUTED, false);
+    if (profile == UiProfile.AUTO) {
+      uiProfileAutoSubtitle = subtitle;
+    } else {
+      subtitle.setText(subtitleRes);
+    }
+    LinearLayout.LayoutParams subtitleParams = wrap();
+    subtitleParams.topMargin = dp(4);
+    card.addView(subtitle, subtitleParams);
+
+    LinearLayout.LayoutParams params = matchWidth();
+    params.bottomMargin = dp(8);
+    root.addView(card, params);
+    uiProfileCards.put(profile, card);
+  }
+
+  private void refreshUiProfileControls() {
+    if (preferences == null) {
+      return;
+    }
+
+    UiProfile selected = preferences.getUiProfilePreference();
+    for (Map.Entry<UiProfile, LinearLayout> entry : uiProfileCards.entrySet()) {
+      boolean active = entry.getKey() == selected;
+      entry
+          .getValue()
+          .setBackground(
+              rounded(
+                  active ? 0xFF201A2D : COLOR_SURFACE,
+                  active ? COLOR_ACCENT : COLOR_BORDER,
+                  active ? 2 : 1,
+                  12f));
+    }
+
+    if (uiProfileAutoSubtitle != null) {
+      UiProfile detected = DeviceUiProfiles.resolve(this, UiProfile.AUTO);
+      uiProfileAutoSubtitle.setText(
+          getString(
+              R.string.ui_profile_auto_subtitle,
+              getString(
+                  detected == UiProfile.MOBILE
+                      ? R.string.ui_profile_mobile_title
+                      : R.string.ui_profile_thor_title)));
+    }
   }
 
   private void styleSetupStatus(TextView chip, boolean ready) {
