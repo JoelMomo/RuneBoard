@@ -19,6 +19,13 @@ public final class KeyboardFontsTest {
     assertEquals(
         KeyboardFonts.ID_MEDIEVAL_SHARP,
         KeyboardFonts.normalizeId(KeyboardFonts.ID_MEDIEVAL_SHARP));
+    assertEquals(
+        KeyboardFonts.ID_NOTHING_NDOT, KeyboardFonts.normalizeId(KeyboardFonts.ID_NOTHING_NDOT));
+  }
+
+  @Test
+  public void nothingNdotIsReadFromTheSystemNotBundled() {
+    assertEquals("/system/fonts/Ndot-57.otf", KeyboardFonts.NOTHING_NDOT_PATH);
   }
 
   @Test

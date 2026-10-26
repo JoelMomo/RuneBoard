@@ -1051,6 +1051,9 @@ public final class MainActivity extends Activity {
     if (KeyboardFonts.ID_MEDIEVAL_SHARP.equals(fontId)) {
       return getString(R.string.font_medieval_sharp);
     }
+    if (KeyboardFonts.ID_NOTHING_NDOT.equals(fontId)) {
+      return getString(R.string.font_nothing_ndot);
+    }
     return getString(R.string.font_system);
   }
 
@@ -1237,6 +1240,10 @@ public final class MainActivity extends Activity {
               root, dialog, KeyboardFonts.ID_SPACE_GROTESK, R.string.font_space_grotesk);
           addFontPickerOption(
               root, dialog, KeyboardFonts.ID_MEDIEVAL_SHARP, R.string.font_medieval_sharp);
+          if (KeyboardFonts.isNothingNdotAvailable()) {
+            addFontPickerOption(
+                root, dialog, KeyboardFonts.ID_NOTHING_NDOT, R.string.font_nothing_ndot);
+          }
         });
   }
 

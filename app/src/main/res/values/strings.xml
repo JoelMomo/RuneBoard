@@ -94,6 +94,7 @@
     <string name="font_jetbrains_mono" translatable="false">JetBrains Mono</string>
     <string name="font_space_grotesk" translatable="false">Space Grotesk</string>
     <string name="font_medieval_sharp" translatable="false">MedievalSharp</string>
+    <string name="font_nothing_ndot" translatable="false">Nothing Ndot</string>
     <string name="color_theme">Theme</string>
     <string name="color_white">White</string>
     <string name="color_lavender">Lavender</string>
