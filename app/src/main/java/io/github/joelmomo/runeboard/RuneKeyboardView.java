@@ -920,11 +920,19 @@ public final class RuneKeyboardView extends View {
     }
     paint.setTextSize(textSize);
 
-    float baseline = rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
     String label = displayLabel(key);
     if (key.getType() != KeyboardKey.Type.TEXT) {
-      label = fitText(label, Math.max(1f, rect.width() - dp(10)));
+      float maxWidth = Math.max(1f, rect.width() - dp(mobile ? 4 : 10));
+      if (mobile) {
+        // Phone keys are narrow: shrink long labels (e.g. DESHACER) before ellipsizing them.
+        float labelWidth = paint.measureText(label);
+        if (labelWidth > maxWidth) {
+          paint.setTextSize(Math.max(dp(8), textSize * maxWidth / labelWidth));
+        }
+      }
+      label = fitText(label, maxWidth);
     }
+    float baseline = rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
     canvas.drawText(label, rect.centerX(), baseline, paint);
     paint.setAlpha(255);
 
