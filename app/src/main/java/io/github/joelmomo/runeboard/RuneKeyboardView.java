@@ -2,6 +2,7 @@ package io.github.joelmomo.runeboard;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.BlurMaskFilter;
@@ -29,6 +30,7 @@ import io.github.joelmomo.runeboard.controller.ControllerAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
 import io.github.joelmomo.runeboard.controller.ControllerKeyNames;
 import io.github.joelmomo.runeboard.controller.ControllerMapper;
+import io.github.joelmomo.runeboard.device.UiProfile;
 import io.github.joelmomo.runeboard.editor.EditorActionSpec;
 import io.github.joelmomo.runeboard.keyboard.EditorCommand;
 import io.github.joelmomo.runeboard.keyboard.KeyFeedbackPolicy;
@@ -36,12 +38,14 @@ import io.github.joelmomo.runeboard.keyboard.KeyPressDepth;
 import io.github.joelmomo.runeboard.keyboard.KeyRepeatPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyVariants;
 import io.github.joelmomo.runeboard.keyboard.KeyboardEngine;
+import io.github.joelmomo.runeboard.keyboard.KeyboardHeightPolicy;
 import io.github.joelmomo.runeboard.keyboard.KeyboardKey;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayout;
 import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.keyboard.KeyboardState;
 import io.github.joelmomo.runeboard.keyboard.SpacebarCursorPolicy;
+import io.github.joelmomo.runeboard.keyboard.TouchPointerPolicy;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
@@ -53,6 +57,7 @@ import java.util.List;
 public final class RuneKeyboardView extends View {
 
   private static final String TAG = "RuneBoard";
+  private static final float MOBILE_OUTER_MARGIN_DP = 4f;
 
   public interface Listener extends KeyboardEngine.Output {
     void onSuggestionSelected(String suggestion);
@@ -84,7 +89,9 @@ public final class RuneKeyboardView extends View {
   private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final KeyPressDepth pressDepth = new KeyPressDepth();
+  private final TouchPointerPolicy touchPointer = new TouchPointerPolicy();
   private final RectF pressedKeyBounds = new RectF();
+  private final RectF suggestionBarBounds = new RectF();
   private final List<HitTarget> hitTargets = new ArrayList<>();
   private final List<SuggestionTarget> suggestionTargets = new ArrayList<>();
   private final List<String> suggestions = new ArrayList<>();
@@ -101,6 +108,9 @@ public final class RuneKeyboardView extends View {
   private final int keyTextColor;
   private final boolean hapticFeedbackEnabled;
   private final boolean soundFeedbackEnabled;
+  private final UiProfile uiProfile;
+  private final boolean mobile;
+  private int measuredInsetPx;
 
   private EditorActionSpec editorAction = EditorActionSpec.enter();
   private Listener listener;
@@ -183,8 +193,38 @@ public final class RuneKeyboardView extends View {
       int keyTextColor,
       boolean hapticFeedbackEnabled,
       boolean soundFeedbackEnabled) {
+    this(
+        context,
+        UiProfile.THOR,
+        profile,
+        theme,
+        initialOpacity,
+        controllerMapper,
+        keyboardTypeface,
+        keyTextColor,
+        hapticFeedbackEnabled,
+        soundFeedbackEnabled);
+  }
+
+  /**
+   * @param uiProfile THOR or MOBILE (already resolved, never AUTO); selects the layouts, the height
+   *     policy and the header presentation.
+   */
+  public RuneKeyboardView(
+      Context context,
+      UiProfile uiProfile,
+      KeyboardProfile profile,
+      KeyboardTheme theme,
+      int initialOpacity,
+      ControllerMapper controllerMapper,
+      Typeface keyboardTypeface,
+      int keyTextColor,
+      boolean hapticFeedbackEnabled,
+      boolean soundFeedbackEnabled) {
     super(context);
     debugLogging = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    mobile = uiProfile == UiProfile.MOBILE;
+    this.uiProfile = mobile ? UiProfile.MOBILE : UiProfile.THOR;
     this.profile = profile;
     this.theme = theme;
     this.controllerMapper = controllerMapper;
@@ -198,8 +238,8 @@ public final class RuneKeyboardView extends View {
 
     engine =
         new KeyboardEngine(
-            profile.layout,
-            profile.symbolLayout,
+            mobile ? profile.mobileLayout : profile.layout,
+            mobile ? profile.mobileSymbolLayout : profile.symbolLayout,
             KeyboardLayouts.editorLayout(),
             new KeyboardEngine.Output() {
               @Override
@@ -281,6 +321,9 @@ public final class RuneKeyboardView extends View {
             },
             initialOpacity,
             profile.locale);
+    // A phone's Enter key follows the editor (Send, Search, Next...); the Thor keeps its
+    // newline Enter and the contextual action on the controller binding.
+    engine.setContextualEnterKey(mobile);
 
     touchRepeatRunnable = this::repeatTouchKey;
     touchVariantRunnable = this::showTouchVariants;
@@ -350,7 +393,17 @@ public final class RuneKeyboardView extends View {
     int width = MeasureSpec.getSize(widthMeasureSpec);
     int availableHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-    int desiredHeight = engine.getState().isMinimized() ? dp(58) : availableHeight;
+    Configuration configuration = getResources().getConfiguration();
+    measuredInsetPx = mobileBottomInsetPx();
+    int desiredHeight =
+        KeyboardHeightPolicy.heightPx(
+            uiProfile,
+            engine.getState().isMinimized(),
+            availableHeight,
+            configuration.screenHeightDp,
+            configuration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+            measuredInsetPx,
+            getResources().getDisplayMetrics().density);
 
     setMeasuredDimension(
         resolveSize(width, widthMeasureSpec), resolveSize(desiredHeight, heightMeasureSpec));
@@ -382,18 +435,27 @@ public final class RuneKeyboardView extends View {
     }
 
     KeyboardLayout layout = state.getLayout();
-    float outer = dp(theme.outerMarginDp);
+    float outer = dp(outerMarginDp());
     float gap = dp(theme.keyGapDp);
-    float headerHeight = dp(theme.headerHeightDp);
-    languageTarget.set(
-        outer, outer, Math.min(width * 0.46f, outer + dp(285)), outer + headerHeight);
-    float contentTop = outer + headerHeight + gap;
+    float headerHeight = dp(headerHeightDp());
+    float contentTop;
+    if (mobile) {
+      // No header on a phone: the editing bar is the top row and suggestions take its place.
+      contentTop = outer;
+    } else {
+      languageTarget.set(
+          outer, outer, Math.min(width * 0.46f, outer + dp(285)), outer + headerHeight);
+      contentTop = outer + headerHeight + gap;
+    }
     float rowGaps = gap * (layout.getRowCount() - 1);
     // Keep the utility row at the top, then shift the typing block
     // downward by exactly the old bottom margin. This preserves key
     // heights while making the thumb row finish flush with the bottom.
     float typingBlockOffset = outer;
-    float availableHeight = Math.max(1f, height - contentTop - typingBlockOffset - rowGaps);
+    // Only MOBILE reserves the system navigation area; the Thor panel has always used it all.
+    float reservedBottom = mobileBottomInsetPx();
+    float availableHeight =
+        Math.max(1f, height - contentTop - typingBlockOffset - rowGaps - reservedBottom);
     float heightUnit = availableHeight / layout.getTotalHeightWeight();
 
     float top = contentTop;
@@ -422,11 +484,33 @@ public final class RuneKeyboardView extends View {
   @Override
   public WindowInsets onApplyWindowInsets(WindowInsets insets) {
     WindowInsets applied = super.onApplyWindowInsets(insets);
+    if (mobile && getHeight() > 0 && measuredInsetPx != mobileBottomInsetPx()) {
+      // Insets can arrive after the first measure (e.g. a view recreated on language change);
+      // re-measure outside the current traversal so the reserved area is added to the height.
+      post(this::requestLayout);
+    }
     if (getWidth() > 0 && getHeight() > 0) {
       rebuildGeometry(getWidth(), getHeight());
       invalidate();
     }
     return applied;
+  }
+
+  /**
+   * System area MOBILE keeps clear below its keys. In gesture navigation the IME draws its own
+   * back / switch-keyboard bar, which is taller than the gesture handle: tappableElement covers
+   * it, navigationBars only the handle. Always 0 for THOR.
+   */
+  private int mobileBottomInsetPx() {
+    if (!mobile) {
+      return 0;
+    }
+    WindowInsets insets = getRootWindowInsets();
+    if (insets == null) {
+      return 0;
+    }
+    return insets.getInsets(WindowInsets.Type.navigationBars() | WindowInsets.Type.tappableElement())
+        .bottom;
   }
 
   @Override
@@ -444,8 +528,16 @@ public final class RuneKeyboardView extends View {
 
     drawHeader(canvas);
 
+    // On a phone, suggestions are drawn over the editing bar while there are any.
+    boolean suggestionBar = mobileSuggestionBarShown();
+    RectF bar = suggestionBarBounds;
+    bar.setEmpty();
     long now = SystemClock.uptimeMillis();
     for (HitTarget target : hitTargets) {
+      if (suggestionBar && target.row == 0) {
+        bar.union(target.bounds);
+        continue;
+      }
       KeyboardKey key = state.getLayout().getKey(target.row, target.col);
       drawKey(
           canvas,
@@ -454,6 +546,10 @@ public final class RuneKeyboardView extends View {
           target.row,
           target.row == state.getSelectedRow() && target.col == state.getSelectedCol(),
           pressDepth.depthOf(target.row, target.col, now));
+    }
+
+    if (suggestionBar && !bar.isEmpty()) {
+      drawMobileSuggestions(canvas, bar);
     }
 
     if (variantPopupVisible) {
@@ -492,6 +588,9 @@ public final class RuneKeyboardView extends View {
 
   private void drawHeader(Canvas canvas) {
     suggestionTargets.clear();
+    if (mobile) {
+      return;
+    }
     KeyboardState state = engine.getState();
     float outer = dp(theme.outerMarginDp);
     float headerHeight = dp(theme.headerHeightDp);
@@ -566,6 +665,44 @@ public final class RuneKeyboardView extends View {
     float lineY = outer + headerHeight + dp(2);
     canvas.drawRect(outer, lineY, getWidth() - outer, lineY + dp(1), paint);
     paint.setAlpha(255);
+  }
+
+  /** Up to three suggestion chips laid over the phone editing bar. */
+  private void drawMobileSuggestions(Canvas canvas, RectF bar) {
+    int count = Math.min(3, suggestions.size());
+    float gap = dp(theme.keyGapDp);
+    float width = (bar.width() - gap * (count - 1)) / count;
+
+    for (int index = 0; index < count; index++) {
+      float chipLeft = bar.left + index * (width + gap);
+      RectF bounds = new RectF(chipLeft, bar.top, chipLeft + width, bar.bottom);
+      String suggestion = suggestions.get(index);
+      suggestionTargets.add(new SuggestionTarget(bounds, suggestion));
+
+      boolean recommended = index == 0 && suggestionsRecommended;
+      paint.setStyle(Paint.Style.FILL);
+      paint.setColor(recommended ? theme.selectedFill : theme.utilityKeyFill);
+      paint.setAlpha(recommended ? 245 : 210);
+      canvas.drawRoundRect(bounds, dp(theme.keyRadiusDp), dp(theme.keyRadiusDp), paint);
+      paint.setAlpha(255);
+
+      paint.setStyle(Paint.Style.FILL);
+      paint.setTypeface(index == 0 ? keyboardTypefaceBold : keyboardTypeface);
+      paint.setTextAlign(Paint.Align.CENTER);
+      paint.setTextSize(dp(14));
+      paint.setColor(recommended ? theme.selectedContent : keyTextColor);
+      String fitted = fitText(suggestion, Math.max(1f, width - dp(10)));
+      float baseline = bounds.centerY() - (paint.ascent() + paint.descent()) / 2f;
+      canvas.drawText(fitted, bounds.centerX(), baseline, paint);
+    }
+  }
+
+  private float outerMarginDp() {
+    return mobile ? Math.min(theme.outerMarginDp, MOBILE_OUTER_MARGIN_DP) : theme.outerMarginDp;
+  }
+
+  private float headerHeightDp() {
+    return mobile ? 0f : theme.headerHeightDp;
   }
 
   private void drawHeaderSurface(Canvas canvas, float outer, float headerHeight) {
@@ -735,9 +872,10 @@ public final class RuneKeyboardView extends View {
 
     float textSize;
     if (key.getType() == KeyboardKey.Type.BACKSPACE) {
-      textSize = dp(27);
+      // Phone symbol rows are narrow enough that the Thor-sized glyph would be ellipsized.
+      textSize = mobile ? dp(22) : dp(27);
     } else if (key.getType() == KeyboardKey.Type.ENTER) {
-      textSize = dp(22);
+      textSize = mobile && editorAction.performsEditorAction() ? dp(12) : dp(22);
     } else if (key.getType() == KeyboardKey.Type.SPACE) {
       textSize = dp(12);
     } else if (key.getType() != KeyboardKey.Type.TEXT) {
@@ -747,11 +885,19 @@ public final class RuneKeyboardView extends View {
     }
     paint.setTextSize(textSize);
 
-    float baseline = rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
     String label = displayLabel(key);
     if (key.getType() != KeyboardKey.Type.TEXT) {
-      label = fitText(label, Math.max(1f, rect.width() - dp(10)));
+      float maxWidth = Math.max(1f, rect.width() - dp(mobile ? 4 : 10));
+      if (mobile) {
+        // Phone keys are narrow: shrink long labels (e.g. DESHACER) before ellipsizing them.
+        float labelWidth = paint.measureText(label);
+        if (labelWidth > maxWidth) {
+          paint.setTextSize(Math.max(dp(8), textSize * maxWidth / labelWidth));
+        }
+      }
+      label = fitText(label, maxWidth);
     }
+    float baseline = rect.centerY() - (paint.ascent() + paint.descent()) / 2f;
     canvas.drawText(label, rect.centerX(), baseline, paint);
     paint.setAlpha(255);
 
@@ -786,7 +932,7 @@ public final class RuneKeyboardView extends View {
 
   private void drawControllerHint(
       Canvas canvas, RectF rect, KeyboardKey key, int row, boolean selected) {
-    BindableAction action = bindableActionFor(key);
+    BindableAction action = mobile ? null : bindableActionFor(key);
     if (action == null) {
       return;
     }
@@ -842,6 +988,9 @@ public final class RuneKeyboardView extends View {
         return getContext()
             .getString(state.isCapsLocked() ? R.string.key_caps : R.string.key_shift);
       case MODE:
+        if (mobile && !state.isSymbols()) {
+          return getContext().getString(R.string.key_symbols_mobile);
+        }
         return getContext()
             .getString(state.isSymbols() ? R.string.key_letters : R.string.key_symbols);
       case EDIT:
@@ -853,13 +1002,36 @@ public final class RuneKeyboardView extends View {
       case BACKSPACE:
         return "⌫";
       case ENTER:
-        return "↵";
+        return mobile ? mobileEnterLabel() : "↵";
       case OPACITY:
         return getContext().getString(R.string.key_opacity, state.getOpacityPercent());
       case MINIMIZE:
         return getContext().getString(R.string.key_minimize);
       default:
         return "";
+    }
+  }
+
+  /** The phone Enter key names the action it will run, since it no longer always types. */
+  private String mobileEnterLabel() {
+    switch (editorAction.kind()) {
+      case GO:
+        return getContext().getString(R.string.key_go);
+      case SEARCH:
+        return getContext().getString(R.string.key_search);
+      case SEND:
+        return getContext().getString(R.string.key_send);
+      case NEXT:
+        return getContext().getString(R.string.key_next);
+      case DONE:
+        return getContext().getString(R.string.key_done);
+      case PREVIOUS:
+        return getContext().getString(R.string.key_previous);
+      case CUSTOM:
+        return editorAction.customLabel();
+      case ENTER:
+      default:
+        return "↵";
     }
   }
 
@@ -1086,7 +1258,7 @@ public final class RuneKeyboardView extends View {
     float left = variantSourceBounds.centerX() - total / 2f;
     left = Math.max(margin, Math.min(left, getWidth() - margin - total));
 
-    float headerBottom = dp(theme.outerMarginDp + theme.headerHeightDp + 8f);
+    float headerBottom = dp(outerMarginDp() + headerHeightDp() + 8f);
     float top = variantSourceBounds.top - height - dp(8);
     if (top < headerBottom) {
       top = variantSourceBounds.bottom + dp(8);
@@ -1225,154 +1397,230 @@ public final class RuneKeyboardView extends View {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    int action = event.getActionMasked();
-
-    if (action == MotionEvent.ACTION_CANCEL) {
-      releasePressedKey();
-      cancelTouchRepeat();
-      clearSpacebarCursor();
-      clearPendingTouchVariant();
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        dismissVariantPopup();
-      }
-      return true;
-    }
-
-    if (action == MotionEvent.ACTION_UP) {
-      releasePressedKey();
-      cancelTouchRepeat();
-      if (pendingSpacebarTarget != null) {
-        updateSpacebarCursor(event.getX());
-        HitTarget pending = pendingSpacebarTarget;
-        boolean cursorGesture = spacebarCursorActive;
+    switch (event.getActionMasked()) {
+      case MotionEvent.ACTION_CANCEL:
+        touchPointer.end();
+        releasePressedKey();
+        cancelTouchRepeat();
         clearSpacebarCursor();
-        if (!cursorGesture) {
-          RectF releaseBounds = new RectF(pending.bounds);
-          releaseBounds.inset(-dp(18), -dp(18));
-          if (releaseBounds.contains(event.getX(), event.getY())) {
-            KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
-            KeyboardKey selectedKey = engine.getState().getSelectedKey();
-            provideKeyFeedback(selectedKey);
-            KeyboardEngine.Update pressUpdate = engine.pressSelected();
-            applyUpdate(merge(selectionUpdate, pressUpdate));
-          }
+        clearPendingTouchVariant();
+        if (variantPopupVisible && !variantPopupControllerMode) {
+          dismissVariantPopup();
         }
         return true;
-      }
-
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX());
-        clearPendingTouchVariant();
-        commitActiveVariant();
+      case MotionEvent.ACTION_DOWN:
+      case MotionEvent.ACTION_POINTER_DOWN:
+        {
+          int index = event.getActionIndex();
+          int previous = touchPointer.begin(event.getPointerId(index));
+          int previousIndex = event.findPointerIndex(previous);
+          if (previousIndex >= 0) {
+            // Fast typing: this finger landed before the previous one lifted. Finish that key as
+            // a tap where its finger is now, so neither key is lost.
+            handleTouchUp(event.getX(previousIndex), event.getY(previousIndex));
+          }
+          requestFocus();
+          performClick();
+          handleTouchDown(event.getX(index), event.getY(index));
+          return true;
+        }
+      case MotionEvent.ACTION_MOVE:
+        {
+          int index = event.findPointerIndex(touchPointer.activePointerId());
+          if (index >= 0) {
+            handleTouchMove(event.getX(index), event.getY(index));
+          }
+          return true;
+        }
+      case MotionEvent.ACTION_UP:
+      case MotionEvent.ACTION_POINTER_UP:
+        {
+          int index = event.getActionIndex();
+          if (touchPointer.isActive(event.getPointerId(index))) {
+            touchPointer.end();
+            handleTouchUp(event.getX(index), event.getY(index));
+          }
+          return true;
+        }
+      default:
         return true;
-      }
+    }
+  }
 
-      HitTarget pending = pendingTouchVariantTarget;
-      if (pending != null) {
-        clearPendingTouchVariant();
+  private void handleTouchUp(float x, float y) {
+    releasePressedKey();
+    cancelTouchRepeat();
+    if (pendingSpacebarTarget != null) {
+      updateSpacebarCursor(x);
+      HitTarget pending = pendingSpacebarTarget;
+      boolean cursorGesture = spacebarCursorActive;
+      clearSpacebarCursor();
+      if (!cursorGesture) {
         RectF releaseBounds = new RectF(pending.bounds);
         releaseBounds.inset(-dp(18), -dp(18));
-        if (releaseBounds.contains(event.getX(), event.getY())) {
+        if (releaseBounds.contains(x, y)) {
           KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+          KeyboardKey selectedKey = engine.getState().getSelectedKey();
+          provideKeyFeedback(selectedKey);
           KeyboardEngine.Update pressUpdate = engine.pressSelected();
           applyUpdate(merge(selectionUpdate, pressUpdate));
         }
-        return true;
       }
-      return true;
+      return;
     }
 
-    if (action == MotionEvent.ACTION_MOVE) {
-      if (pendingSpacebarTarget != null) {
-        updateSpacebarCursor(event.getX());
-        return true;
-      }
-
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX());
-        return true;
-      }
-
-      if (pendingTouchVariantTarget != null) {
-        RectF holdBounds = new RectF(pendingTouchVariantTarget.bounds);
-        holdBounds.inset(-dp(18), -dp(18));
-        if (!holdBounds.contains(event.getX(), event.getY())) {
-          clearPendingTouchVariant();
-        }
-        return true;
-      }
-
-      if (touchRepeatActive && !touchRepeatBounds.contains(event.getX(), event.getY())) {
-        cancelTouchRepeat();
-      }
-      return true;
+    if (variantPopupVisible && !variantPopupControllerMode) {
+      updateTouchVariantSelection(x);
+      clearPendingTouchVariant();
+      commitActiveVariant();
+      return;
     }
 
-    if (action != MotionEvent.ACTION_DOWN) {
-      return true;
+    HitTarget pending = pendingTouchVariantTarget;
+    if (pending != null) {
+      clearPendingTouchVariant();
+      RectF releaseBounds = new RectF(pending.bounds);
+      releaseBounds.inset(-dp(18), -dp(18));
+      if (releaseBounds.contains(x, y)) {
+        KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+        KeyboardEngine.Update pressUpdate = engine.pressSelected();
+        applyUpdate(merge(selectionUpdate, pressUpdate));
+      }
+    }
+  }
+
+  private void handleTouchMove(float x, float y) {
+    if (pendingSpacebarTarget != null) {
+      updateSpacebarCursor(x);
+      return;
     }
 
+    if (variantPopupVisible && !variantPopupControllerMode) {
+      updateTouchVariantSelection(x);
+      return;
+    }
+
+    if (pendingTouchVariantTarget != null) {
+      RectF holdBounds = new RectF(pendingTouchVariantTarget.bounds);
+      holdBounds.inset(-dp(18), -dp(18));
+      if (!holdBounds.contains(x, y)) {
+        clearPendingTouchVariant();
+      }
+      return;
+    }
+
+    if (touchRepeatActive && !touchRepeatBounds.contains(x, y)) {
+      cancelTouchRepeat();
+    }
+  }
+
+  private void handleTouchDown(float x, float y) {
     cancelTouchRepeat();
     clearSpacebarCursor();
     clearPendingTouchVariant();
     if (variantPopupVisible) {
       dismissVariantPopup();
     }
-    requestFocus();
-    performClick();
 
     if (engine.getState().isMinimized()) {
       provideKeyFeedback(null);
       applyUpdate(engine.pressSelected());
-      return true;
+      return;
     }
 
-    for (SuggestionTarget target : suggestionTargets) {
-      if (target.bounds.contains(event.getX(), event.getY())) {
-        provideKeyFeedback(null);
-        if (listener != null) {
-          listener.onSuggestionSelected(target.suggestion);
-        }
-        return true;
+    SuggestionTarget suggestion = suggestionTargetAt(x, y);
+    if (suggestion != null) {
+      provideKeyFeedback(null);
+      if (listener != null) {
+        listener.onSuggestionSelected(suggestion.suggestion);
       }
+      return;
     }
 
-    if (languageTarget.contains(event.getX(), event.getY())) {
+    if (languageTarget.contains(x, y)) {
       provideActionFeedback(ControllerAction.LANGUAGE_NEXT);
       applyUpdate(engine.handle(ControllerAction.LANGUAGE_NEXT));
-      return true;
+      return;
     }
 
-    for (HitTarget target : hitTargets) {
-      if (target.bounds.contains(event.getX(), event.getY())) {
-        pressKey(target.row, target.col, KeyEvent.KEYCODE_UNKNOWN);
-        KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
-        KeyboardKey selectedKey = engine.getState().getSelectedKey();
+    HitTarget target = touchTargetAt(x, y);
+    if (target == null) {
+      return;
+    }
 
-        if (selectedKey.getType() == KeyboardKey.Type.SPACE) {
-          applyUpdate(selectionUpdate);
-          beginSpacebarCursor(target, event.getX());
-          return true;
-        }
+    pressKey(target.row, target.col, KeyEvent.KEYCODE_UNKNOWN);
+    KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
+    KeyboardKey selectedKey = engine.getState().getSelectedKey();
 
-        provideKeyFeedback(selectedKey);
+    if (selectedKey.getType() == KeyboardKey.Type.SPACE) {
+      applyUpdate(selectionUpdate);
+      beginSpacebarCursor(target, x);
+      return;
+    }
 
-        if (!variantsForKey(selectedKey).isEmpty()) {
-          applyUpdate(selectionUpdate);
-          beginTouchVariant(target);
-          return true;
-        }
+    provideKeyFeedback(selectedKey);
 
-        KeyboardEngine.Update pressUpdate = engine.pressSelected();
-        applyUpdate(merge(selectionUpdate, pressUpdate));
-        if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
-          startTouchRepeat(target);
-        }
-        return true;
+    if (!variantsForKey(selectedKey).isEmpty()) {
+      applyUpdate(selectionUpdate);
+      beginTouchVariant(target);
+      return;
+    }
+
+    KeyboardEngine.Update pressUpdate = engine.pressSelected();
+    applyUpdate(merge(selectionUpdate, pressUpdate));
+    if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
+      startTouchRepeat(target);
+    }
+  }
+
+  private boolean mobileSuggestionBarShown() {
+    return mobile && !engine.getState().isEditing() && !suggestions.isEmpty();
+  }
+
+  /**
+   * The suggestion under a touch. On a phone the suggestions cover the editing bar, so a touch in
+   * the gaps between them goes to the nearest one rather than to the hidden key underneath.
+   */
+  private SuggestionTarget suggestionTargetAt(float x, float y) {
+    SuggestionTarget nearest = null;
+    float nearestDistance = mobileSuggestionBarShown() ? dp(TouchPointerPolicy.GAP_SNAP_DP) : 0f;
+    for (SuggestionTarget target : suggestionTargets) {
+      RectF b = target.bounds;
+      if (b.contains(x, y)) {
+        return target;
+      }
+      float distance = TouchPointerPolicy.distanceToRect(x, y, b.left, b.top, b.right, b.bottom);
+      if (distance <= nearestDistance) {
+        nearestDistance = distance;
+        nearest = target;
       }
     }
+    return nearest;
+  }
 
-    return true;
+  /**
+   * The key under a touch. On a phone a touch in the gap between keys (or just past the edge)
+   * goes to the nearest key, as fast typing often lands there.
+   */
+  private HitTarget touchTargetAt(float x, float y) {
+    HitTarget nearest = null;
+    float nearestDistance = mobile ? dp(TouchPointerPolicy.GAP_SNAP_DP) : 0f;
+    boolean barHidden = mobileSuggestionBarShown();
+    for (HitTarget target : hitTargets) {
+      if (barHidden && target.row == 0) {
+        continue;
+      }
+      RectF b = target.bounds;
+      if (b.contains(x, y)) {
+        return target;
+      }
+      float distance = TouchPointerPolicy.distanceToRect(x, y, b.left, b.top, b.right, b.bottom);
+      if (distance <= nearestDistance) {
+        nearestDistance = distance;
+        nearest = target;
+      }
+    }
+    return mobile ? nearest : null;
   }
 
   private void startTouchRepeat(HitTarget target) {

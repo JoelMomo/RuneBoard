@@ -16,6 +16,8 @@ public final class KeyboardLayouts {
     private static final String RU_EXTRAS =
             "\u0451\u0401\u2116\u20bd\u20ac\u00ab\u00bb\u2014\u2026?";
 
+    static final float MOBILE_TOOLBAR_HEIGHT = 0.62f;
+
     private KeyboardLayouts() {
     }
 
@@ -77,6 +79,62 @@ public final class KeyboardLayouts {
 
     public static KeyboardLayout russianSymbols() {
         return symbolLayout(RU_EXTRAS);
+    }
+
+    // Phone layouts: a compact editing bar above four typing rows. The
+    // Thor layouts above stay exactly as they are; these are separate
+    // definitions picked by the MOBILE interface profile.
+
+    public static KeyboardLayout mobileEnglishQwerty() {
+        return mobileAlphabetLayout(
+                "QWERTYUIOP",
+                "ASDFGHJKL",
+                "ZXCVBNM",
+                0.5f,
+                0f);
+    }
+
+    public static KeyboardLayout mobileSpanishQwerty() {
+        return mobileAlphabetLayout(
+                "QWERTYUIOP",
+                "ASDFGHJKLÑ",
+                "ZXCVBNM",
+                0f,
+                0f);
+    }
+
+    public static KeyboardLayout mobileFrenchAzerty() {
+        return mobileAlphabetLayout(
+                "AZERTYUIOP",
+                "QSDFGHJKLM",
+                "WXCVBN",
+                0f,
+                1f);
+    }
+
+    public static KeyboardLayout mobileRussianJcuken() {
+        return mobileAlphabetLayout(
+                "ЙЦУКЕНГШЩЗХЪ",
+                "ФЫВАПРОЛДЖЭ",
+                "ЯЧСМИТЬБЮ",
+                0f,
+                0f);
+    }
+
+    public static KeyboardLayout mobileEnglishSymbols() {
+        return mobileSymbolLayout(EN_EXTRAS);
+    }
+
+    public static KeyboardLayout mobileSpanishSymbols() {
+        return mobileSymbolLayout(ES_EXTRAS);
+    }
+
+    public static KeyboardLayout mobileFrenchSymbols() {
+        return mobileSymbolLayout(FR_EXTRAS);
+    }
+
+    public static KeyboardLayout mobileRussianSymbols() {
+        return mobileSymbolLayout(RU_EXTRAS);
     }
 
     public static KeyboardLayout editorLayout() {
@@ -160,6 +218,69 @@ public final class KeyboardLayouts {
         rows.add(row(symbolBottomKeys(), 0f, 0f, 1f));
         rows.add(row(symbolActionKeys(), 0f, 0f, 0.72f));
         return new KeyboardLayout(rows);
+    }
+
+    private static KeyboardLayout mobileAlphabetLayout(
+            String top,
+            String middle,
+            String bottom,
+            float middleInset,
+            float bottomInset) {
+        List<KeyboardRow> rows = new ArrayList<>();
+        rows.add(row(mobileToolbarKeys(), 0f, 0f, MOBILE_TOOLBAR_HEIGHT));
+        rows.add(row(textKeys(top), 0f, 0f, 1f));
+        rows.add(row(textKeys(middle), middleInset, middleInset, 1f));
+        rows.add(row(mobileBottomKeys(textKeys(bottom)),
+                bottomInset, bottomInset, 1f));
+        rows.add(row(mobileActionKeys(), 0f, 0f, 1f));
+        return new KeyboardLayout(rows);
+    }
+
+    // Symbols need one more row than letters, so each one is a little
+    // shorter; the keyboard keeps the same total height.
+    private static KeyboardLayout mobileSymbolLayout(String extras) {
+        List<KeyboardRow> rows = new ArrayList<>();
+        rows.add(row(mobileToolbarKeys(), 0f, 0f, MOBILE_TOOLBAR_HEIGHT));
+        rows.add(row(literalKeys("1234567890"), 0f, 0f, 0.8f));
+        rows.add(row(literalKeys(COMMON_SYMBOLS_TOP), 0f, 0f, 0.8f));
+        rows.add(row(literalKeys(extras), 0f, 0f, 0.8f));
+        List<KeyboardKey> bottom = new ArrayList<>(
+                literalKeys(COMMON_SYMBOLS_BOTTOM));
+        bottom.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.3f));
+        rows.add(row(bottom, 0f, 0f, 0.8f));
+        rows.add(row(mobileActionKeys(), 0f, 0f, 1f));
+        return new KeyboardLayout(rows);
+    }
+
+    private static List<KeyboardKey> mobileBottomKeys(
+            List<KeyboardKey> letters) {
+        List<KeyboardKey> keys = new ArrayList<>();
+        keys.add(KeyboardKey.action(KeyboardKey.Type.SHIFT, 1.5f));
+        keys.addAll(letters);
+        keys.add(KeyboardKey.action(KeyboardKey.Type.BACKSPACE, 1.5f));
+        return keys;
+    }
+
+    private static List<KeyboardKey> mobileActionKeys() {
+        List<KeyboardKey> actions = new ArrayList<>();
+        actions.add(KeyboardKey.action(KeyboardKey.Type.MODE, 1.5f));
+        actions.add(KeyboardKey.text(",", 1f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.SPACE, 5f));
+        actions.add(KeyboardKey.text(".", 1f));
+        actions.add(KeyboardKey.action(KeyboardKey.Type.ENTER, 1.5f));
+        return actions;
+    }
+
+    // No opacity or minimize on a phone: the keyboard covers its own
+    // area and the system back gesture already dismisses it. No cursor
+    // arrows either: dragging along the space bar moves the cursor.
+    private static List<KeyboardKey> mobileToolbarKeys() {
+        return List.of(
+                command(EditorCommand.COPY, "COPY", 1f),
+                command(EditorCommand.PASTE, "PASTE", 1f),
+                command(EditorCommand.UNDO, "UNDO", 1f),
+                command(EditorCommand.REDO, "REDO", 1f),
+                KeyboardKey.action(KeyboardKey.Type.EDIT, 1f));
     }
 
     private static List<KeyboardKey> alphabetBottomKeys(

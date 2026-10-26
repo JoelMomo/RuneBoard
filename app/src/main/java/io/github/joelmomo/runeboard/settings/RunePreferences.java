@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import io.github.joelmomo.runeboard.controller.BindableAction;
 import io.github.joelmomo.runeboard.controller.ControllerBindings;
+import io.github.joelmomo.runeboard.device.UiProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
@@ -32,6 +33,7 @@ public final class RunePreferences {
   private static final String KEY_CUSTOM_RADIUS = "custom_key_radius";
   private static final String KEY_CUSTOM_GAP = "custom_key_gap";
   private static final String KEY_BINDING_PREFIX = "binding_";
+  private static final String KEY_UI_PROFILE = "ui_profile";
 
   private final SharedPreferences preferences;
 
@@ -56,6 +58,17 @@ public final class RunePreferences {
     KeyboardProfile next = KeyboardProfiles.next(getKeyboardProfileId());
     setKeyboardProfileId(next.id);
     return next;
+  }
+
+  /** The stored interface choice; AUTO unless the user picked Thor or Mobile in settings. */
+  public UiProfile getUiProfilePreference() {
+    return UiProfile.fromPreferenceValue(
+        preferences.getString(KEY_UI_PROFILE, UiProfile.AUTO.preferenceValue));
+  }
+
+  public void setUiProfilePreference(UiProfile profile) {
+    UiProfile value = profile == null ? UiProfile.AUTO : profile;
+    preferences.edit().putString(KEY_UI_PROFILE, value.preferenceValue).apply();
   }
 
   public KeyboardTheme getTheme() {

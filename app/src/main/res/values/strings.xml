@@ -16,6 +16,17 @@
     <string name="physical_controls_subtitle">Allow D-pad and controller buttons</string>
     <string name="setup_ready">READY</string>
     <string name="setup_required">SET UP</string>
+    <string name="setup_optional">OPTIONAL</string>
+    <string name="physical_controls_optional_subtitle">Optional on a phone: only needed to type with a game controller</string>
+
+    <string name="section_interface">INTERFACE</string>
+    <string name="section_interface_subtitle">Thor dual-screen panel or phone keyboard</string>
+    <string name="ui_profile_auto_title">Automatic</string>
+    <string name="ui_profile_auto_subtitle">Detected on this device: %1$s</string>
+    <string name="ui_profile_thor_title">AYN Thor</string>
+    <string name="ui_profile_thor_subtitle">Large lower-screen panel with controller shortcuts</string>
+    <string name="ui_profile_mobile_title">Phone</string>
+    <string name="ui_profile_mobile_subtitle">Compact touch keyboard for a single screen</string>
 
     <string name="section_language">TYPING</string>
     <string name="section_language_subtitle">Language and keyboard layout</string>
@@ -83,6 +94,7 @@
     <string name="font_jetbrains_mono" translatable="false">JetBrains Mono</string>
     <string name="font_space_grotesk" translatable="false">Space Grotesk</string>
     <string name="font_medieval_sharp" translatable="false">MedievalSharp</string>
+    <string name="font_nothing_ndot" translatable="false">Nothing Ndot</string>
     <string name="color_theme">Theme</string>
     <string name="color_white">White</string>
     <string name="color_lavender">Lavender</string>
@@ -90,6 +102,7 @@
     <string name="color_green">Green</string>
     <string name="color_amber">Amber</string>
     <string name="color_pink">Pink</string>
+    <string name="color_ember">Ember</string>
     <string name="color_custom">Custom</string>
 
     <string name="custom_color_purple">Purple</string>
@@ -97,6 +110,7 @@
     <string name="custom_color_green">Green</string>
     <string name="custom_color_amber">Amber</string>
     <string name="custom_color_pink">Pink</string>
+    <string name="custom_color_ember">Ember</string>
     <string name="custom_key_graphite">Graphite</string>
     <string name="custom_key_black">Black</string>
     <string name="custom_key_navy">Navy</string>
@@ -137,6 +151,7 @@
     <string name="key_shift">SHIFT</string>
     <string name="key_symbols">SYM</string>
     <string name="key_letters">ABC</string>
+    <string name="key_symbols_mobile" translatable="false">\?123</string>
     <string name="key_edit">EDIT</string>
     <string name="key_caps">CAPS</string>
     <string name="key_space">SPACE</string>

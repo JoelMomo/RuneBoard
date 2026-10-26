@@ -31,6 +31,7 @@ public final class KeyboardEngine {
     private final KeyboardState state;
     private final Output output;
     private final Locale locale;
+    private boolean contextualEnterKey;
 
     public KeyboardEngine(KeyboardLayout layout, Output output) {
         this(
@@ -98,6 +99,15 @@ public final class KeyboardEngine {
                 initialOpacity);
         this.output = output;
         this.locale = locale == null ? Locale.ROOT : locale;
+    }
+
+    /**
+     * When enabled, pressing the on-screen Enter key runs the editor's own
+     * action (Send, Search, Next...) like the controller ENTER binding does.
+     * Off by default so the Thor's Enter key keeps typing a newline.
+     */
+    public void setContextualEnterKey(boolean enabled) {
+        contextualEnterKey = enabled;
     }
 
     public KeyboardState getState() {
@@ -243,7 +253,11 @@ public final class KeyboardEngine {
                 output.onBackspace();
                 return Update.NONE;
             case ENTER:
-                output.onText("\n");
+                if (contextualEnterKey) {
+                    output.onEnter();
+                } else {
+                    output.onText("\n");
+                }
                 return Update.NONE;
             case OPACITY:
                 state.cycleOpacity();

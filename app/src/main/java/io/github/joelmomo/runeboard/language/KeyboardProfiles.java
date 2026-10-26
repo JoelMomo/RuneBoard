@@ -19,7 +19,9 @@ public final class KeyboardProfiles {
                     "QWERTY",
                     "EN",
                     KeyboardLayouts.englishQwerty(),
-                    KeyboardLayouts.englishSymbols()),
+                    KeyboardLayouts.englishSymbols(),
+                    KeyboardLayouts.mobileEnglishQwerty(),
+                    KeyboardLayouts.mobileEnglishSymbols()),
             new KeyboardProfile(
                     ID_ES_ES,
                     "es-ES",
@@ -27,7 +29,9 @@ public final class KeyboardProfiles {
                     "QWERTY",
                     "ES",
                     KeyboardLayouts.spanishQwerty(),
-                    KeyboardLayouts.spanishSymbols()),
+                    KeyboardLayouts.spanishSymbols(),
+                    KeyboardLayouts.mobileSpanishQwerty(),
+                    KeyboardLayouts.mobileSpanishSymbols()),
             new KeyboardProfile(
                     ID_FR_FR,
                     "fr-FR",
@@ -35,7 +39,9 @@ public final class KeyboardProfiles {
                     "AZERTY",
                     "FR",
                     KeyboardLayouts.frenchAzerty(),
-                    KeyboardLayouts.frenchSymbols()),
+                    KeyboardLayouts.frenchSymbols(),
+                    KeyboardLayouts.mobileFrenchAzerty(),
+                    KeyboardLayouts.mobileFrenchSymbols()),
             new KeyboardProfile(
                     ID_RU_RU,
                     "ru-RU",
@@ -43,7 +49,9 @@ public final class KeyboardProfiles {
                     "\u0419\u0426\u0423\u041a\u0415\u041d",
                     "RU",
                     KeyboardLayouts.russianJcuken(),
-                    KeyboardLayouts.russianSymbols()));
+                    KeyboardLayouts.russianSymbols(),
+                    KeyboardLayouts.mobileRussianJcuken(),
+                    KeyboardLayouts.mobileRussianSymbols()));
 
     private KeyboardProfiles() {
     }
