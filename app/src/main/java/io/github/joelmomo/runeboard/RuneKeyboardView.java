@@ -45,6 +45,7 @@ import io.github.joelmomo.runeboard.keyboard.KeyboardLayouts;
 import io.github.joelmomo.runeboard.keyboard.KeyboardRow;
 import io.github.joelmomo.runeboard.keyboard.KeyboardState;
 import io.github.joelmomo.runeboard.keyboard.SpacebarCursorPolicy;
+import io.github.joelmomo.runeboard.keyboard.TouchPointerPolicy;
 import io.github.joelmomo.runeboard.language.KeyboardProfile;
 import io.github.joelmomo.runeboard.language.KeyboardProfiles;
 import io.github.joelmomo.runeboard.theme.BackgroundOpacity;
@@ -88,7 +89,9 @@ public final class RuneKeyboardView extends View {
   private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final KeyPressDepth pressDepth = new KeyPressDepth();
+  private final TouchPointerPolicy touchPointer = new TouchPointerPolicy();
   private final RectF pressedKeyBounds = new RectF();
+  private final RectF suggestionBarBounds = new RectF();
   private final List<HitTarget> hitTargets = new ArrayList<>();
   private final List<SuggestionTarget> suggestionTargets = new ArrayList<>();
   private final List<String> suggestions = new ArrayList<>();
@@ -526,8 +529,9 @@ public final class RuneKeyboardView extends View {
     drawHeader(canvas);
 
     // On a phone, suggestions are drawn over the editing bar while there are any.
-    boolean suggestionBar = mobile && !state.isEditing() && !suggestions.isEmpty();
-    RectF bar = new RectF();
+    boolean suggestionBar = mobileSuggestionBarShown();
+    RectF bar = suggestionBarBounds;
+    bar.setEmpty();
     long now = SystemClock.uptimeMillis();
     for (HitTarget target : hitTargets) {
       if (suggestionBar && target.row == 0) {
@@ -1393,154 +1397,230 @@ public final class RuneKeyboardView extends View {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    int action = event.getActionMasked();
-
-    if (action == MotionEvent.ACTION_CANCEL) {
-      releasePressedKey();
-      cancelTouchRepeat();
-      clearSpacebarCursor();
-      clearPendingTouchVariant();
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        dismissVariantPopup();
-      }
-      return true;
-    }
-
-    if (action == MotionEvent.ACTION_UP) {
-      releasePressedKey();
-      cancelTouchRepeat();
-      if (pendingSpacebarTarget != null) {
-        updateSpacebarCursor(event.getX());
-        HitTarget pending = pendingSpacebarTarget;
-        boolean cursorGesture = spacebarCursorActive;
+    switch (event.getActionMasked()) {
+      case MotionEvent.ACTION_CANCEL:
+        touchPointer.end();
+        releasePressedKey();
+        cancelTouchRepeat();
         clearSpacebarCursor();
-        if (!cursorGesture) {
-          RectF releaseBounds = new RectF(pending.bounds);
-          releaseBounds.inset(-dp(18), -dp(18));
-          if (releaseBounds.contains(event.getX(), event.getY())) {
-            KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
-            KeyboardKey selectedKey = engine.getState().getSelectedKey();
-            provideKeyFeedback(selectedKey);
-            KeyboardEngine.Update pressUpdate = engine.pressSelected();
-            applyUpdate(merge(selectionUpdate, pressUpdate));
-          }
+        clearPendingTouchVariant();
+        if (variantPopupVisible && !variantPopupControllerMode) {
+          dismissVariantPopup();
         }
         return true;
-      }
-
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX());
-        clearPendingTouchVariant();
-        commitActiveVariant();
+      case MotionEvent.ACTION_DOWN:
+      case MotionEvent.ACTION_POINTER_DOWN:
+        {
+          int index = event.getActionIndex();
+          int previous = touchPointer.begin(event.getPointerId(index));
+          int previousIndex = event.findPointerIndex(previous);
+          if (previousIndex >= 0) {
+            // Fast typing: this finger landed before the previous one lifted. Finish that key as
+            // a tap where its finger is now, so neither key is lost.
+            handleTouchUp(event.getX(previousIndex), event.getY(previousIndex));
+          }
+          requestFocus();
+          performClick();
+          handleTouchDown(event.getX(index), event.getY(index));
+          return true;
+        }
+      case MotionEvent.ACTION_MOVE:
+        {
+          int index = event.findPointerIndex(touchPointer.activePointerId());
+          if (index >= 0) {
+            handleTouchMove(event.getX(index), event.getY(index));
+          }
+          return true;
+        }
+      case MotionEvent.ACTION_UP:
+      case MotionEvent.ACTION_POINTER_UP:
+        {
+          int index = event.getActionIndex();
+          if (touchPointer.isActive(event.getPointerId(index))) {
+            touchPointer.end();
+            handleTouchUp(event.getX(index), event.getY(index));
+          }
+          return true;
+        }
+      default:
         return true;
-      }
+    }
+  }
 
-      HitTarget pending = pendingTouchVariantTarget;
-      if (pending != null) {
-        clearPendingTouchVariant();
+  private void handleTouchUp(float x, float y) {
+    releasePressedKey();
+    cancelTouchRepeat();
+    if (pendingSpacebarTarget != null) {
+      updateSpacebarCursor(x);
+      HitTarget pending = pendingSpacebarTarget;
+      boolean cursorGesture = spacebarCursorActive;
+      clearSpacebarCursor();
+      if (!cursorGesture) {
         RectF releaseBounds = new RectF(pending.bounds);
         releaseBounds.inset(-dp(18), -dp(18));
-        if (releaseBounds.contains(event.getX(), event.getY())) {
+        if (releaseBounds.contains(x, y)) {
           KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+          KeyboardKey selectedKey = engine.getState().getSelectedKey();
+          provideKeyFeedback(selectedKey);
           KeyboardEngine.Update pressUpdate = engine.pressSelected();
           applyUpdate(merge(selectionUpdate, pressUpdate));
         }
-        return true;
       }
-      return true;
+      return;
     }
 
-    if (action == MotionEvent.ACTION_MOVE) {
-      if (pendingSpacebarTarget != null) {
-        updateSpacebarCursor(event.getX());
-        return true;
-      }
-
-      if (variantPopupVisible && !variantPopupControllerMode) {
-        updateTouchVariantSelection(event.getX());
-        return true;
-      }
-
-      if (pendingTouchVariantTarget != null) {
-        RectF holdBounds = new RectF(pendingTouchVariantTarget.bounds);
-        holdBounds.inset(-dp(18), -dp(18));
-        if (!holdBounds.contains(event.getX(), event.getY())) {
-          clearPendingTouchVariant();
-        }
-        return true;
-      }
-
-      if (touchRepeatActive && !touchRepeatBounds.contains(event.getX(), event.getY())) {
-        cancelTouchRepeat();
-      }
-      return true;
+    if (variantPopupVisible && !variantPopupControllerMode) {
+      updateTouchVariantSelection(x);
+      clearPendingTouchVariant();
+      commitActiveVariant();
+      return;
     }
 
-    if (action != MotionEvent.ACTION_DOWN) {
-      return true;
+    HitTarget pending = pendingTouchVariantTarget;
+    if (pending != null) {
+      clearPendingTouchVariant();
+      RectF releaseBounds = new RectF(pending.bounds);
+      releaseBounds.inset(-dp(18), -dp(18));
+      if (releaseBounds.contains(x, y)) {
+        KeyboardEngine.Update selectionUpdate = engine.select(pending.row, pending.col);
+        KeyboardEngine.Update pressUpdate = engine.pressSelected();
+        applyUpdate(merge(selectionUpdate, pressUpdate));
+      }
+    }
+  }
+
+  private void handleTouchMove(float x, float y) {
+    if (pendingSpacebarTarget != null) {
+      updateSpacebarCursor(x);
+      return;
     }
 
+    if (variantPopupVisible && !variantPopupControllerMode) {
+      updateTouchVariantSelection(x);
+      return;
+    }
+
+    if (pendingTouchVariantTarget != null) {
+      RectF holdBounds = new RectF(pendingTouchVariantTarget.bounds);
+      holdBounds.inset(-dp(18), -dp(18));
+      if (!holdBounds.contains(x, y)) {
+        clearPendingTouchVariant();
+      }
+      return;
+    }
+
+    if (touchRepeatActive && !touchRepeatBounds.contains(x, y)) {
+      cancelTouchRepeat();
+    }
+  }
+
+  private void handleTouchDown(float x, float y) {
     cancelTouchRepeat();
     clearSpacebarCursor();
     clearPendingTouchVariant();
     if (variantPopupVisible) {
       dismissVariantPopup();
     }
-    requestFocus();
-    performClick();
 
     if (engine.getState().isMinimized()) {
       provideKeyFeedback(null);
       applyUpdate(engine.pressSelected());
-      return true;
+      return;
     }
 
-    for (SuggestionTarget target : suggestionTargets) {
-      if (target.bounds.contains(event.getX(), event.getY())) {
-        provideKeyFeedback(null);
-        if (listener != null) {
-          listener.onSuggestionSelected(target.suggestion);
-        }
-        return true;
+    SuggestionTarget suggestion = suggestionTargetAt(x, y);
+    if (suggestion != null) {
+      provideKeyFeedback(null);
+      if (listener != null) {
+        listener.onSuggestionSelected(suggestion.suggestion);
       }
+      return;
     }
 
-    if (languageTarget.contains(event.getX(), event.getY())) {
+    if (languageTarget.contains(x, y)) {
       provideActionFeedback(ControllerAction.LANGUAGE_NEXT);
       applyUpdate(engine.handle(ControllerAction.LANGUAGE_NEXT));
-      return true;
+      return;
     }
 
-    for (HitTarget target : hitTargets) {
-      if (target.bounds.contains(event.getX(), event.getY())) {
-        pressKey(target.row, target.col, KeyEvent.KEYCODE_UNKNOWN);
-        KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
-        KeyboardKey selectedKey = engine.getState().getSelectedKey();
+    HitTarget target = touchTargetAt(x, y);
+    if (target == null) {
+      return;
+    }
 
-        if (selectedKey.getType() == KeyboardKey.Type.SPACE) {
-          applyUpdate(selectionUpdate);
-          beginSpacebarCursor(target, event.getX());
-          return true;
-        }
+    pressKey(target.row, target.col, KeyEvent.KEYCODE_UNKNOWN);
+    KeyboardEngine.Update selectionUpdate = engine.select(target.row, target.col);
+    KeyboardKey selectedKey = engine.getState().getSelectedKey();
 
-        provideKeyFeedback(selectedKey);
+    if (selectedKey.getType() == KeyboardKey.Type.SPACE) {
+      applyUpdate(selectionUpdate);
+      beginSpacebarCursor(target, x);
+      return;
+    }
 
-        if (!variantsForKey(selectedKey).isEmpty()) {
-          applyUpdate(selectionUpdate);
-          beginTouchVariant(target);
-          return true;
-        }
+    provideKeyFeedback(selectedKey);
 
-        KeyboardEngine.Update pressUpdate = engine.pressSelected();
-        applyUpdate(merge(selectionUpdate, pressUpdate));
-        if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
-          startTouchRepeat(target);
-        }
-        return true;
+    if (!variantsForKey(selectedKey).isEmpty()) {
+      applyUpdate(selectionUpdate);
+      beginTouchVariant(target);
+      return;
+    }
+
+    KeyboardEngine.Update pressUpdate = engine.pressSelected();
+    applyUpdate(merge(selectionUpdate, pressUpdate));
+    if (KeyRepeatPolicy.isTouchKeyRepeatable(selectedKey)) {
+      startTouchRepeat(target);
+    }
+  }
+
+  private boolean mobileSuggestionBarShown() {
+    return mobile && !engine.getState().isEditing() && !suggestions.isEmpty();
+  }
+
+  /**
+   * The suggestion under a touch. On a phone the suggestions cover the editing bar, so a touch in
+   * the gaps between them goes to the nearest one rather than to the hidden key underneath.
+   */
+  private SuggestionTarget suggestionTargetAt(float x, float y) {
+    SuggestionTarget nearest = null;
+    float nearestDistance = mobileSuggestionBarShown() ? dp(TouchPointerPolicy.GAP_SNAP_DP) : 0f;
+    for (SuggestionTarget target : suggestionTargets) {
+      RectF b = target.bounds;
+      if (b.contains(x, y)) {
+        return target;
+      }
+      float distance = TouchPointerPolicy.distanceToRect(x, y, b.left, b.top, b.right, b.bottom);
+      if (distance <= nearestDistance) {
+        nearestDistance = distance;
+        nearest = target;
       }
     }
+    return nearest;
+  }
 
-    return true;
+  /**
+   * The key under a touch. On a phone a touch in the gap between keys (or just past the edge)
+   * goes to the nearest key, as fast typing often lands there.
+   */
+  private HitTarget touchTargetAt(float x, float y) {
+    HitTarget nearest = null;
+    float nearestDistance = mobile ? dp(TouchPointerPolicy.GAP_SNAP_DP) : 0f;
+    boolean barHidden = mobileSuggestionBarShown();
+    for (HitTarget target : hitTargets) {
+      if (barHidden && target.row == 0) {
+        continue;
+      }
+      RectF b = target.bounds;
+      if (b.contains(x, y)) {
+        return target;
+      }
+      float distance = TouchPointerPolicy.distanceToRect(x, y, b.left, b.top, b.right, b.bottom);
+      if (distance <= nearestDistance) {
+        nearestDistance = distance;
+        nearest = target;
+      }
+    }
+    return mobile ? nearest : null;
   }
 
   private void startTouchRepeat(HitTarget target) {
